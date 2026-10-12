@@ -137,3 +137,73 @@ def test_helper_detects_prefix_metadata_and_merged_forms():
     )
     assert not is_compaction_summary_message(_user(DECISION_MSG))
     assert not is_compaction_summary_message(_user(""))
+
+
+# ---------------------------------------------------------------------------
+# zh-TW / zh-CN extraction
+# ---------------------------------------------------------------------------
+
+ZH_PREFERENCE = "我偏好簡潔且可驗證的解法，不要過度工程。"
+ZH_HABITUAL = "我一律使用繁體中文回覆，不會用簡體。"
+ZH_DECISION = "我們決定專案以 Julia 作為唯一的模擬核心。"
+ZH_DECLARATIVE = "命名規則是先日期後主題。"
+
+
+@pytest.mark.parametrize("message,expected_category", [
+    (ZH_PREFERENCE, "user_pref"),
+    (ZH_HABITUAL, "user_pref"),
+    (ZH_DECISION, "project"),
+    (ZH_DECLARATIVE, "project"),
+])
+def test_zh_extraction_stores_the_sentence_under_the_right_category(tmp_path, message, expected_category):
+    provider = _make_provider(tmp_path, auto_extract=True)
+    provider.on_session_end([_user(message)])
+    facts = provider._store.list_facts(limit=100)
+    assert [f["content"] for f in facts] == [message]
+    assert facts[0]["category"] == expected_category
+    provider.shutdown()
+
+
+def test_zh_full_width_terminators_split_a_paragraph_into_one_fact_per_clause(tmp_path):
+    """A Chinese paragraph is not one fact: 。and ；are sentence terminators too, so a
+    message holding three separate statements yields three facts, not one long one."""
+    provider = _make_provider(tmp_path, auto_extract=True)
+    provider.on_session_end([_user("我偏好繁體中文回覆。我也偏好簡單的解法。我們決定用 Julia。")])
+    assert _fact_contents(provider) == ["我偏好繁體中文回覆。", "我也偏好簡單的解法。", "我們決定用 Julia。"]
+    provider.shutdown()
+
+
+def test_zh_restatement_is_dropped_rather_than_stored_again(tmp_path):
+    """An unattended extractor has nobody to read write_check's advisory hint, so a
+    near-duplicate is dropped instead of becoming one more copy of the same fact."""
+    provider = _make_provider(tmp_path, auto_extract=True)
+    for message in ("我偏好所有回覆一律使用繁體中文與台灣用語。",
+                    "Frank 要求所有回覆只使用繁體中文與台灣用語。",
+                    "所有回覆只用繁體中文和台灣用語，不用簡體。"):
+        provider.on_session_end([_user(message)])
+    assert len(_fact_contents(provider)) == 1
+    provider.shutdown()
+
+
+def test_zh_sentence_is_stored_under_one_category_only(tmp_path):
+    """「我們決定命名規則是 …」matches both a decision pattern and a declarative one; the
+    sentence is stored once, not once per matching category."""
+    provider = _make_provider(tmp_path, auto_extract=True)
+    provider.on_session_end([_user("我們決定命名規則是 YYMMDDNN-topic.md，這是專案的固定規則。")])
+    facts = provider._store.list_facts(limit=100)
+    assert len(facts) == 1
+    provider.shutdown()
+
+
+@pytest.mark.parametrize("message", [
+    "我不太確定這個能不能用，先看看再說吧。",      # uncertainty, not a preference
+    "你知道為什麼會這樣嗎？",                     # a question
+    "你必須先備份資料庫再動手，不得跳過。",         # an imperative addressed to the assistant
+    "你好，今天天氣不錯。",                       # chit-chat
+    "請幫我檢查一下這個檔案。",                   # a request
+])
+def test_zh_utterances_that_are_not_durable_facts_are_not_stored(tmp_path, message):
+    provider = _make_provider(tmp_path, auto_extract=True)
+    provider.on_session_end([_user(message)])
+    assert _fact_contents(provider) == []
+    provider.shutdown()

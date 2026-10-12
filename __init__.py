@@ -104,13 +104,32 @@ _EXTRACT_CATEGORIES = (
       re.compile(r'\bmy\s+(?:favorite|favourite|preferred|default)\s+\w+\s+is\s+\S', re.IGNORECASE),
       re.compile(r'\bI\s+(?:always|never|usually)\s+\S', re.IGNORECASE),
       re.compile(r'(?:^|\s)я\s+(?:предпочитаю|люблю|использую|пользуюсь|хочу|обычно|всегда|никогда|не\s+ем|не\s+пью)\s+\S', re.IGNORECASE),
-      re.compile(r'(?:^|\s)мо[йяеи]\s+любим\w+\s+\S', re.IGNORECASE)], "user_pref"),
+      re.compile(r'(?:^|\s)мо[йяеи]\s+любим\w+\s+\S', re.IGNORECASE),
+      # zh-TW / zh-CN: mirrors "I prefer / I always / I never". The subject is optional so a bare
+      # 「偏好簡潔的解法」 matches; 「傾向」 is the hedged form and 「會選用」 the behavioural one.
+      # Deliberately not matching a bare 「要」 or 「覺得」: those are wishes and passing opinions,
+      # not durable preferences.
+      re.compile(r'(?:我|本人|自己)?(?:偏好|習慣|喜歡|較喜歡|傾向|會先?選用)[^。；\n]{2,40}'),
+      # Narrow on purpose. A bare 「不」 also matches 不太確定 / 不知道 / 不清楚 — exactly the
+      # utterances that must never become facts — so the negation has to hang off a habitual or
+      # prescriptive verb.
+      re.compile(r'我(?:一律|都會|總是|不會|不習慣|不接受|不用|不再)[^。；\n]{2,40}'),
+      re.compile(r'(?:對我而言|就我來說|以我來看)[^。；\n]{2,40}'),
+      ], "user_pref"),
     ([re.compile(r'\bwe\s+(?:decided|agreed|chose)\s+\S', re.IGNORECASE),
       re.compile(r'\bthe\s+project\s+(?:uses|needs|requires)\s+\S', re.IGNORECASE),
       re.compile(r'(?:^|\s)мы\s+(?:решили|договорились|выбрали)\s+\S', re.IGNORECASE),
-      re.compile(r'(?:^|\s)в\s+проекте\s+(?:используем|используется|нужен|нужна|нужно)\s+\S', re.IGNORECASE)], "project"),
+      re.compile(r'(?:^|\s)в\s+проекте\s+(?:используем|используется|нужен|нужна|нужно)\s+\S', re.IGNORECASE),
+      # zh-TW / zh-CN: mirrors "we decided / the project uses". An explicit deciding subject is
+      # required — a bare 「必須」 or 「不得」 also matches an instruction addressed to the
+      # assistant ("you must back up first"), which _fact_problem does not reject because that is
+      # not injection phrasing, only an imperative.
+      re.compile(r'(?:我們|大家|團隊|雙方)(?:決定|裁定|決議|達成共識)[^。；\n]{2,60}'),
+      re.compile(r'(?:專案|系統|流程|文件|規則|命名|設定|架構|契約|介面)[^。；\n]{0,12}'
+                 r'(?:是|為|採用|使用|定義)[^。；\n]{2,40}'),
+      ], "project"),
 )
-_RE_SENTENCE = re.compile(r"[^.!?\n]+[.!?]?")
+_RE_SENTENCE = re.compile(r"[^.!?\n。；]+[.!?。；]?")
 _EXTRACT_MAX_CHARS = 300
 
 # What a fact must not be. Facts are injected into later prompts, so instructions and tool transcripts stored as
@@ -588,13 +607,13 @@ class HolographicMemoryProvider(MemoryProvider):
                 None if self._authors_seen else self._init_key)
             target = self._open(key) if key is not None else None
         if target:
-            self._auto_extract_facts([{"role": "user", "content": user_content}], target[0])
+            self._auto_extract_facts([{"role": "user", "content": user_content}], target[0], target[1])
 
     @_serialized
     def on_session_end(self, messages: List[Dict[str, Any]]) -> None:
         # User scope extracts per turn in sync_turn (attributed); a whole transcript cannot be attributed safely.
         if self._extracting() and self._scope != "user" and self._store and messages:
-            self._auto_extract_facts(messages, self._store)
+            self._auto_extract_facts(messages, self._store, self._retriever)
         self._flush_counts()
 
     @_serialized
@@ -602,7 +621,7 @@ class HolographicMemoryProvider(MemoryProvider):
         """Harvest before the turns are summarised away (a long session that is later killed keeps what it said),
         and let facts injected into the compressed turns be recalled again."""
         if self._extracting() and self._scope != "user" and self._store and messages:
-            self._auto_extract_facts(messages, self._store)
+            self._auto_extract_facts(messages, self._store, self._retriever)
         for key in [k for k in self._injected if k.split("|", 1)[0] == self._session_id]:
             self._injected.pop(key, None)
         self._flush_counts()
@@ -833,7 +852,7 @@ class HolographicMemoryProvider(MemoryProvider):
         "fact_feedback": lambda self, a: self._feedback(a),
     }
 
-    def _auto_extract_facts(self, messages: list, store: MemoryStore) -> None:
+    def _auto_extract_facts(self, messages: list, store: MemoryStore, retriever=None) -> None:
         # Compaction handoff summaries arrive as role="user" and match the decision patterns; never store the
         # compactor's own output as a fact. A merge-into-tail row holds genuine prior user text BEFORE
         # _MERGED_SUMMARY_DELIMITER (after the header) and the summary AFTER it — harvest only that segment.
@@ -856,8 +875,21 @@ class HolographicMemoryProvider(MemoryProvider):
                 for patterns, category in _EXTRACT_CATEGORIES:
                     if any(p.search(sentence) for p in patterns):
                         try:
-                            if store.add_fact_status(sentence, category=category, trust=extract_trust)[1]:
-                                extracted += 1
+                            fact_id, created = store.add_fact_status(
+                                sentence, category=category, trust=extract_trust)
+                            if created:
+                                # The same near-duplicate check the fact_store "add" action runs. There
+                                # the result is advisory and an agent reads it; an unattended extractor
+                                # has nobody to read it, so a near-duplicate is dropped rather than
+                                # kept — otherwise switching extraction on for a language whose users
+                                # restate a preference in their own words turns every session into one
+                                # more copy of the same fact. `similar` only: a `possible_conflicts`
+                                # hit is a genuine change of state and has to be kept. write_check's
+                                # threshold is the shipped one, unchanged here.
+                                if retriever is not None and retriever.write_check(fact_id).get("similar"):
+                                    store.remove_fact(fact_id)
+                                else:
+                                    extracted += 1
                         except Exception:
                             pass
                         break

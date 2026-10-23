@@ -62,7 +62,11 @@ _PROBE_BATCH = 4  # facts in the first request to an endpoint whose speed is not
 _MAX_CUTS = 3  # batches of facts cut short in a row before the endpoint counts as failing (a server that never answers)
 _CUT = object()  # _request: a request for fact vectors ran out of time (embed_facts decides what that means)
 _BUSY = object()  # _request: not sent or not answered in time while our own fact request held the endpoint
-RECALL_MARGIN = 1.0  # before a turn
+RECALL_MARGIN = 0.6  # before a turn: the z the top meaning candidate needs over the store's own
+# spread (z_bar). At 1.0 the bar (~3.9 for a 64-fact store) turned away paraphrase targets whose
+# z sat at 3.4-3.8; a sweep on the four sets (2026-10-22, emb on): 1.0 -> 432 hits, 0.6 -> 437,
+# noise +1 (ru chit), multi stays 0, wrong-entity unchanged. SEARCH_MARGIN (0.5) stays: an asked
+# search is deliberately more permissive than a proactive recall.
 SEARCH_MARGIN = 0.5  # fact_store search: the agent asked, and judges what it gets
 # fact_store search beyond the words (Retriever.beyond_words): of the SEARCH_TOP_K facts closest in meaning, one is
 # shown when it is closer than the best the words found by SEARCH_BEAT_WORDS and stands out at least SEARCH_Z_FLOOR.

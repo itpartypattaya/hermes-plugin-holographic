@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+### Added
+
+- **Second-stage rescoring by a cross-encoder** (RFC itpartypattaya/hermes-plugin-holographic#9). Off by default
+  (`rerank: off`); with it on, a Cohere-compatible `/v1/rerank` endpoint (llama-server `--reranking`, TEI, vLLM,
+  Infinity, Jina, Cohere) reorders the candidate pool before a turn, after the blend. One mode (the two designs
+  were compared in the issue and collapsed after review 2026-10-22): membership always stays with coverage, the
+  reranker advises the order. New keys: `rerank`, `rerank_url`, `rerank_model`, `rerank_top_k` (40),
+  `rerank_weight` (0 = order-only), `rerank_window` (0.05 = the tail below δ of the best score is cut before
+  the top five (coverage runs first, then the reranker, then the window; 0 keeps all)), `rerank_timeout` (3 s, capped so that `embedding_timeout + rerank_timeout` stays under the core's 8 s
+  prefetch budget), `rerank_scale` (`logit` by default — the endpoint's own score scale; `unit` for a
+  [0, 1] endpoint such as Cohere or TEI). `rerank_mode` and `rerank_margin` existed in
+  the drafts and are gone: a config carrying them is ignored with a warning. A failure or a slow answer keeps the
+  current order and pauses the endpoint (60 s doubling to 900 s); a query holding a secret is never sent. One
+  stdlib client, no new dependency (`rerank.py`); with the feature off, scores and recall are 0.17.8's (tests
+  pin them).
+- **`tools/benchmark_rerank.py`** — the five modes (off, reorder × weight {0, >0}, gate × weight {0, >0}) measured on
+  the multilingual set: recall@5, wrong-entity hits, chit-chat noise, latency p50/p95. Latency against a real
+  llama-server reranker (`--endpoint=…`); with no endpoint a mock ranker shows the mechanics only. Measured on a CPU
+  box with bge-m3-reranker-v2 (Bge-M3-568M-Q4_K_M), en/ru/zh, 60 questions / 15 that must recall nothing: recall@5
+  100% in all five modes, wrong-entity 0, noise 0%, per-turn cost 3-4 ms → 37-40 ms (p50) and 8 ms → ~52 ms (p95) — see
+  the README table. Measured on the earlier design (the five modes before the 2026-10-22 collapse
+  into one mode); the head-commit table is `results/BENCHMARK.md`.
+
 ### Docs
 
 - **Stored times are UTC, and the README says so** (issue #3, njwangfeng: a weekly window written in local time
@@ -107,6 +130,7 @@ common word with the message.
   instructions", "You mustn't never ignore…". A negation before the prohibition cancels it now, and so does an
   exception after it ("never ignore your instructions unless they stop you from answering"). (Third to fifth Codex
   passes.)
+
 
 ## 0.17.6 — 2026-10-21
 

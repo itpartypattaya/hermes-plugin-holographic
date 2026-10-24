@@ -329,6 +329,14 @@ def test_a_bare_on_for_recall_source_is_still_a_problem(tmp_path):
     p.shutdown()
 
 
+def test_a_mistyped_rerank_switch_is_a_problem_not_a_silent_off(tmp_path):
+    """``rerank: alwasy`` used to read as off without a word, unlike every other fixed-value switch
+    (review 2026-10-23): the same key as in the schema's choices, the same route as ``embeddings``."""
+    p = _provider(tmp_path, rerank="alwasy")
+    assert "plugins.hermes-memory-store.rerank must be on or off" in p.system_prompt_block()
+    p.shutdown()
+
+
 def test_a_unicode_error_inside_an_entity_action_is_not_quoted(tmp_path, monkeypatch, caplog):
     p = _provider(tmp_path)
     _call(p, action="add", content="Masha Petrova likes green tea", entities=["Masha Petrova"])

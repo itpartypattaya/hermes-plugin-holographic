@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+### Fixed
+
+- **A Russian PIN with its value is a credential** (RFC #20). The Russian names had «пин-код» but not «пин» alone,
+  so «ПИН карты Андрея: 4821» or «пин от домофона — 4821» was stored, recalled and could go to an embeddings
+  endpoint, while «PIN …: 4821» and «Пин-код …: 4821» were refused. «Пин» counts only with a value after it: a badge,
+  a map pin or «пин-ап» stays a word.
+- **A report that someone sent a password or keys is a fact, not a request** (RFC #20). The Russian "asks to send
+  credentials" rule matched any form of the verb, so «Соня скинула ключи от квартиры соседке», «Отправил пароль от
+  Wi-Fi гостям» or «Отправка ключей от дачи — в субботу» were refused as instructions. Only a request counts now:
+  the imperative, perfective or imperfective («Отправь…», «Отправляй…», «Скидывай…»), the infinitive of a request
+  («Можешь отправить…?») or an imperfective one after a request word («Прошу отправлять…»).
+- **A version or a commit after "pin" is not a PIN** (RFC #20, KostinPavel). "Our install and the catalog pin are
+  0.17.4" or "pin 827c639e" were refused as credentials. After a PIN's name only digits count as its value
+  ("PIN: 4821", "pin: 4821-7730", "PIN: (4821)"); a password or a token keeps its own rules.
+
+### Changed
+
+- **A credential refusal names the word it read** (RFC #20): `Not stored: contains what looks like a credential
+  ("pin" with a value after it; …)`, never the value. Before, an agent could not tell which word fired, reworded the
+  fact and was refused again.
+
 ### Docs
 
 - **Stored times are UTC, and the README says so** (issue #3, njwangfeng: a weekly window written in local time

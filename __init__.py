@@ -435,7 +435,10 @@ _CREDENTIAL_LATIN = (
     # environment variables, in the text of any language
     r"|" + _ENV_SECRET_NAME)
 _CREDENTIAL_NAMES = {
-    "ru": r"парол[ьяюеи]|пин[\s-]?код\w*|токен\w*|ключ\w*\s+api|api[\s-]?ключ\w*|секретн\w*\s+ключ\w*"
+    # «пин» alone too, as a word: it only counts with a value after it («ПИН: 4821»), so a badge or a map pin stays
+    # a word («Значок-пин…», «Покажи пин на карте»); «шпинат», «пинг», «пинцет» never match (RFC #20, 2026-10-24)
+    "ru": r"парол[ьяюеи]|пин[\s-]?код\w*|(?<!\w)пин(?:а|у|ом|е|ы)?(?!\w)|токен\w*|ключ\w*\s+api|api[\s-]?ключ\w*"
+          r"|секретн\w*\s+ключ\w*"
           r"|код\w*\s+(?:подтверждения|доступа)",
     "zh": r"密码|密碼|口令|密钥|密鑰|金钥|金鑰|私钥|私鑰|令牌|验证码|驗證碼",
     "ja": r"パスワード|暗証番号|APIキー|ＡＰＩキー|秘密鍵|トークン|認証コード|確認コード|PINコード",
@@ -468,6 +471,13 @@ _RU_CREDENTIAL = (r"парол\w*|секрет(?:а|у|ом|е|ы|ов|ам|ам
                   r"|секретн\w*\s+(?:фраз|слов|ключ|код|данн|комбинаци|строк|номер|вопрос|ответ|пин)\w*|секретик\w*"
                   r"|(?:сид|seed)[\s-]?фраз\w*|фраз\w*\s+восстановлени\w*|мнемоническ\w*\s+фраз\w*"
                   r"|пин[\s-]?код\w*|пин(?:а|ом|у)?\s+(?:от|для|к)(?!\w)|код\w*\s+(?:подтверждени|доступ|из\s+смс)\w*")
+# The Russian imperative of sending or showing, perfective and imperfective, and the words that make an infinitive a
+# request.
+_RU_SEND = (r"отправь|отправьте|отправляй|отправляйте|перешли|перешлите|пересылай|пересылайте|покажи|покажите"
+            r"|показывай|показывайте|раскрой|раскройте|раскрывай|раскрывайте|выложи|выложите|выкладывай|выкладывайте"
+            r"|скинь|скиньте|скидывай|скидывайте")
+_RU_ASKING = (r"прошу|просим|можешь|можете|сможешь|сможете|надо|нужно|пожалуйста|давай|давайте|не\s+забывай(?:те)?"
+              r"|будь(?:те)?\s+добр\w*")
 _RE_EXFILTRATION = re.compile("|".join((
     _alternatives(r"send|share|reveal|post|upload|forward|email|leak|paste"
                   r"|env[íi]a(?:r|le|lo)?|env[íi]e|comparte|compartir|compartilhe|compartilha|partilhe|revela|revele"
@@ -487,11 +497,15 @@ _RE_EXFILTRATION = re.compile("|".join((
     r"(?<![$%{])" + _alternatives(r"[şs]ifre\w*|parola\w*|anahtar\w*|tokens?|" + _ENV_SECRET_NAME, r"(?!)")
     + r".{0,40}"
     + _alternatives(r"g[öo]nder(?:in|iniz)?|payla[şs](?:[ıi]n)?|ilet(?:in)?|yay[ıi]nla(?:y[ıi]n)?", r"(?!)"),
-    # the whole verb, then the rest: "\w*(?!\w)" gives nothing back to ".{0,40}", as "\w*+" would; possessive
-    # quantifiers need Python 3.11, and the dream (hermes-dreaming) runs a copy of this screen on 3.9 (0.17.3)
-    r"(?:отправ|перешл|покаж|раскрой|выложи|скин)\w*(?!\w).{0,40}(?<!\w)(?:" + _RU_CREDENTIAL + r")",
-    r"(?:отправь|отправьте|перешли|перешлите|покажи|покажите|раскрой|раскройте|выложи|выложите|скинь|скиньте)"
-    r"(?!\w).{0,40}" + _ENV_OBJ,
+    # a request, not a report: the imperative or the infinitive of a request («Можешь отправить…?»), never the past
+    # tense or a noun — «Соня скинула ключи от квартиры соседке», «Отправка ключей от дачи — в субботу» are facts
+    # (RFC #20, 2026-10-24; the stems before matched every form). The imperfective asks too («Отправляй…»), its
+    # infinitive only after a request («Прошу отправлять…»): «Андрей не любит отправлять пароли» is a habit (Codex
+    # review of PR #22).
+    r"(?<!\w)(?:" + _RU_SEND + r"|отправить|переслать|раскрыть|выложить|скинуть|(?:" + _RU_ASKING
+    + r")\s+(?:[^\W\d_]+\s+){0,2}?(?:отправлять|пересылать|показывать|раскрывать|выкладывать|скидывать))(?!\w)"
+    r".{0,40}(?<!\w)(?:" + _RU_CREDENTIAL + r")",
+    r"(?:" + _RU_SEND + r")(?!\w).{0,40}" + _ENV_OBJ,
     _ZH_SEND + r".{0,40}(?:" + _CREDENTIAL_NAMES["zh"] + r"|助记词|助記詞|" + _ENV_OBJ + r")",
     r"(?:把|将|將).{0,20}(?:" + _CREDENTIAL_NAMES["zh"] + r"|助记词|助記詞|" + _ENV_OBJ + r").{0,40}" + _ZH_SEND,
     r"(?:" + _CREDENTIAL_NAMES["ja"] + r"|" + _ENV_OBJ + r").{0,40}(?:送って|送信して|共有して|公開して|転送して|送れ)",
@@ -582,10 +596,29 @@ _RE_TOKEN_SHAPE = re.compile(
     r"|(?i:[a-z][a-z0-9+.-]{1,20})://[^\s:/?#@]*:[^\s/?#@]+@")
 
 
+# A PIN by name, in the languages that call it so ("PIN-Code", "código PIN", "пин-код", "PINコード", "รหัสพิน"), and the
+# digits it is: one hyphen between groups at most ("4821-7730").
+_RE_PIN_NAME = re.compile(r"(?<![^\W\d_])(?:pins?|pincodes?|пин(?:а|у|ом|е|ы)?)(?![^\W\d_])|pin(?=コード)"
+                          r"|пин(?=[\s-]?код)|พิน|পিন", re.IGNORECASE)
+_RE_PIN_VALUE = re.compile(r"\d+(?:-\d+)*")
+
+
 def _has_credential(text: str) -> bool:
     """A credential word with its value, or a token whose shape alone says it is one (_RE_TOKEN_SHAPE)."""
-    return bool(_RE_TOKEN_SHAPE.search(text)) or any(_holds_a_secret(m) for rx in _RE_CREDENTIALS
-                                                     for m in rx.finditer(text))
+    return _credential_word(text) is not None
+
+
+def _credential_word(text: str) -> str | None:
+    """The credential word that comes with its value in *text* ("PIN", "пароль", "OPENAI_API_KEY"), "" for a token
+    known by its shape alone, None when there is none. A refusal names it, so a writer can tell what was read as a
+    credential (RFC #20)."""
+    if _RE_TOKEN_SHAPE.search(text):
+        return ""
+    for rx in _RE_CREDENTIALS:
+        for m in rx.finditer(text):
+            if _holds_a_secret(m):
+                return (m.groupdict().get("word") or "").strip()
+    return None
 
 
 def _holds_a_secret(match: re.Match) -> bool:
@@ -618,6 +651,11 @@ def _holds_a_secret(match: re.Match) -> bool:
         if _is_reference(_value(value), assigned):
             return False
         return _looks_like_a_secret(value, links=not _RE_SECRET_LINK_NAME.search(word), assigned=assigned)
+    if _RE_PIN_NAME.search(word) and not _RE_PIN_VALUE.fullmatch(_value(value).strip("()[]{}")):
+        # a PIN is digits: after "pin" a version or a commit is what a catalog pins ("the catalog pin is 0.17.4",
+        # "pin 827c639e"), not a secret (RFC #20, 2026-10-24); brackets around it are not part of it ("PIN: (4821)",
+        # Codex review of PR #22)
+        return False
     return _looks_like_a_secret(value, assigned=assigned)
 
 
@@ -796,8 +834,12 @@ def _fact_problem(content: str) -> str | None:
         return "reads like an instruction to the assistant, not a fact"
     if _RE_EXFILTRATION.search(unquoted):
         return "asks to send credentials somewhere: an instruction, not a fact"
-    if _has_credential(text):
-        return "contains what looks like a credential (a password, key, token or PIN with its value): never store those"
+    word = _credential_word(text)
+    if word is not None:
+        # the word, never the value: a writer who meant a version pin or a token count can see what was read (RFC #20)
+        what = f'"{word}" with a value after it' if word else "a key, token or password known by its shape"
+        return (f"contains what looks like a credential ({what}; a password, key, token or PIN with its value): never "
+                "store those")
     if _hidden_char(text):
         return "contains invisible formatting characters"
     if _RE_IMAGE_EXFIL.search(text):

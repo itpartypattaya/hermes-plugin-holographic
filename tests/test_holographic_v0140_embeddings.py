@@ -554,6 +554,47 @@ def test_messages_shaped_like_secrets_are_never_sent(tmp_path, endpoint, message
     p.shutdown()
 
 
+def _long_message(tail: str) -> str:
+    """A question padded so that *tail* starts 10 characters before the cut at TEXT_MAX_CHARS."""
+    head = "which machine copies our data while we sleep? "
+    pad = "and then we talked about the garden for a while "
+    text = head
+    while len(text) < embeddings.TEXT_MAX_CHARS - 10:
+        text += pad
+    return text[:embeddings.TEXT_MAX_CHARS - 11] + " " + tail  # a space before it: a token, not a word's tail
+
+
+def test_a_long_message_with_a_key_across_the_cut_is_never_sent(tmp_path, endpoint):
+    # A pasted log ends with a key that starts just before the 2000-character cut. The message holds a secret,
+    # so nothing of it may leave — not the first ten characters of the key that would survive the cut either.
+    key = "sk-proj-AbCdEf0123456789xyz"
+    message = _long_message(key + " and the rest of the log")
+    assert len(message) > embeddings.TEXT_MAX_CHARS
+    assert message.index(key) < embeddings.TEXT_MAX_CHARS < message.index(key) + len(key)
+    p = _provider(tmp_path, **ON)
+    _fill(p, BACKUP)
+    p.sync_turn("hello", "hi")
+    before = len(endpoint.requests)
+    p.prefetch(message)
+    p.handle_tool_call("fact_store", {"action": "search", "query": message})
+    assert len(endpoint.requests) == before
+    assert not any("sk-proj" in text for text in endpoint.inputs)
+    p.shutdown()
+
+
+def test_a_long_plain_message_is_still_sent_cut(tmp_path, endpoint):
+    # The control for the test above: the same long message without a key does reach the endpoint, cut.
+    message = _long_message("and the rest of the log, nothing secret in it")
+    p = _provider(tmp_path, **ON)
+    _fill(p, BACKUP)
+    p.sync_turn("hello", "hi")
+    before = len(endpoint.requests)
+    p.prefetch(message)
+    assert len(endpoint.requests) == before + 1
+    assert endpoint.inputs[-1] == message[:embeddings.TEXT_MAX_CHARS]
+    p.shutdown()
+
+
 def test_a_plain_message_with_basic_in_it_is_still_sent(tmp_path, endpoint):
     p = _provider(tmp_path, **ON)
     _fill(p, BACKUP)

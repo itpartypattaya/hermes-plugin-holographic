@@ -64,9 +64,13 @@ _CUT = object()  # _request: a request for fact vectors ran out of time (embed_f
 _BUSY = object()  # _request: not sent or not answered in time while our own fact request held the endpoint
 RECALL_MARGIN = 0.6  # before a turn: the z the top meaning candidate needs over the store's own
 # spread (z_bar). At 1.0 the bar (~3.9 for a 64-fact store) turned away paraphrase targets whose
-# z sat at 3.4-3.8; a sweep on the four sets (2026-10-22, emb on): 1.0 -> 432 hits, 0.6 -> 437,
-# noise +1 (ru chit), multi stays 0, wrong-entity unchanged. SEARCH_MARGIN (0.5) stays: an asked
-# search is deliberately more permissive than a proactive recall.
+# z sat at 3.4-3.8. Final gate run (2026-10-25, git_sha 958de48, emb on bge-m3, rerank off, both
+# margins, household test + 3 contrast + multilingual, 540 real rows): hit@5 481 -> 486, b=5 c=0,
+# targets lost 0, confusion 34 -> 34, noise 94 -> 95 — one ru chit row (contrast_ru c31,
+# "light_evening") passes the gate at 0.6. Pooled with the maintainer's held-out 126 (4/0, noise
+# 44 -> 44): exact McNemar p = 0.0039, noise 138 -> 139 — three of four conditions pass, noise
+# fails by that one row (issuecomment-6381967163). SEARCH_MARGIN (0.5) stays: an asked search is
+# deliberately more permissive than a proactive recall.
 SEARCH_MARGIN = 0.5  # fact_store search: the agent asked, and judges what it gets
 # fact_store search beyond the words (Retriever.beyond_words): of the SEARCH_TOP_K facts closest in meaning, one is
 # shown when it is closer than the best the words found by SEARCH_BEAT_WORDS and stands out at least SEARCH_Z_FLOOR.

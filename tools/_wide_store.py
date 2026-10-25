@@ -9,6 +9,9 @@
 работает), доля hit-целей глубже позиции 5 в пуле (подъём рангом), латентность prefetch
 p50/p95, время эмбеддинга базы.
 
+Роль в PR #17: вспомогательное A/B широкого стора — НЕ участвует в гейте RECALL_MARGIN
+(гейт считает provenance_probe --recall-margin + mcnemar_gate --margin-pair).
+
 Запуск:
     PYTHONPATH=~/.hermes/hermes-agent HERMES_AGENT_REPO=~/.hermes/hermes-agent \
         python -I tools/_wide_store.py

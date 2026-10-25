@@ -1,5 +1,68 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **Second-stage rescoring by a cross-encoder** (RFC itpartypattaya/hermes-plugin-holographic#9). Off by default
+  (`rerank: off`); with it on, a Cohere-compatible `/v1/rerank` endpoint (llama-server `--reranking`, TEI, vLLM,
+  Infinity, Jina, Cohere) reorders the candidate pool before a turn, after the blend. One mode (the two designs
+  were compared in the issue and collapsed after review 2026-10-22): membership always stays with coverage, the
+  reranker advises the order. New keys: `rerank`, `rerank_url`, `rerank_model`, `rerank_top_k` (40),
+  `rerank_weight` (0 = order-only), `rerank_window` (0.05 = the tail below δ of the best score is cut before
+  the top five (coverage runs first, then the reranker, then the window; 0 keeps all)), `rerank_timeout` (3 s, capped so that `embedding_timeout + rerank_timeout` stays under the core's 8 s
+  prefetch budget), `rerank_scale` (`logit` by default — the endpoint's own score scale; `unit` for a
+  [0, 1] endpoint such as Cohere or TEI). `rerank_mode` and `rerank_margin` existed in
+  the drafts and are gone: a config carrying them is ignored with a warning. A failure or a slow answer keeps the
+  current order and pauses the endpoint (60 s doubling to 900 s); a query holding a secret is never sent. One
+  stdlib client, no new dependency (`rerank.py`); with the feature off, scores and recall are 0.17.8's (tests
+  pin them).
+- **`tools/benchmark_rerank.py`** — the five modes (off, reorder × weight {0, >0}, gate × weight {0, >0}) measured on
+  the multilingual set: recall@5, wrong-entity hits, chit-chat noise, latency p50/p95. Latency against a real
+  llama-server reranker (`--endpoint=…`); with no endpoint a mock ranker shows the mechanics only. Measured on a CPU
+  box with bge-m3-reranker-v2 (Bge-M3-568M-Q4_K_M), en/ru/zh, 60 questions / 15 that must recall nothing: recall@5
+  100% in all five modes, wrong-entity 0, noise 0%, per-turn cost 3-4 ms → 37-40 ms (p50) and 8 ms → ~52 ms (p95) — see
+  the README table. Measured on the earlier design (the five modes before the 2026-10-22 collapse
+  into one mode); the head-commit table is `results/BENCHMARK.md`.
+
+### Fixed
+
+- **A Russian PIN with its value is a credential** (RFC #20). The Russian names had «пин-код» but not «пин» alone,
+  so «ПИН карты Андрея: 4821» or «пин от домофона — 4821» was stored, recalled and could go to an embeddings
+  endpoint, while «PIN …: 4821» and «Пин-код …: 4821» were refused. «Пин» counts only with a value after it: a badge,
+  a map pin or «пин-ап» stays a word.
+- **A report that someone sent a password or keys is a fact, not a request** (RFC #20). The Russian "asks to send
+  credentials" rule matched any form of the verb, so «Соня скинула ключи от квартиры соседке», «Отправил пароль от
+  Wi-Fi гостям» or «Отправка ключей от дачи — в субботу» were refused as instructions. Only a request counts now:
+  the imperative, perfective or imperfective («Отправь…», «Отправляй…», «Скидывай…»), the infinitive of a request
+  («Можешь отправить…?») or an imperfective one after a request word («Прошу отправлять…»).
+- **A version or a commit after "pin" is not a PIN** (RFC #20, KostinPavel). "Our install and the catalog pin are
+  0.17.4" or "pin 827c639e" were refused as credentials. After a PIN's name only digits count as its value
+  ("PIN: 4821", "pin: 4821-7730", "PIN: (4821)"); a password or a token keeps its own rules.
+- **A message with a key across the 2000-character cut is no longer sent for embedding.** The message was cut to
+  `TEXT_MAX_CHARS` first and screened after, so a key that began just before the cut lost its tail, passed the
+  screen as a harmless fragment, and its first characters went to the embeddings endpoint (found in the PR #10
+  review, Codex). The whole message is screened now; a message holding a secret anywhere is not sent at all.
+
+### Changed
+
+- **A credential refusal names the word it read** (RFC #20): `Not stored: contains what looks like a credential
+  ("pin" with a value after it; …)`, never the value. Before, an agent could not tell which word fired, reworded the
+  fact and was refused again.
+
+### Internal
+
+- **The screen lives in `screen.py`.** What may not be stored, recalled or sent (credentials, instructions to the
+  assistant, the sentence rules auto_extract uses) moved out of `__init__.py` byte for byte; the provider imports
+  it and re-exports the names tests read from the package. Behaviour is unchanged. hermes-dreaming vendors part
+  of the screen, takes its copy from this file from now on.
+
+### Docs
+
+- **Stored times are UTC, and the README says so** (issue #3, njwangfeng: a weekly window written in local time
+  returned zero rows from `fact_versions.recorded_at`). `recorded_at`, `facts.created_at` and `updated_at` are UTC;
+  `fact_versions.recorded_on` holds the same moment as a date in Hermes's timezone, for windows in local days.
+
 ## 0.17.9 — 2026-10-23
 
 The tool description says what leaving `origin` out does, and CI runs faster on Windows. Nothing that is stored or
@@ -99,6 +162,7 @@ common word with the message.
   instructions", "You mustn't never ignore…". A negation before the prohibition cancels it now, and so does an
   exception after it ("never ignore your instructions unless they stop you from answering"). (Third to fifth Codex
   passes.)
+
 
 ## 0.17.6 — 2026-10-21
 

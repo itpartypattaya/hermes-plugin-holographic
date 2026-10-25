@@ -71,6 +71,7 @@ In `config.yaml` under `plugins.hermes-memory-store`:
 | `cron_writes` | `true` | A cron job's explicit `fact_store` / `fact_feedback` calls may write (nightly memory jobs such as hermes-dreaming's extraction and keywords exist to make them). Automatic writes (auto-extraction, mirroring, recall counts) stay off in cron, subagents and flush contexts; with `embeddings` on, a cron job that may write also makes missing fact vectors; `false` makes cron read-only too |
 | `recall_indicator` | `true` | Report recalled facts to the core's recall indicator ("🧠 Holographic — recalled 2 memories"). On Telegram and other messaging platforms that line arrives as a separate message before the reply; `false` turns it off, recall itself is unchanged. Like every key here it is read when the gateway starts: a change takes effect after a restart |
 | `embeddings` | `off` | `on`: search by meaning through an embeddings API you name (`embedding_url`, `embedding_model`, `embedding_key_env`, …) — ONLINE: fact texts and messages are sent there. See [Search by meaning](#search-by-meaning-optional-online) |
+| `rerank` | `off` | `on`: rescore the candidate pool before a turn with a cross-encoder (`rerank_url`, `rerank_model`, `rerank_window`, …) — ONLINE: candidate texts and the message are sent there. See [Rescoring by a cross-encoder](#rescoring-by-a-cross-encoder-optional-online) |
 | `scope` | `profile` | `user`: a separate database per user (`holographic-users/<platform>-<user id>.db` next to `db_path`); in a shared chat the store follows the author of each turn, and with no user identity nothing is recalled or written. `chat`: a separate database per chat (`holographic-chats/<platform>-<chat id>.db`) — for one bot serving many unrelated groups; `thread`: per forum topic / thread (`…-t<thread id>.db`), the chat's own database outside threads. Without a chat (CLI, cron, subagents) nothing is recalled or written. File names: an id made only of `A-Z a-z 0-9 _ . -` is used as is (Telegram's `-1001234567890`); any other character becomes `_`, the name is cut to 60 characters, and `-<first 10 hex of sha256(the original "platform-id")>` is appended, so distinct ids never share a file |
 
 A number that is not one (`hrr_dim: abc`, `min_trust_threshold: high`), and a value outside a key's fixed set
@@ -236,7 +237,9 @@ months on, a rule the user set and a guess the agent made looked the same.
   `origin` until a new session starts: its facts land without one. A new fact or a changed version stored with no
   origin has none (`unknown` in `stats`), and the tool description says so; an `add` of a text already stored
   keeps that fact's origin and trust. In the database the origin is kept with
-  the version, in `fact_versions.src_origin` of the current row (`status = 'current'`), not on `facts`.
+  the version, in `fact_versions.src_origin` of the current row (`status = 'current'`), not on `facts`. Stored
+  times are UTC (`fact_versions.recorded_at`, `facts.created_at` / `updated_at`); for a window in local days use
+  `fact_versions.recorded_on`, the same moment as a date in Hermes's timezone (UTC when none is set).
 - **Starting trust.** What the person said or confirmed starts 0.1 above `default_trust`, the agent's conclusion 0.1
   below it (within 0 and 1), a fact without an origin at `default_trust` as before; a `change` starts over at its
   new origin's trust. Measured on 40 pairs of conflicting facts about the
@@ -663,8 +666,8 @@ Off by default, and the one part of the plugin that goes online. Words, keywords
 an embedding model you choose for the questions that share no word with their fact ("Which machine copies our data
 while we sleep?" against "The nightly backup runs from the OES box at 2 am."). It lives in its own module
 (`embeddings.py`) and needs no new dependency (the standard library's HTTP client, numpy as for HRR). With it off
-there are no calls and no vectors, and search scores (to six decimal places) and recall are 0.13.0's — a test pins
-them on a store of twenty facts in five languages; what
+there are no calls and no vectors, and search scores (to six decimal places) and recall are 0.13.0's — a test
+pins recall on six English facts and four queries (``test_recall_is_identical_to_main``); what
 else 0.14.0 changes is the prompt line (see the CHANGELOG), a `search_by_meaning` field in `stats`, and the empty
 `fact_embeddings` table a writable session creates.
 
@@ -825,6 +828,109 @@ stored (0 of 30), came in by meaning. On this store keywords and names do most o
 one recall in these questions; a lower bar on the same questions: margin 0.5 added two with nothing wrong, 0 added
 four but brought two wrong facts and three of the 30 other questions. The synthetic table above, whose facts carry no
 keywords, is a separate benchmark; one store does not show what another will do.
+
+## Rescoring by a cross-encoder (optional, online)
+
+**Experimental — it does not raise hits.** The gate agreed on in
+[#9](https://github.com/itpartypattaya/hermes-plugin-holographic/issues/9) did not pass on either set
+(branch A needs +5 points and there are none; branch B allows no lost target and each run loses at
+least one — the embeddings-on hold-out loses two),
+so the option ships **off by default** and states its trade plainly. Three independent runs, all with
+``jina-reranker-v2-base-multilingual`` Q4_K_M, ``rerank_scale: logit``, window 0.05, weight 0 — the
+maintainer's held-out set twice, with embeddings off and on (bge-m3 Q4_K_M vectors from
+``gpustack/bge-m3-GGUF``, sha256 ``6d39681b…a82fc06``, llama.cpp b11836, CPU — all 199 facts
+vectorized per language):
+
+| run | hit@5 off → on | non-target in top 5 | lines/turn | targets lost / gained | confused rows |
+|---|---|---|---|---|---|
+| this PR's test split (90 queries) | 43 → 43 | 108 → 66 (−39 %) | 1.98 → 1.27 | 1 / 0 | 6 → 4 |
+| the maintainer's hold-out (126 queries) | 64 → 64 | 249 → 154 (−38 %) | 2.24 → 1.44 | 1 / 1 | 24 → 18 |
+| the maintainer's hold-out, embeddings on (126 queries) | 81 → 81 | 251 → 150 (−40 %) | 2.38 → 1.53 | 2 / 1 | 24 → 18 |
+
+*lines/turn in all three rows is per real question. The hold-out figures 1.84 → 1.21 and 1.97 → 1.30*
+*quoted earlier were an average over all 195 rows, chit-chat included (denominator pointed out by the*
+*maintainer, 2026-10-24); per question: 2.24 → 1.44 and 2.38 → 1.53.*
+
+With it **on**, a third fewer lines reach the model and ~40 % fewer non-target facts, with fewer
+confusions in all runs and noise (chit-chat, no-answer) unchanged; the cost is no gain in hits and
+about one target per hundred questions — one in the 126-question emb-off run, two in the emb-on rerun —
+lost on questions holding several facts of one kind (``q055``, ``h42``, ``h34``). With it **off**, nothing changes — the off rows match ``main`` (195 of 195 on
+the hold-out set), and failed rerank calls were 0 in all three runs.
+
+Off by default (``rerank: off``): words, keywords, HRR and, when on, meaning decide as above, with 0.17.8's scores and
+recall — a test pins them on six English facts and four queries (``test_recall_is_identical_to_main``,
+golden blocks per mode). Turn it on to add a second stage: a
+cross-encoder reranker (Cohere's ``/v1/rerank`` shape; OpenAI has no rerank API) reorders the candidate pool before a
+turn, after the blend. It lives in its own module (``rerank.py``), needs no new dependency, and makes one synchronous
+HTTP call at recall time; a failure or a slow answer only keeps the current order and pauses the endpoint (60 s
+doubling to 900 s). One mode since the 2026-10-22 review: the two designs were compared in
+[#9](https://github.com/itpartypattaya/hermes-plugin-holographic/issues/9) and collapsed into one —
+``rerank_mode`` and ``rerank_margin`` are gone (a config that still carries them is ignored with a warning):
+
+```yaml
+plugins:
+  hermes-memory-store:
+    rerank: on
+    rerank_window: 0.05              # δ: cut the tail below this distance of the best score; 0 = keep all
+    rerank_url: http://127.0.0.1:8080/v1/rerank   # llama-server --reranking --embedding --pooling rank
+    rerank_model: local-reranker       # the endpoint's --alias
+```
+
+The cross-encoder reorders the pool; **membership stays with coverage** (the words' own criterion, exactly as in
+off), so the reranker never adds a fact the words would not admit. It can still lose one they did admit: with
+``rerank_window`` > 0 the tail below δ of the best score is cut before the top five is taken by rank — if the
+cross-encoder is confidently wrong at the top, a fact the words admitted disappears instead of slipping places.
+The cut never drops below two scored candidates — that minimum is built into the window itself (review of
+2026-10-23), so a confidently wrong top cannot squeeze recall down to a single fact. Meaning- and entity-based
+facts compete in the same rank as the lexical pool. A failed call falls back to the pool's blend order.
+
+Other keys: ``rerank_top_k`` (40: how deep a pool the cross-encoder sees; the first stage's limit is widened to
+match), ``rerank_weight`` (0 = order-only, recommended; >0 = the min-max-normalised cross-encoder score blended into
+the blend score; the window applies to order-only runs), ``rerank_timeout`` (3 s — additionally capped so that ``embedding_timeout + rerank_timeout`` stays under
+the 8 s the core gives a provider's prefetch: with ``embedding_timeout`` at its maximum 6 s the rerank
+timeout clamps to 1.5 s) and ``rerank_scale`` —
+the endpoint's score scale, set explicitly: ``logit`` (raw llama-server logits; the default, no probing) or
+``unit`` ([0,1], Cohere-style). Set ``unit`` for an endpoint that already returns [0, 1] (Cohere, TEI): on the
+default ``logit`` the sigmoid runs on scores that were normalised once already, the gaps shrink and the window
+keeps more than it should. A value outside that pair is a config problem that names the key and turns
+memory off for the session, like any other out-of-set value — never a silent fallback.
+A query that holds a secret is never sent.
+With ``rerank_weight: 0`` the cross-encoder judges text only and ignores trust: a fact whose trust
+was lowered (by feedback or by a dreaming plugin) can move back to the top of what is admitted.
+
+Measured on a real llama-server with bge-m3-reranker-v2 (Bge-M3-568M-Q4_K_M), three languages (en/ru/zh),
+60 questions and 15 that must recall nothing (``tools/benchmark_rerank.py --endpoint=…``). The first table is
+the PR author's CPU box; the same run on a GTX 1050 Ti (2026-10-22) gives p50 32–35 ms / p95 47–51 ms for the
+four rerank modes and p50 4 ms off — the same order of cost, and recall/wrong/noise identical:
+
+| mode | recall@5 | wrong-entity | noise | p50 (ms) | p95 (ms) |
+|---|---|---|---|---|---|
+| off | 100% (60/60) | 0 | 0% | 4 | 8 |
+| window off, weight 0 | 100% (60/60) | 0 | 0% | 38 | 52 |
+| window off, weight 0.5 | 100% (60/60) | 0 | 0% | 40 | 52 |
+| window 0.05, weight 0 | 100% (60/60) | 0 | 0% | 38 | 51 |
+| window 0.05, weight 0.5 | 100% (60/60) | 0 | 0% | 37 | 51 |
+
+All five rows were measured on the **earlier design**, before the 2026-10-22 collapse into one mode
+(`reorder_before_gate` = window off, `gate_reads_score` = window 0.05) — they are not the current result:
+the head-commit table is in `results/BENCHMARK.md`, and the labels in it keep the historical names.
+
+This store's recall was already 100% before the turn (its data are calibrated to ≥95%): the reranker keeps it there.
+The honest number this table adds is the per-turn cost — 3-4 ms to 40 ms median, ~52 ms p95 on the author's box,
+32–35 ms median / 47–51 ms p95 on a GTX 1050 Ti — the price the maintainer's acceptance asked to see next to the
+gain. On CPU (`results/bench_cpu_t4.jsonl`, the head): llama-server with the same model, capped at
+**threads 4 on a Ryzen 7 2700** — 176–184 ms median / 393–413 ms p95 per call, 0 fallbacks. The earlier
+CPU numbers (94–101 ms median / 212–229 ms p95) were measured on a **different processor** — a
+Ryzen 7 5800H laptop, `7f1efd6`, before the words-gate fix (`results/bench_p8_cpu.jsonl`): same model
+and harness, not comparable across machines — see docs/contrast-benchmark.md. A second reranker of
+different quality and a larger public set are run before merging (issue #9).
+
+Choosing a reranker model: ``jina-reranker-v2-base-multilingual`` Q4_K_M is the CPU recommendation — p50 121 /
+p95 152 ms at 4 threads (620 calls per model, ``results/bench_cpu_gate_jina.jsonl``) — and it is
+**CC-BY-NC-4.0: non-commercial use only** (both upstream ``jinaai`` and the ``gpustack`` GGUF). For work that
+must stay commercial, use ``bge-reranker-v2-m3`` (Q4_K_M, **Apache-2.0**): the same CPU run gives p50 343 /
+p95 448 ms at 4 threads — it misses the 300 ms bar on CPU and stays the GPU default, but its licence is safe
+for commercial use. The plugin ships neither model.
 
 ## Data and privacy
 

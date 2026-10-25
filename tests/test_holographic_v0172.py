@@ -166,7 +166,8 @@ def test_the_screen_compiles_without_possessive_quantifiers():
     import re as _re
 
     import hermes_plugin_holographic as H
-    for name, value in vars(H).items():
+    from hermes_plugin_holographic import screen  # 0.18.0: the screen lives here; H re-exports only part of it
+    for name, value in {**vars(H), **vars(screen)}.items():
         patterns = value if isinstance(value, tuple) else (value,)
         for rx in patterns:
             if isinstance(rx, _re.Pattern):

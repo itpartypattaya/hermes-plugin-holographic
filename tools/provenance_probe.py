@@ -388,7 +388,9 @@ def run_multilingual(langs, modes, emb, endpoint, extra: dict | None = None) -> 
                     miss_cls = next((classify(next((f for f, k in back.items() if k == rk), None), ctx)
                                      for rk in relevant if rk not in keys), "-")
                 rows.append({"set": "multi", "lang": lang, "mode": mode, "emb": emb,
+                             "qid": str(i), "split": "all",
                              "kind": kind, "q": query, "keys": keys,
+                             "targets": list(relevant or []),
                              "sources": {str(f): ctx["tags"].get(f, ["pool-only"])
                                          for f in found},
                              "hit": hit, "wrong": wrong_keys,
@@ -440,7 +442,9 @@ def run_contrast(set_name, modes, emb, endpoint, extra: dict | None = None) -> l
                 miss_cls = classify(next((f for f, k in back.items() if k == target), None), ctx) \
                     if own_pos is None else "-"
                 rows.append({"set": set_name, "lang": set_name, "mode": mode, "emb": emb,
+                             "qid": f"p{pi}q{i}", "split": "all",
                              "kind": "real", "q": query, "keys": keys, "target": target,
+                             "targets": [target],
                              "own_pos": own_pos, "partner_pos": part_pos,
                              "sources": {str(f): ctx["tags"].get(f, ["pool-only"]) for f in found},
                              "hit": own_pos is not None, "wrong": part_pos is not None and part_pos <= 5,
@@ -456,7 +460,9 @@ def run_contrast(set_name, modes, emb, endpoint, extra: dict | None = None) -> l
             found = parse_ids(block)
             keys = [back[f] for f in found if f in back]
             rows.append({"set": set_name, "lang": set_name, "mode": mode, "emb": emb,
+                         "qid": f"c{i}", "split": "all",
                          "kind": "chit", "cat": cat, "q": query, "keys": keys,
+                         "targets": [],
                          "sources": {str(f): ctx["tags"].get(f, ["pool-only"]) for f in found},
                          "hit": None, "wrong": [], "hit5": None, "out_n": len(keys), "miss_cls": "-",
                          "pool_n": len(ctx.get("pool") or []),
@@ -709,7 +715,12 @@ def main(argv):
     ap.add_argument("--out", default=None, help="JSONL directory (default: results/)")
     ap.add_argument("--label", default=None,
                     help="a label in the file name (e.g. jina): does not overwrite the rows of another reranker")
+    ap.add_argument("--recall-margin", default=None, type=float,
+                    help="override embeddings.RECALL_MARGIN for this run and stamp the value into every row "
+                         "and the file name (the 0.6 gate, PR #17); default: the module's own value")
     args = ap.parse_args(argv)
+    if args.recall_margin is not None:
+        _holographic_embeddings.RECALL_MARGIN = args.recall_margin
 
     ENDPOINT = args.endpoint
     SCALE = args.rerank_scale
@@ -737,12 +748,15 @@ def main(argv):
             f"_{args.split}" + ("_nfoff" if args.names_fit == "off" else ""))
         # --label: the second reranker/model must not overwrite the first one's file (item 9: bge vs jina)
         label = f"_{args.label}" if args.label else ""
-        path = out_dir / f"provenance_{args.set}{suffix}{label}_{emb}.jsonl"
+        # --recall-margin: two margins must not overwrite each other (PR #17 recipe, 2026-10-24)
+        margin_sfx = "" if args.recall_margin is None else f"_m{args.recall_margin:g}"
+        path = out_dir / f"provenance_{args.set}{suffix}{label}{margin_sfx}_{emb}.jsonl"
         sha = _git_sha()
         for r in rows:
             r["git_sha"] = sha
             r["endpoint"] = args.endpoint or "mock"
             r["scale"] = SCALE  # which scale was set for the run
+            r["margin"] = _holographic_embeddings.RECALL_MARGIN  # which RECALL_MARGIN the run used
         with open(path, "w", encoding="utf-8") as fh:
             for r in rows:
                 fh.write(json.dumps(r, ensure_ascii=False) + "\n")

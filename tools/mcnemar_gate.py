@@ -138,7 +138,101 @@ def report(path: str) -> None:
         print(f"  UNPAIRED rows vs off (both branches refuse to pass): {bad}")
 
 
+def _confused(r: dict) -> bool:
+    """A confuser in the top five: household stamps `confused`, multi a `wrong5` list, contrast a
+    boolean `wrong` that is already computed against the top five."""
+    return bool(r.get("confused")) or bool(r.get("wrong5")) or bool(r.get("wrong"))
+
+
+def _noise(r: dict) -> bool:
+    """A row that showed anything it should not: chit with output, or a no-answer real row (a real row
+    without targets — the maintainer's PR #17 recipe counts them as noise, unlike the mode report above)."""
+    if (r.get("out_n") or 0) <= 0:
+        return False
+    if r.get("kind") == "chit":
+        return True
+    return r.get("kind") == "real" and not (r.get("targets") or [])
+
+
+def report_margins(paths: list[str]) -> None:
+    """Two-margin pairing for the PR #17 gate: rows stamped with `margin` (provenance_probe
+    --recall-margin) are paired per (set, lang, qid) and compared 0.6 against 1.0 on one head.
+
+    Reports hit@5 with exact McNemar on the pooled rows, the gained and lost top-five targets as
+    `set/lang qid -> target`, noise (chit AND no-answer rows with output) and confusion — the four
+    guards of the recipe: no target lost anywhere, noise not higher, confusion not higher, and the
+    rescue passing p < 0.05 pooled (2026-10-24)."""
+    rows = []
+    for path in paths:
+        rows.extend(json.loads(line) for line in open(path, encoding="utf-8") if line.strip())
+    margins = sorted({float(r["margin"]) for r in rows if r.get("margin") is not None})
+    if len(margins) != 2:
+        raise SystemExit(f"expected rows stamped with exactly two margins, got {margins} — "
+                         f"run provenance_probe --recall-margin twice and pass both files")
+    lo, hi = margins  # sorted ascending: lo is the proposal (0.6), hi the current default (1.0)
+    for field in ("git_sha", "emb", "mode", "scale"):
+        vals = sorted({str(r.get(field)) for r in rows})
+        if len(vals) > 1:
+            raise SystemExit(f"mixed runs — {field}={vals}: the pairing needs one clean head")
+    seen = {m: set() for m in margins}
+    for r in rows:
+        key = (r.get("set"), r.get("lang"), r.get("qid"))
+        if key in seen[float(r["margin"])]:
+            raise SystemExit(f"duplicate rows for margin {r['margin']} {key} — the report is impossible")
+        seen[float(r["margin"])].add(key)
+    # pairing is per (set, lang, qid): the margin is what differs, not part of the pair key
+    only = {m: sorted(seen[m] - (seen[margins[0]] & seen[margins[1]])) for m in margins}
+    if only[margins[0]] or only[margins[1]]:
+        raise SystemExit(f"unpaired rows: {only[margins[0]][:3]} vs {only[margins[1]][:3]}")
+    by = {m: {(r["set"], r["lang"], r["qid"]): r for r in rows if float(r["margin"]) == m}
+          for m in margins}
+    real_keys = [k for k, r in by[lo].items() if r.get("kind") == "real"]
+
+    hit = {m: {k: bool(by[m][k].get("hit5")) for k in real_keys} for m in margins}
+    # b/c of McNemar: b = rescued BY the proposal (miss at the default, hit at the proposal), c = lost
+    b = sum(1 for k in real_keys if not hit[hi][k] and hit[lo][k])
+    c = sum(1 for k in real_keys if hit[hi][k] and not hit[lo][k])
+    p = mcnemar(b, c)
+    n = len(real_keys)
+
+    def top5(m, k):
+        return set((by[m][k].get("keys") or [])[:5])
+
+    gained, lost = [], []
+    for k in real_keys:
+        targets = set(by[hi][k].get("targets") or set(by[lo][k].get("targets") or []))
+        for t in sorted(targets & (top5(lo, k) - top5(hi, k))):
+            gained.append(f"{k[0]}/{k[1]} {k[2]} -> {t}")
+        for t in sorted(targets & (top5(hi, k) - top5(lo, k))):
+            lost.append(f"{k[0]}/{k[1]} {k[2]} -> {t}")
+    noise = {m: sum(1 for r in by[m].values() if _noise(r)) for m in margins}
+    conf = {m: sum(1 for k in real_keys if _confused(by[m][k])) for m in margins}
+    hits = {m: sum(hit[m].values()) for m in margins}
+
+    print(f"\n== margins {hi} (default) vs {lo} (proposal) | rows {n} real | git_sha {rows[0].get('git_sha')}")
+    print(f"{'margin':>8} {'hit5':>9} {'noise':>6} {'confused':>9}")
+    for m in (lo, hi):
+        print(f"{m:>8} {hits[m]:4d}/{n} {noise[m]:6d} {conf[m]:9d}")
+    print(f"paired misses: b={b} (rescued at {lo}), c={c} (lost at {lo}), exact McNemar p={p:.4f}")
+    print(f"gained targets in the top five ({len(gained)}): " + ("; ".join(gained) or "-"))
+    print(f"lost targets in the top five ({len(lost)}): " + ("; ".join(lost) or "-"))
+    # the gate judges THE PROPOSAL (lo) against the current default (hi)
+    guards = {
+        "no target lost": not lost,
+        f"noise not higher ({noise[lo]} <= {noise[hi]})": noise[lo] <= noise[hi],
+        f"confusion not higher ({conf[lo]} <= {conf[hi]})": conf[lo] <= conf[hi],
+        f"pooled McNemar p < 0.05 ({p:.3f})": p < 0.05,
+    }
+    for name, ok in guards.items():
+        print(f"  {'PASS' if ok else 'FAIL'}  {name}")
+    verdict = all(guards.values())
+    print(f"  => gate {'PASSES' if verdict else 'DOES NOT PASS'} on these files")
+
+
 def main() -> None:
+    if sys.argv[1:2] == ["--margin-pair"]:
+        report_margins(sys.argv[2:])
+        return
     paths = sys.argv[1:] or sorted(
         glob.glob(os.path.join(os.path.dirname(__file__), "..",
                                "results", "provenance_household_dev*.jsonl")))

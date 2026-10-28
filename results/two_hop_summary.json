@@ -1,0 +1,1255 @@
+{
+ "result": {
+  "all": {
+   "main": {
+    "recall_two_hop": 0.2857142857142857,
+    "n_two_hop": 14,
+    "recall_one_hop": 1.0,
+    "n_one_hop": 8,
+    "recall_namesake": 0.75,
+    "n_namesake": 4,
+    "recall_changed": 0.5,
+    "n_changed": 4,
+    "recall_forgotten": 1.0,
+    "n_forgotten": 3,
+    "recall_cross_scope": 1.0,
+    "n_cross_scope": 3,
+    "recall_no_answer": 1.0,
+    "n_no_answer": 4,
+    "controls_n": 16,
+    "controls_injected": 59,
+    "controls_irrelevant": 44,
+    "controls_noise_share": 0.7457627118644068,
+    "forbidden_hits": 1,
+    "synthesized_lines": 0,
+    "hop_facts": 0,
+    "p95_ms_work": 331.25,
+    "median_ms_work": 111.535
+   },
+   "hop": {
+    "recall_two_hop": 0.7142857142857143,
+    "n_two_hop": 14,
+    "recall_one_hop": 1.0,
+    "n_one_hop": 8,
+    "recall_namesake": 1.0,
+    "n_namesake": 4,
+    "recall_changed": 1.0,
+    "n_changed": 4,
+    "recall_forgotten": 1.0,
+    "n_forgotten": 3,
+    "recall_cross_scope": 1.0,
+    "n_cross_scope": 3,
+    "recall_no_answer": 1.0,
+    "n_no_answer": 4,
+    "controls_n": 16,
+    "controls_injected": 63,
+    "controls_irrelevant": 47,
+    "controls_noise_share": 0.746031746031746,
+    "forbidden_hits": 2,
+    "synthesized_lines": 0,
+    "hop_facts": 20,
+    "p95_ms_work": 319.32,
+    "median_ms_work": 130.36
+   }
+  },
+  "held_out": {
+   "main": {
+    "recall_two_hop": 0.16666666666666666,
+    "n_two_hop": 6,
+    "recall_one_hop": 1.0,
+    "n_one_hop": 4,
+    "recall_namesake": 0.0,
+    "n_namesake": 1,
+    "recall_changed": 0.6666666666666666,
+    "n_changed": 3,
+    "recall_forgotten": 1.0,
+    "n_forgotten": 1,
+    "recall_no_answer": 1.0,
+    "n_no_answer": 1,
+    "controls_n": 6,
+    "controls_injected": 25,
+    "controls_irrelevant": 20,
+    "controls_noise_share": 0.8,
+    "forbidden_hits": 0,
+    "synthesized_lines": 0,
+    "hop_facts": 0,
+    "p95_ms_work": 231.7,
+    "median_ms_work": 97.35
+   },
+   "hop": {
+    "recall_two_hop": 0.5,
+    "n_two_hop": 6,
+    "recall_one_hop": 1.0,
+    "n_one_hop": 4,
+    "recall_namesake": 1.0,
+    "n_namesake": 1,
+    "recall_changed": 1.0,
+    "n_changed": 3,
+    "recall_forgotten": 1.0,
+    "n_forgotten": 1,
+    "recall_no_answer": 1.0,
+    "n_no_answer": 1,
+    "controls_n": 6,
+    "controls_injected": 28,
+    "controls_irrelevant": 22,
+    "controls_noise_share": 0.7857142857142857,
+    "forbidden_hits": 1,
+    "synthesized_lines": 0,
+    "hop_facts": 10,
+    "p95_ms_work": 248.09,
+    "median_ms_work": 102.51
+   }
+  },
+  "dev": {
+   "main": {
+    "recall_two_hop": 0.375,
+    "n_two_hop": 8,
+    "recall_one_hop": 1.0,
+    "n_one_hop": 4,
+    "recall_namesake": 1.0,
+    "n_namesake": 3,
+    "recall_changed": 0.0,
+    "n_changed": 1,
+    "recall_forgotten": 1.0,
+    "n_forgotten": 2,
+    "recall_cross_scope": 1.0,
+    "n_cross_scope": 3,
+    "recall_no_answer": 1.0,
+    "n_no_answer": 3,
+    "controls_n": 10,
+    "controls_injected": 34,
+    "controls_irrelevant": 24,
+    "controls_noise_share": 0.7058823529411765,
+    "forbidden_hits": 1,
+    "synthesized_lines": 0,
+    "hop_facts": 0,
+    "p95_ms_work": 350.8,
+    "median_ms_work": 122.4
+   },
+   "hop": {
+    "recall_two_hop": 0.875,
+    "n_two_hop": 8,
+    "recall_one_hop": 1.0,
+    "n_one_hop": 4,
+    "recall_namesake": 1.0,
+    "n_namesake": 3,
+    "recall_changed": 1.0,
+    "n_changed": 1,
+    "recall_forgotten": 1.0,
+    "n_forgotten": 2,
+    "recall_cross_scope": 1.0,
+    "n_cross_scope": 3,
+    "recall_no_answer": 1.0,
+    "n_no_answer": 3,
+    "controls_n": 10,
+    "controls_injected": 35,
+    "controls_irrelevant": 25,
+    "controls_noise_share": 0.7142857142857143,
+    "forbidden_hits": 1,
+    "synthesized_lines": 0,
+    "hop_facts": 10,
+    "p95_ms_work": 327.05,
+    "median_ms_work": 137.52
+   }
+  }
+ },
+ "checks": {
+  "H1_all": 42.85714285714286,
+  "H1_held_out": 33.333333333333336,
+  "G1_one_hop": 0.0,
+  "G2_noise_share_pp": 0.02690341673392549,
+  "G2_extra_irrelevant_per_control": 0.1875,
+  "G3_forbidden_hop_strict": 2,
+  "G3_forbidden_attributable": 1,
+  "G3_removed_in_hop": 0,
+  "G3_removed_in_main": 0,
+  "G3_synthesized": 0,
+  "G4_p95_delta_ms": -11.930000000000007
+ },
+ "passed": {
+  "H1": true,
+  "G1": true,
+  "G2": false,
+  "G3": false,
+  "G4": true
+ },
+ "adopt": false,
+ "default_on": false,
+ "attributable_forbidden": [
+  [
+   "q24",
+   "cole_lessons"
+  ]
+ ],
+ "extra_irrelevant_controls_held_out": 2,
+ "per_question": [
+  {
+   "qid": "q01",
+   "type": "two_hop",
+   "held_out": false,
+   "main": [
+    "alpha_on",
+    "#1309",
+    "#1681",
+    "#1074",
+    "#1721",
+    "kim_alpha"
+   ],
+   "hop": [
+    "alpha_on",
+    "#1309",
+    "#1681",
+    "#1074",
+    "#1721",
+    "kim_alpha",
+    "vega_resp",
+    "#1091"
+   ],
+   "hop_facts": [
+    "vega_resp",
+    "#1091"
+   ],
+   "gold": [
+    "alpha_on",
+    "vega_resp"
+   ],
+   "main_ok": false,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q02",
+   "type": "two_hop",
+   "held_out": true,
+   "main": [
+    "borey_on",
+    "vetrov_borey",
+    "#1375",
+    "#1326",
+    "#910"
+   ],
+   "hop": [
+    "borey_on",
+    "vetrov_borey",
+    "#1375",
+    "#1326",
+    "#910"
+   ],
+   "hop_facts": [],
+   "gold": [
+    "borey_on",
+    "kedr_resp"
+   ],
+   "main_ok": false,
+   "hop_ok": false,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q03",
+   "type": "one_hop",
+   "held_out": false,
+   "main": [
+    "vega_resp",
+    "alpha_on"
+   ],
+   "hop": [
+    "vega_resp",
+    "alpha_on"
+   ],
+   "hop_facts": [],
+   "gold": [
+    "vega_resp"
+   ],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q04",
+   "type": "namesake",
+   "held_out": true,
+   "main": [
+    "mia_swim",
+    "#298",
+    "#290"
+   ],
+   "hop": [
+    "mia_swim",
+    "#298",
+    "#290",
+    "anna_practice",
+    "#266"
+   ],
+   "hop_facts": [
+    "anna_practice",
+    "#266"
+   ],
+   "gold": [
+    "mia_swim",
+    "anna_practice"
+   ],
+   "main_ok": false,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q05",
+   "type": "changed",
+   "held_out": false,
+   "main": [
+    "nimbus_on",
+    "#624",
+    "#1793",
+    "#724",
+    "#1074"
+   ],
+   "hop": [
+    "nimbus_on",
+    "#624",
+    "#1793",
+    "#724",
+    "#1074",
+    "#64",
+    "elm_resp"
+   ],
+   "hop_facts": [
+    "#64",
+    "elm_resp"
+   ],
+   "gold": [
+    "nimbus_on",
+    "elm_resp"
+   ],
+   "main_ok": false,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q06",
+   "type": "two_hop",
+   "held_out": false,
+   "main": [
+    "billing_db",
+    "#149",
+    "#1800",
+    "#1444",
+    "#125"
+   ],
+   "hop": [
+    "billing_db",
+    "#149",
+    "#1800",
+    "#1444",
+    "#125",
+    "#106",
+    "ledger_backup"
+   ],
+   "hop_facts": [
+    "#106",
+    "ledger_backup"
+   ],
+   "gold": [
+    "billing_db",
+    "ledger_backup"
+   ],
+   "main_ok": false,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q07",
+   "type": "forgotten",
+   "held_out": true,
+   "main": [
+    "#647",
+    "#1309",
+    "#15",
+    "#624",
+    "#1074"
+   ],
+   "hop": [
+    "#647",
+    "#1309",
+    "#15",
+    "#624",
+    "#1074",
+    "#946"
+   ],
+   "hop_facts": [
+    "#946"
+   ],
+   "gold": [],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q08",
+   "type": "cross_scope",
+   "held_out": false,
+   "main": [
+    "orbit_on",
+    "#624",
+    "#647",
+    "#716",
+    "#1793"
+   ],
+   "hop": [
+    "orbit_on",
+    "#624",
+    "#647",
+    "#716",
+    "#1793",
+    "#64"
+   ],
+   "hop_facts": [
+    "#64"
+   ],
+   "gold": [
+    "orbit_on"
+   ],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q09",
+   "type": "no_answer",
+   "held_out": true,
+   "main": [
+    "alpha_on",
+    "kim_alpha"
+   ],
+   "hop": [
+    "alpha_on",
+    "kim_alpha",
+    "kim_pays"
+   ],
+   "hop_facts": [
+    "kim_pays"
+   ],
+   "gold": [],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q10",
+   "type": "two_hop",
+   "held_out": false,
+   "main": [
+    "orion_backup",
+    "#1028",
+    "#682",
+    "#860",
+    "#1562",
+    "kashtan_db"
+   ],
+   "hop": [
+    "orion_backup",
+    "#1028",
+    "#682",
+    "#860",
+    "#1562",
+    "kashtan_db"
+   ],
+   "hop_facts": [],
+   "gold": [
+    "kashtan_db",
+    "orion_backup"
+   ],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q11",
+   "type": "one_hop",
+   "held_out": false,
+   "main": [
+    "kedr_resp",
+    "borey_on"
+   ],
+   "hop": [
+    "kedr_resp",
+    "borey_on"
+   ],
+   "hop_facts": [],
+   "gold": [
+    "kedr_resp"
+   ],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q12",
+   "type": "two_hop",
+   "held_out": true,
+   "main": [
+    "harbor_lead"
+   ],
+   "hop": [
+    "harbor_lead",
+    "harbor_standup"
+   ],
+   "hop_facts": [
+    "harbor_standup"
+   ],
+   "gold": [
+    "harbor_lead",
+    "harbor_standup"
+   ],
+   "main_ok": false,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q13",
+   "type": "namesake",
+   "held_out": false,
+   "main": [
+    "timur_tutor",
+    "#306",
+    "olga_lessons",
+    "#270",
+    "timur_doctor"
+   ],
+   "hop": [
+    "timur_tutor",
+    "#306",
+    "olga_lessons",
+    "#270",
+    "timur_doctor"
+   ],
+   "hop_facts": [],
+   "gold": [
+    "timur_tutor",
+    "olga_lessons"
+   ],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q14",
+   "type": "changed",
+   "held_out": true,
+   "main": [
+    "#910",
+    "#328",
+    "#918",
+    "#477",
+    "#269"
+   ],
+   "hop": [
+    "#910",
+    "#328",
+    "#918",
+    "#477",
+    "#269",
+    "#41",
+    "#459"
+   ],
+   "hop_facts": [
+    "#41",
+    "#459"
+   ],
+   "gold": [],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q15",
+   "type": "two_hop",
+   "held_out": false,
+   "main": [
+    "priboy_lead",
+    "vetrov_pays",
+    "vetrov_borey",
+    "#1403",
+    "#382"
+   ],
+   "hop": [
+    "priboy_lead",
+    "vetrov_pays",
+    "vetrov_borey",
+    "#1403",
+    "#382",
+    "priboy_meeting"
+   ],
+   "hop_facts": [
+    "priboy_meeting"
+   ],
+   "gold": [
+    "priboy_lead",
+    "priboy_meeting"
+   ],
+   "main_ok": false,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q16",
+   "type": "forgotten",
+   "held_out": false,
+   "main": [
+    "zhuk_days",
+    "#322",
+    "#219"
+   ],
+   "hop": [
+    "zhuk_days",
+    "#322",
+    "#219"
+   ],
+   "hop_facts": [],
+   "gold": [],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [
+    "zhuk_days"
+   ],
+   "forbidden_hop": [
+    "zhuk_days"
+   ]
+  },
+  {
+   "qid": "q17",
+   "type": "one_hop",
+   "held_out": true,
+   "main": [
+    "mia_dentist",
+    "hale_office",
+    "anna_neighbour",
+    "#298",
+    "#290"
+   ],
+   "hop": [
+    "mia_dentist",
+    "hale_office",
+    "anna_neighbour",
+    "#298",
+    "#290"
+   ],
+   "hop_facts": [],
+   "gold": [
+    "mia_dentist"
+   ],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q18",
+   "type": "cross_scope",
+   "held_out": false,
+   "main": [
+    "orion_backup",
+    "#1562",
+    "#998",
+    "#1028",
+    "#860",
+    "klever_db"
+   ],
+   "hop": [
+    "orion_backup",
+    "#1562",
+    "#998",
+    "#1028",
+    "#860",
+    "klever_db"
+   ],
+   "hop_facts": [],
+   "gold": [
+    "klever_db"
+   ],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q19",
+   "type": "two_hop",
+   "held_out": true,
+   "main": [
+    "lynx_courier",
+    "#866",
+    "#1345",
+    "#1750",
+    "#1351"
+   ],
+   "hop": [
+    "lynx_courier",
+    "#866",
+    "#1345",
+    "#1750",
+    "#1351"
+   ],
+   "hop_facts": [],
+   "gold": [
+    "lynx_courier",
+    "courier_contract"
+   ],
+   "main_ok": false,
+   "hop_ok": false,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q20",
+   "type": "no_answer",
+   "held_out": false,
+   "main": [
+    "borey_on",
+    "vetrov_borey"
+   ],
+   "hop": [
+    "borey_on",
+    "vetrov_borey",
+    "vetrov_pays"
+   ],
+   "hop_facts": [
+    "vetrov_pays"
+   ],
+   "gold": [],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q21",
+   "type": "two_hop",
+   "held_out": false,
+   "main": [
+    "soyka_golub",
+    "#932",
+    "#276",
+    "#641",
+    "#470"
+   ],
+   "hop": [
+    "soyka_golub",
+    "#932",
+    "#276",
+    "#641",
+    "#470"
+   ],
+   "hop_facts": [],
+   "gold": [
+    "soyka_golub",
+    "golub_contract"
+   ],
+   "main_ok": false,
+   "hop_ok": false,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q22",
+   "type": "one_hop",
+   "held_out": true,
+   "main": [
+    "priboy_meeting",
+    "priboy_lead",
+    "#925",
+    "#169",
+    "#1247"
+   ],
+   "hop": [
+    "priboy_meeting",
+    "priboy_lead",
+    "#925",
+    "#169",
+    "#1247"
+   ],
+   "hop_facts": [],
+   "gold": [
+    "priboy_meeting"
+   ],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q23",
+   "type": "namesake",
+   "held_out": false,
+   "main": [
+    "quartz_designer",
+    "sam_mockups"
+   ],
+   "hop": [
+    "quartz_designer",
+    "sam_mockups"
+   ],
+   "hop_facts": [],
+   "gold": [
+    "quartz_designer",
+    "sam_mockups"
+   ],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q24",
+   "type": "changed",
+   "held_out": true,
+   "main": [
+    "leo_guitar",
+    "#30",
+    "#170",
+    "#107",
+    "#289",
+    "#264"
+   ],
+   "hop": [
+    "leo_guitar",
+    "#30",
+    "#170",
+    "#107",
+    "#289",
+    "#264",
+    "cole_lessons",
+    "reid_lessons"
+   ],
+   "hop_facts": [
+    "cole_lessons",
+    "reid_lessons"
+   ],
+   "gold": [
+    "leo_guitar",
+    "reid_lessons"
+   ],
+   "main_ok": false,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": [
+    "cole_lessons"
+   ]
+  },
+  {
+   "qid": "q25",
+   "type": "two_hop",
+   "held_out": false,
+   "main": [
+    "mia_piano",
+    "voss_lessons",
+    "#298",
+    "#290"
+   ],
+   "hop": [
+    "mia_piano",
+    "voss_lessons",
+    "#298",
+    "#290"
+   ],
+   "hop_facts": [],
+   "gold": [
+    "mia_piano",
+    "voss_lessons"
+   ],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q26",
+   "type": "forgotten",
+   "held_out": false,
+   "main": [
+    "zoe_party",
+    "#298",
+    "#290"
+   ],
+   "hop": [
+    "zoe_party",
+    "#298",
+    "#290"
+   ],
+   "hop_facts": [],
+   "gold": [],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q27",
+   "type": "one_hop",
+   "held_out": true,
+   "main": [
+    "leo_allergy",
+    "leo_guitar",
+    "#289"
+   ],
+   "hop": [
+    "leo_allergy",
+    "leo_guitar",
+    "#289"
+   ],
+   "hop_facts": [],
+   "gold": [
+    "leo_allergy"
+   ],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q28",
+   "type": "cross_scope",
+   "held_out": false,
+   "main": [
+    "comet_relay",
+    "#556",
+    "#1351",
+    "#1345",
+    "#1750"
+   ],
+   "hop": [
+    "comet_relay",
+    "#556",
+    "#1351",
+    "#1345",
+    "#1750"
+   ],
+   "hop_facts": [],
+   "gold": [
+    "comet_relay"
+   ],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q29",
+   "type": "two_hop",
+   "held_out": true,
+   "main": [
+    "leo_doctor",
+    "#1",
+    "#207",
+    "#162",
+    "#118",
+    "leo_guitar",
+    "#289"
+   ],
+   "hop": [
+    "leo_doctor",
+    "#1",
+    "#207",
+    "#162",
+    "#118",
+    "leo_guitar",
+    "#289"
+   ],
+   "hop_facts": [],
+   "gold": [
+    "leo_doctor",
+    "noor_days"
+   ],
+   "main_ok": false,
+   "hop_ok": false,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q30",
+   "type": "no_answer",
+   "held_out": false,
+   "main": [
+    "leo_doctor",
+    "pepper_groomer",
+    "leo_guitar",
+    "#289"
+   ],
+   "hop": [
+    "leo_doctor",
+    "pepper_groomer",
+    "leo_guitar",
+    "#289"
+   ],
+   "hop_facts": [],
+   "gold": [],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q31",
+   "type": "two_hop",
+   "held_out": false,
+   "main": [
+    "pepper_groomer"
+   ],
+   "hop": [
+    "pepper_groomer",
+    "tidy_closed"
+   ],
+   "hop_facts": [
+    "tidy_closed"
+   ],
+   "gold": [
+    "pepper_groomer",
+    "tidy_closed"
+   ],
+   "main_ok": false,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q32",
+   "type": "one_hop",
+   "held_out": true,
+   "main": [
+    "timur_doctor",
+    "timur_tutor",
+    "#111",
+    "#216",
+    "#195",
+    "#306",
+    "#270"
+   ],
+   "hop": [
+    "timur_doctor",
+    "timur_tutor",
+    "#111",
+    "#216",
+    "#195",
+    "#306",
+    "#270"
+   ],
+   "hop_facts": [],
+   "gold": [
+    "timur_doctor"
+   ],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q33",
+   "type": "namesake",
+   "held_out": false,
+   "main": [
+    "granit_analyst",
+    "denis_report"
+   ],
+   "hop": [
+    "granit_analyst",
+    "denis_report"
+   ],
+   "hop_facts": [],
+   "gold": [
+    "granit_analyst",
+    "denis_report"
+   ],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q34",
+   "type": "changed",
+   "held_out": true,
+   "main": [
+    "#322",
+    "#219"
+   ],
+   "hop": [
+    "#322",
+    "#219"
+   ],
+   "hop_facts": [],
+   "gold": [],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q35",
+   "type": "two_hop",
+   "held_out": false,
+   "main": [
+    "orlov_pool",
+    "varya_coach",
+    "#322",
+    "#219"
+   ],
+   "hop": [
+    "orlov_pool",
+    "varya_coach",
+    "#322",
+    "#219"
+   ],
+   "hop_facts": [],
+   "gold": [
+    "varya_coach",
+    "orlov_pool"
+   ],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q36",
+   "type": "one_hop",
+   "held_out": false,
+   "main": [
+    "timur_school",
+    "#200",
+    "timur_doctor",
+    "timur_tutor",
+    "#306",
+    "#270",
+    "#216"
+   ],
+   "hop": [
+    "timur_school",
+    "#200",
+    "timur_doctor",
+    "timur_tutor",
+    "#306",
+    "#270",
+    "#216"
+   ],
+   "hop_facts": [],
+   "gold": [
+    "timur_school"
+   ],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q37",
+   "type": "two_hop",
+   "held_out": true,
+   "main": [
+    "timur_doctor",
+    "#306",
+    "#270"
+   ],
+   "hop": [
+    "timur_doctor",
+    "#306",
+    "#270",
+    "belova_days"
+   ],
+   "hop_facts": [
+    "belova_days"
+   ],
+   "gold": [
+    "timur_doctor",
+    "belova_days"
+   ],
+   "main_ok": false,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q38",
+   "type": "no_answer",
+   "held_out": false,
+   "main": [
+    "varya_coach",
+    "#322",
+    "#219"
+   ],
+   "hop": [
+    "varya_coach",
+    "#322",
+    "#219"
+   ],
+   "hop_facts": [],
+   "gold": [],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q39",
+   "type": "two_hop",
+   "held_out": true,
+   "main": [
+    "pushok_food",
+    "murlyka_shop"
+   ],
+   "hop": [
+    "pushok_food",
+    "murlyka_shop"
+   ],
+   "hop_facts": [],
+   "gold": [
+    "pushok_food",
+    "murlyka_shop"
+   ],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  },
+  {
+   "qid": "q40",
+   "type": "one_hop",
+   "held_out": false,
+   "main": [
+    "harbor_lead",
+    "#452",
+    "#83",
+    "#464",
+    "#502"
+   ],
+   "hop": [
+    "harbor_lead",
+    "#452",
+    "#83",
+    "#464",
+    "#502"
+   ],
+   "hop_facts": [],
+   "gold": [
+    "harbor_lead"
+   ],
+   "main_ok": true,
+   "hop_ok": true,
+   "forbidden_main": [],
+   "forbidden_hop": []
+  }
+ ]
+}

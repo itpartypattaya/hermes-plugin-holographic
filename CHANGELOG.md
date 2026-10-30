@@ -11,6 +11,22 @@
   the memory-map export are untouched, and ASCII-only results stay byte-identical. Tests:
   `tests/test_holographic_ensure_ascii.py`.
 
+## 0.25.2 — 2026-10-30
+
+### Fixed
+- **A Russian name whose stem changes between its forms meets its other forms, and two names that only share a short
+  stem no longer meet.** For a fact offered on meaning alone, `names_fit` now reads a capitalized word of the fact as
+  the first forms its case ending allows (`text.name_lemmas`: «Льва» -> «Лев», «Никите» -> «Никита», «Яной» -> «Яна»,
+  «Яном» -> «Ян») instead of the short stem 0.25.1 compared. «Лев» / «Льва» / «Львом», «Павел» / «Павла» and «Никита» /
+  «Никите» met on no key before; 0.25.1's short stem joined «Аня» and «Анна» (not so on 0.25.0), «Ян» and «Яны» /
+  «Яной». Forms that are one word for two names still meet both: «Яна», «Яну», «Яне» are forms of «Ян» and of «Яна».
+  Unchanged: a name that shares a longer stem with another («Евгений» / «Евгения», «Александр» / «Александра») meets it
+  through the words' own keys, as before 0.25.1. A sweep of 34 names in all their forms: no case form missed (36
+  before), no pair of different names joined but those. Codex review: «-ей» after ж, ш, ч, щ, ц is also a name in
+  «-а» («Яшей» of «Яша»). Codex review on GitHub: a dropped vowel is restored only for the names that drop
+  it («Лев», «Павел», «Любовь»), not for every final consonant pair, which made «Марек» of «Марка» and «Петер» of
+  «Петра». Tests: `tests/test_holographic_names_fit_cases.py`.
+
 ## 0.25.1 — 2026-10-30
 
 ### Fixed

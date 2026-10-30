@@ -17,7 +17,7 @@ from . import text as _text
 from .embeddings import Meaning, VectorIndex
 from .history import CLOSED, error_kind, version_state
 from .text import (CJK_NEGATORS, CLAIM_WORDS, CONTRASTIVE, NEGATORS, UNSEGMENTED, analyze, content_chars,
-                   content_keys, content_stems, gram_coverage, is_chinese, is_greeting, is_sea, name_forms,
+                   content_keys, content_stems, gram_coverage, is_chinese, is_greeting, is_sea, name_forms, name_lemmas,
                    query_grams, query_terms, question_parts, run_grams, soft_jaccard, soft_overlap, words,
                    zh_char_text)
 
@@ -471,12 +471,14 @@ class FactRetriever:
             if not terms or any(t.found_in(analysis) for t in terms):
                 continue
             # «Ева» and «Еву» share only «ев», a stem under _MIN_STEM that plain text keeps out of a word's keys, so the
-            # fact read as being about someone else (2026-10-30). A name also meets a word of the fact written with a
-            # capital that shares a stem with it read as a name (text.name_forms), and never a lower-case word: «Мая»
-            # is no «в мае». «Евгений» and «Ольга» have stems of their own and stay apart.
+            # fact read as being about someone else (2026-10-30); «Лев» and «Льва» share no stem at all. A name also
+            # meets a word of the fact written with a capital that may be a case form of the same first form
+            # (text.name_lemmas), and never a lower-case word: «Мая» is no «в мае». A shared short stem alone was
+            # not enough: it joined «Аня» and «Анна», «Ян» and «Яной» (0.25.1).
             if capitals is None:
-                capitals = _name_forms(analyze(_capitalized(fact.get("content", ""), inner=False)))
-            if frozenset().union(*(name_forms(t.word) for t in terms if not t.identifier)).isdisjoint(capitals):
+                capitals = frozenset().union(*(name_lemmas(w.text) for w in analyze(
+                    _capitalized(fact.get("content", ""), inner=False)).words if not w.stop and not w.identifier))
+            if frozenset().union(*(name_lemmas(t.word) for t in terms if not t.identifier)).isdisjoint(capitals):
                 return False
         known = self.store.mentioned_entity_ids(query)
         if known:

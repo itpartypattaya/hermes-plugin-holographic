@@ -6,8 +6,9 @@ The holographic-memory bridge, 2026-10-30, search by meaning on (text-embedding-
 message names, in any word form; «Ева» and «Еву» share only the stem «ев», which plain Russian text drops as a key
 (_MIN_STEM), so the fact was read as being about someone else. The same for «Ира» / «Иру», «Оля» / «Олю», «Яна» / «Яну»,
 «Аня» / «Ане»; «Ксюша» / «Ксюшу» share «ксюш» and always met. A name now also meets a word of the fact written with a
-capital that shares its stem as a name (text.name_forms); «Евгений», «Ольга» and the month «мае» stay apart. The facts
-are synthetic, modelled on the case; none of them is anyone's."""
+capital that may be a case form of the same first form (text.name_lemmas; 0.25.1 compared short stems, which
+joined «Аня» and «Анна»); «Евгений», «Ольга» and the month «мае» stay apart. The facts are synthetic, modelled on the
+case; none of them is anyone's."""
 from __future__ import annotations
 
 import json
@@ -110,8 +111,38 @@ def test_a_case_form_of_a_short_name_fits(provider, query, text, name, declared)
     assert provider._retriever.names_fit(query, fact)
 
 
-# -- different names stay apart (these held before the change too) ----------------------------------------------------------
-# Not listed: «Ян» and «Яна», whose forms are one word in Russian («Яну» is either), so no word form tells them apart.
+# -- a name whose stem changes between its forms ------------------------------------------------------------------------
+# «Лев» / «Льва», «Павел» / «Павла» drop a vowel; Snowball cuts «Никите» to another stem than «Никита». None of them met
+# on 0.25.1, by any key.
+
+@pytest.mark.parametrize("query, text", [
+    ("Что подарить Льву на день рождения?", "Лев собирает модели самолётов."),
+    ("Где сейчас Лев?", "Льва записали в секцию плавания."),
+    ("Во сколько забрать Льва?", "Со Львом договорились на шесть вечера."),
+    ("Когда приедет Павел?", "Павла ждут в пятницу вечером."),
+    ("Что передать Павлу?", "Павел просил купить батарейки."),
+    ("Где Никита?", "Никите купили новый рюкзак."),
+    ("Что купили Никите?", "Никиту записали к стоматологу."),
+    ("Что подарить Любови?", "Любовь любит пионы."),
+    ("Где сейчас Любовь?", "Любви купили билеты в театр."),
+    # an ending read two ways (these held on 0.25.1 too): «Илью» is not «-ью» of «Ил…», «Зою» not «-ою» of «З…»
+    ("Где сейчас Илья?", "Илью забрали из школы пораньше."),
+    ("Что подарить Зое?", "Зою пригласили на день рождения."),
+    # «-ей» after ж, ш, ч, щ, ц is a name in «-а» («Яшей» of «Яша»), not only one in «-я» (Codex review)
+    ("Где сейчас Яша?", "С Яшей договорились на субботу."),
+    ("Когда забирать Яшу?", "С Яшей договорились на субботу."),
+    ("Где сейчас Яша?", "Яшею все гордятся."),
+    ("Где сейчас Гоша?", "С Гошей договорились на субботу."),
+    ("Где сейчас Даша?", "С Дашей договорились на субботу."),
+])
+def test_a_name_whose_stem_changes_fits(provider, query, text):
+    assert provider._retriever.names_fit(query, _fact(provider, text))
+
+
+# -- different names stay apart -------------------------------------------------------------------------------------------
+# «Ян» and «Яна» share «Яна», «Яну» and «Яне» (each is a form of both), and those still fit either; a form only one of
+# them has («Ян», «Яном» / «Яны», «Яной») tells them apart. «Аня» and «Анна» met on 0.25.1 (a short stem of the name
+# read in «Анна»), not before.
 
 @pytest.mark.parametrize("query, text", [
     ("Где Ева будет учиться?", "Евгений учится в университете в Бангкоке."),
@@ -120,6 +151,19 @@ def test_a_case_form_of_a_short_name_fits(provider, query, text, name, declared)
     ("Когда у Иры отпуск?", "Ирина берёт отпуск в августе."),
     ("Когда у Мая день рождения?", "День рождения в мае, подарок купить заранее."),  # the name, the month
     ("Когда Ане к врачу?", "Антону назначили приём у врача на четверг."),
+    ("Где сейчас Ян?", "У Яны балет по вторникам."),
+    ("Где сейчас Ян?", "С Яной договорились на субботу."),
+    ("Когда у Яны балет?", "Ян ходит в бассейн по средам."),
+    ("Когда у Яны балет?", "С Яном договорились на субботу."),
+    ("Что подарить Ане?", "Анна работает в банке."),
+    ("Когда Аню вести к врачу?", "Анне назначили приём на четверг."),
+    ("Где Анна?", "Аня ушла гулять."),
+    ("Где сейчас Лев?", "Лена ушла гулять."),
+    ("Где сейчас Олег?", "Ольгу забрали из школы."),
+    # a vowel drops only in names that drop it: «Марка» is of «Марк», not «Марек» (Codex review on GitHub)
+    ("Где сейчас Марек?", "Марка записали в секцию плавания."),
+    ("Где сейчас Марек?", "С Марком договорились на субботу."),
+    ("Где сейчас Петер?", "Петра записали в секцию плавания."),
 ])
 def test_another_name_does_not_fit(provider, query, text):
     assert not provider._retriever.names_fit(query, _fact(provider, text))

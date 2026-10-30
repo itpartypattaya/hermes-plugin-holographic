@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Fixed
+- **Tool results keep the fact's own words: raw Unicode instead of `\uXXXX` escapes.** All 33 `json.dumps` calls
+  in the tool handlers defaulted to `ensure_ascii=True`, so a Cyrillic fact reached the model in every result
+  transliterated as escape sequences («Ловушка» as `\u041b\u043e\u0432\u0443\u0448\u043a\u0430` in enrich/history
+  outputs; found while discussing recall forms in #59). The handlers now serialize through `_dumps`
+  (`ensure_ascii=False`); network payloads (`embeddings`, `rerank`), stored digests (`experience`, `history`) and
+  the memory-map export are untouched, and ASCII-only results stay byte-identical. Tests:
+  `tests/test_holographic_ensure_ascii.py`.
+
 ## 0.25.1 — 2026-10-30
 
 ### Fixed

@@ -247,8 +247,14 @@ def _load_plugin_config() -> dict:
     return section or {}
 
 
+def _dumps(value) -> str:
+    """Tool output as JSON with raw Unicode: the model reads the fact's own words, not \\uXXXX escapes (the default
+    ensure_ascii=True transliterates every non-ASCII character of a stored fact in every result)."""
+    return json.dumps(value, ensure_ascii=False)
+
+
 def _results(items: list, key: str = "results") -> str:
-    return json.dumps({key: items, "count": len(items)})
+    return _dumps({key: items, "count": len(items)})
 
 
 _MAX_LIMIT = 100
@@ -374,7 +380,7 @@ def _with_splits(answer: str, splits: dict) -> str:
                + (f". Facts {info['facts_to_check']} are linked to '{info['from']}' and name neither: check whom they "
                   "are about" if info["facts_to_check"] else ""))
         for name, info in splits.items()}
-    return json.dumps(result)
+    return _dumps(result)
 
 
 def _with_unlinked(answer: str, entities) -> str:
@@ -390,7 +396,7 @@ def _with_unlinked(answer: str, entities) -> str:
     if not isinstance(result, dict) or "error" in result:
         return answer
     result["entities_not_linked"] = unusable
-    return json.dumps(result)
+    return _dumps(result)
 
 
 def _limit(args: dict) -> int:
@@ -1457,7 +1463,7 @@ class HolographicMemoryProvider(MemoryProvider):
                 return tool_error(f"Missing required argument: {exc}")
             return self._failed(tool_name, args, exc)
         except DuplicateContentError as exc:
-            return json.dumps({"updated": False, "duplicate_of": exc.fact_id,
+            return _dumps({"updated": False, "duplicate_of": exc.fact_id,
                                "reason": "another fact already says exactly this; remove one of them instead"})
         except ChangedSince as exc:  # a conditional merge: what the caller saw is not what is there (0.19.0)
             return tool_error("Not merged: a fact changed since the versions in 'expect' were read; read history "
@@ -1657,12 +1663,12 @@ class HolographicMemoryProvider(MemoryProvider):
             result = json.loads(changed)
             if "error" not in result:
                 result["superseded"] = old_id
-            return json.dumps(result)
+            return _dumps(result)
         content = a["content"].strip()
         if not self._writable:  # a cron job re-reading old messages must not bring back what the user had forgotten
             gone = self._store.forgotten_match(content)
             if gone is not None:
-                return json.dumps({"fact_id": gone["fact_id"], "status": "forgotten", "stored": False,
+                return _dumps({"fact_id": gone["fact_id"], "status": "forgotten", "stored": False,
                                    "hint": "The user asked to forget this; a scheduled job does not store it again."})
         if not self._store.read("SELECT 1 FROM facts WHERE content = ?", (content,)):
             merged = self._store.merged_match(content)
@@ -1671,7 +1677,7 @@ class HolographicMemoryProvider(MemoryProvider):
             past = self._store.past_version(content)
             if past is not None:  # X -> Y -> X: the same fact again, not a new one
                 until = past["valid_to"] if past["valid_to_exact"] else f"some point before {past['valid_to']}"
-                return json.dumps({"fact_id": past["fact_id"], "status": "past_version", "stored": False,
+                return _dumps({"fact_id": past["fact_id"], "status": "past_version", "stored": False,
                                    "hint": f"Fact #{past['fact_id']} said exactly this until {until}"
                                            + ("" if past["is_current"] else " and then ended")
                                            + f". If it holds again, change {{fact_id: {past['fact_id']}, content}} "
@@ -1706,7 +1712,7 @@ class HolographicMemoryProvider(MemoryProvider):
                 result["forgotten_before"] = {"fact_id": gone["fact_id"], "forgotten_at": gone["forgotten_at"]}
                 result["hint"] = (f"The user asked to forget this (fact #{gone['fact_id']}, {gone['forgotten_at'][:10]}). "
                                   f"Keep it only if they asked to remember it again; otherwise forget {{fact_id: {fact_id}}}.")
-        return json.dumps(result)
+        return _dumps(result)
 
     def _confirm_said_again(self, result: dict, fact_id: int, origin) -> None:
         """An add of a text a current fact already holds, said or confirmed by the person in a later session than
@@ -1728,7 +1734,7 @@ class HolographicMemoryProvider(MemoryProvider):
                                 "holds it now (its text may be worded differently); nothing was stored."}
         result = self._with_keyword_report(result, a)
         self._confirm_said_again(result, keep, a.get("origin") or None)
-        return json.dumps(result)
+        return _dumps(result)
 
     @staticmethod
     def _entity_call(a: dict, needs: tuple, call) -> str:
@@ -1736,7 +1742,7 @@ class HolographicMemoryProvider(MemoryProvider):
         for arg in needs:
             a[arg]  # a missing argument is reported as one (handle_tool_call)
         try:
-            return json.dumps(call())
+            return _dumps(call())
         except NotFound as exc:
             return tool_error(f"{exc.args[0] if exc.args else exc}; fact_store entities lists the names. Nothing was "
                               "changed.")
@@ -1770,7 +1776,7 @@ class HolographicMemoryProvider(MemoryProvider):
                               "delete_entity {entities: [...]} removes them (the facts stay); a misspelt one: rename. A "
                               "real one becomes established when a second fact uses it as a name or when you pass it "
                               "in entities.")
-        return json.dumps(result)
+        return _dumps(result)
 
     def _review(self, a: dict) -> str:
         """Clean-up candidates: facts (low trust, never recalled, unconfirmed inferences, near-duplicates) and, apart
@@ -1788,7 +1794,7 @@ class HolographicMemoryProvider(MemoryProvider):
                          "person: alias {entity, content: <alias>} confirms it; two: split {entity: <alias>}.")
         if hints:
             result["hint"] = " ".join(hints)
-        return json.dumps(result)
+        return _dumps(result)
 
     def _fact_call(self, a: dict, call, missing: str = ""):
         """Run a history action on a{fact_id}; a fact that does not exist is an answer, not a 'missing argument'."""
@@ -1811,7 +1817,7 @@ class HolographicMemoryProvider(MemoryProvider):
                           _keywords(a.get("keywords")))
         if stored is None and a.get("tags") is None and a.get("keywords") is None:
             tags = None  # an ended fact resumes with its last version's tags
-        return self._fact_call(a, lambda fact_id: json.dumps(self._with_keyword_report(self._store.change_fact(
+        return self._fact_call(a, lambda fact_id: _dumps(self._with_keyword_report(self._store.change_fact(
             fact_id, a["content"], valid_from=a.get("valid_from"), category=a.get("category"), tags=tags,
             entities=self._entities(a), source=self._source("tool", origin=a.get("origin") or None)), a)), missing)
 
@@ -1833,7 +1839,7 @@ class HolographicMemoryProvider(MemoryProvider):
         problem = _fact_problem(a["content"]) if a.get("content") is not None else ""
         if problem:
             return tool_error(f"Not corrected: {problem}.")
-        return self._fact_call(a, lambda fact_id: json.dumps(self._store.correct_fact(
+        return self._fact_call(a, lambda fact_id: _dumps(self._store.correct_fact(
             fact_id, a.get("content"), valid_from=a.get("valid_from"), entities=self._entities(a),
             source=self._source("tool", origin=a.get("origin") or None))))
 
@@ -1850,7 +1856,7 @@ class HolographicMemoryProvider(MemoryProvider):
             if result.get("merged_into") is not None:
                 result["hint"] += (f" It had been merged into #{result['merged_into']}, which still says the same; "
                                    f"forget {{fact_id: {result['merged_into']}}} if that is what the user asked.")
-            return json.dumps(result)
+            return _dumps(result)
         return self._fact_call(a, run)
 
     def _merge(self, a: dict) -> str:
@@ -1909,14 +1915,14 @@ class HolographicMemoryProvider(MemoryProvider):
             result["hint"] = (f"The merged facts are kept under #{keep}: history {{fact_id: {keep}}} shows their "
                               "versions and sources (merged_from), and their text is not added as a new fact again. "
                               "To delete a fact for good, forget it.")
-        return json.dumps(result)
+        return _dumps(result)
 
     def _remove(self, a: dict) -> str:
         """0.7.0 prompts: remove is forget."""
         fact_id = int(a["fact_id"])
         removed = self._store.remove_fact(fact_id)
         self._drop_cached(fact_id)
-        return json.dumps({"removed": removed})
+        return _dumps({"removed": removed})
 
     def _drop_cached(self, fact_id: int) -> None:
         """Forget what this process still holds of a fact: the analysed text and the recall de-duplication."""
@@ -1938,7 +1944,7 @@ class HolographicMemoryProvider(MemoryProvider):
                 found["note"] = (f"Nothing is known to have held on {day}"
                                  + ("; see 'undetermined' for what may have." if found["undetermined"] else "."))
             found["count"] = len(found["results"])
-            return json.dumps(found)
+            return _dumps(found)
         limit, meaning = _limit(a), self._meaning_of(a["query"], before_turn=False)
         results = self._retriever.search(a["query"], category=a.get("category"), min_trust=self._trust_floor(a),
                                          limit=limit, meaning=meaning)
@@ -2006,7 +2012,7 @@ class HolographicMemoryProvider(MemoryProvider):
         attempt = self._record_experience("search", results)
         if attempt:
             response["memory_attempt"] = attempt
-        return json.dumps(response)
+        return _dumps(response)
 
     def _experience_session(self):
         return hashlib.sha256(self._session_id.encode("utf-8")).hexdigest()
@@ -2042,11 +2048,11 @@ class HolographicMemoryProvider(MemoryProvider):
         session = self._experience_session()
         action = a.get("action")
         if action == "recent":
-            return json.dumps({"attempts": self._store.recent_attempts(session), "error_kind": self._experience_error})
+            return _dumps({"attempts": self._store.recent_attempts(session), "error_kind": self._experience_error})
         if action == "explain":
-            return json.dumps(self._store.experience_report(a["attempt_id"], session))
+            return _dumps(self._store.experience_report(a["attempt_id"], session))
         if action == "outcome":
-            return json.dumps(self._store.record_outcome(a["attempt_id"], a["event_id"], a["outcome"], a["reason"],
+            return _dumps(self._store.record_outcome(a["attempt_id"], a["event_id"], a["outcome"], a["reason"],
                 correction=a.get("correction", ""), supersedes=a.get("supersedes"),
                 actor=a.get("actor", "agent"), session_key=session, task=a.get("task", ""),
                 correction_refs=a.get("correction_refs")))
@@ -2057,7 +2063,7 @@ class HolographicMemoryProvider(MemoryProvider):
 
     def _list(self, a: dict) -> str:
         if a.get("as_of"):
-            return json.dumps(self._store.versions_on(self._as_of(a), category=a.get("category"),
+            return _dumps(self._store.versions_on(self._as_of(a), category=a.get("category"),
                                                       min_trust=float(a.get("min_trust", 0.0)), limit=_limit(a)))
         facts = self._store.list_facts(category=a.get("category"), min_trust=float(a.get("min_trust", 0.0)), limit=_limit(a))
         sources = self._store.current_sources([f["fact_id"] for f in facts])
@@ -2087,13 +2093,13 @@ class HolographicMemoryProvider(MemoryProvider):
             int(a["fact_id"]), content=a.get("content"), trust_delta=float(a["trust_delta"]) if "trust_delta" in a else None,
             tags=tags, category=a.get("category"), entities=self._entities(a), touch=not only_keywords,
             source=self._source("tool", origin=a.get("origin") or None))
-        return json.dumps({"updated": updated, **(_keyword_report(a.get("keywords")) if updated else {})})
+        return _dumps({"updated": updated, **(_keyword_report(a.get("keywords")) if updated else {})})
 
     def _enrich(self, a: dict) -> str:
         """Facts without keywords, the most recalled first: what the agent (or a nightly job) should give keywords."""
         rows = self._store.facts_without_keywords(_KW_MARK, _limit(a))
         facts = [{"fact_id": r["fact_id"], "content": r["content"]} for r in rows]
-        return json.dumps({"facts": facts, "count": len(facts),
+        return _dumps({"facts": facts, "count": len(facts),
                            "hint": "Give each 3-8 keywords with update {fact_id, keywords}: synonyms, other roots and "
                                    "translations someone might ask with."} if facts else {"facts": [], "count": 0})
 
@@ -2101,9 +2107,9 @@ class HolographicMemoryProvider(MemoryProvider):
         if a["action"] not in ("helpful", "unhelpful", "confirmed"):
             return tool_error("action must be 'helpful', 'unhelpful' or 'confirmed'")
         if a["action"] == "confirmed":  # the person said again, or agreed, that it is so (0.15.0)
-            return self._fact_call(a, lambda fact_id: json.dumps(
+            return self._fact_call(a, lambda fact_id: _dumps(
                 self._store.record_confirmation(fact_id, self._source("feedback"))))
-        return self._fact_call(a, lambda fact_id: json.dumps(
+        return self._fact_call(a, lambda fact_id: _dumps(
             self._store.record_feedback(fact_id, helpful=a["action"] == "helpful")))
 
     def _stats(self, a: dict) -> str:
@@ -2112,7 +2118,7 @@ class HolographicMemoryProvider(MemoryProvider):
         read = self._store.read
         by_category = {r[0] or "general": r[1] for r in read("SELECT category, COUNT(*) FROM facts GROUP BY category")}
         names = self._store.entity_counts()
-        return json.dumps({
+        return _dumps({
             "facts": self._store.count_facts(), "entities": read("SELECT COUNT(*) FROM entities")[0][0],
             "provisional_entities": names["provisional"], "text_aliases": names["text_aliases"],
             "entity_index": self._store.entity_index_state(),
@@ -2176,7 +2182,7 @@ class HolographicMemoryProvider(MemoryProvider):
             result["markdown"] = "\n".join(lines)
             result["merged"] = [{"fact_id": m["from_fact_id"], "into": m["into_fact_id"], "merged_at": m["merged_at"]}
                                 for m in merged]
-        return json.dumps(result)
+        return _dumps(result)
 
     _TOOL_HANDLERS = {
         "fact_store": _tool_handler({
@@ -2191,13 +2197,13 @@ class HolographicMemoryProvider(MemoryProvider):
                 category=a.get("category"), limit=_limit(a), min_trust=float(a.get("min_trust", 0.0)))),
             "update": lambda self, a: self._update(a),
             "change": lambda self, a: self._change(a),
-            "end": lambda self, a: self._fact_call(a, lambda fact_id: json.dumps(
+            "end": lambda self, a: self._fact_call(a, lambda fact_id: _dumps(
                 self._store.end_fact(fact_id, valid_to=a.get("valid_to")))),
             "correct": lambda self, a: self._correct(a),
-            "revert": lambda self, a: self._fact_call(a, lambda fact_id: json.dumps(self._store.revert_fact(fact_id))),
+            "revert": lambda self, a: self._fact_call(a, lambda fact_id: _dumps(self._store.revert_fact(fact_id))),
             "forget": lambda self, a: self._forget(a),
             "merge": lambda self, a: self._merge(a),
-            "history": lambda self, a: self._fact_call(a, lambda fact_id: json.dumps(self._store.history(fact_id))),
+            "history": lambda self, a: self._fact_call(a, lambda fact_id: _dumps(self._store.history(fact_id))),
             "remove": lambda self, a: self._remove(a),
             "list": lambda self, a: self._list(a),
             "stats": lambda self, a: self._stats(a),
@@ -2210,7 +2216,7 @@ class HolographicMemoryProvider(MemoryProvider):
                                                         lambda: self._store.rename_entity(a["entity"], a["content"])),
             "delete_entity": lambda self, a: self._delete_entity(a),
             "split": lambda self, a: self._entity_call(a, ("entity",), lambda: self._store.split_alias(a["entity"])),
-            "rebuild_entities": lambda self, a: json.dumps(self._store.rebuild_entity_index()),
+            "rebuild_entities": lambda self, a: _dumps(self._store.rebuild_entity_index()),
             "enrich": lambda self, a: self._enrich(a),
         }),
         "fact_feedback": lambda self, a: self._feedback(a),

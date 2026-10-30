@@ -13,8 +13,8 @@ pytest.importorskip("numpy")
 
 from hermes_plugin_holographic import HolographicMemoryProvider
 
-CYRILLIC = "Ловушка: change без keywords вычищает их — by design"
-ESCAPED_HEAD = "\\u041b"  # «Л» as ensure_ascii=True would render it
+CYRILLIC = "Красный велосипед стоял у синей стены весь вторник"
+ESCAPED_HEAD = "\\u%04x" % ord(CYRILLIC[0])  # the first letter as ensure_ascii=True would render it
 
 
 @pytest.fixture
@@ -30,13 +30,13 @@ def _raw(provider, **args):
 
 
 def test_cyrillic_fact_is_raw_in_every_result(provider):
-    """The case itself: add, list and history must carry «Ловушка», never \\u041b."""
+    """The case itself: add, list and history must carry the fact's own words, never its \\uXXXX escape."""
     added = _raw(provider, action="add", content=CYRILLIC, origin="said")
     fact_id = json.loads(added)["fact_id"]
     for call in ({"action": "list"}, {"action": "history", "fact_id": fact_id},
-                 {"action": "search", "query": "Ловушка"}):
+                 {"action": "search", "query": "велосипед"}):
         out = _raw(provider, **call)
-        assert "Ловушка" in out, call
+        assert "Красный" in out, call
         assert ESCAPED_HEAD not in out, call
 
 
@@ -52,4 +52,4 @@ def test_results_stay_valid_json(provider):
     """Raw Unicode is an encoding choice, not a format change: every result still parses."""
     _raw(provider, action="add", content=CYRILLIC, origin="said")
     parsed = json.loads(_raw(provider, action="list"))
-    assert any("Ловушка" in f.get("content", "") for f in parsed["facts"])
+    assert any("Красный" in f.get("content", "") for f in parsed["facts"])

@@ -5,6 +5,16 @@
 ## 0.25.3 — 2026-10-31
 
 ### Fixed
+- **Tool results keep the fact's own words: raw Unicode instead of `\uXXXX` escapes.** All 33 `json.dumps` calls
+  in the tool handlers defaulted to `ensure_ascii=True`, so a Cyrillic fact reached the model in every result
+  transliterated as escape sequences («Ловушка» as `\u041b\u043e\u0432\u0443\u0448\u043a\u0430` in enrich/history
+  outputs; found while discussing recall forms in #59). The handlers now serialize through `_dumps`
+  (`ensure_ascii=False`); network payloads (`embeddings`, `rerank`), stored digests (`experience`, `history`) and
+  the memory-map export are untouched, and ASCII-only results stay byte-identical. A payload that cannot be
+  encoded to UTF-8 (a lone surrogate, which can come from tool arguments) keeps the escaped form: `_dumps` falls
+  back, since the tool executor logs the result before anything else reads it. Expected side effect: the core's
+  size limits count characters, so Cyrillic results hit truncation or spillover less often. Tests:
+  `tests/test_holographic_ensure_ascii.py`.
 - **Starting the provider no longer imports numpy; the first search that scores by structure does.** PR #45 moved
   the module-level imports to first use, but the first use still came at start: opening the store asked
   `has_numpy()` (which imports) for its vector checks, the retriever asked it to settle its weights, and

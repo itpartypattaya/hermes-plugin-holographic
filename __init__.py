@@ -996,7 +996,7 @@ class HolographicMemoryProvider(MemoryProvider):
                          "reason, correction?: one short line}; useful (reason other) only when they say it was "
                          "right. Not every turn. It is your report, not their confirmation, and changes no fact: a "
                          "wrong fact still needs change/correct, with their say-so.")
-        if not hrr.has_numpy():
+        if not hrr.numpy_installed():  # asked without importing it: building the prompt must not load numpy
             lines.append("- numpy is not installed: keyword recall only (no structural 'related').")
         if self._scope == "user":
             lines.append("- Facts are kept per user: what one person tells you is not recalled for another.")
@@ -1296,7 +1296,7 @@ class HolographicMemoryProvider(MemoryProvider):
             return None
         try:
             tag = self._embedding.tag
-            if not self._embedder.usable() or not self._retriever.vector_index(tag).ready():
+            if not self._retriever.vector_index(tag).ready() or not self._embedder.usable():  # no vector, no numpy
                 return None
             vector = self._embedder.query(query)
             return self._retriever.meaning(vector, tag, self._embedding.weight) if vector is not None else None
@@ -2128,7 +2128,8 @@ class HolographicMemoryProvider(MemoryProvider):
             "low_trust": read("SELECT COUNT(*) FROM facts WHERE trust_score < ?", (self._min_trust,))[0][0],
             "history": self._store.history_counts() or "not set up yet",
             "origin": self._origin_counts(),
-            "structural_recall": "on" if hrr.has_numpy() else "off (numpy missing)",
+            "structural_recall": "on" if hrr.has_numpy() else (f"off (numpy did not load: {hrr.numpy_error()})"
+                                                                 if hrr.numpy_error() else "off (numpy missing)"),
             "search_by_meaning": self._meaning_stats(),
             "database": str(self._store.db_path),
             **({"recall_error": self._recall_error} if self._recall_error else {}),

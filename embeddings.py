@@ -31,6 +31,7 @@ import urllib.parse
 import urllib.request
 from collections import OrderedDict
 
+from . import holographic as hrr  # its numpy loader: one import attempt for the plugin, a failure said once
 from . import net  # the socket of the in-flight request, for the caller to end the read (issue #26)
 from .text import UNSEGMENTED, is_greeting, query_terms
 
@@ -41,14 +42,10 @@ np = None  # numpy is optional and loaded on first use (see _numpy): this module
 
 
 def _numpy():
-    """numpy, imported on first use; None when it is not installed (the feature stays off)."""
+    """numpy, imported on first use; None when it is not installed or does not load (the feature stays off)."""
     global np
-    if np is None:
-        try:
-            import numpy as _np
-        except ImportError:  # pragma: no cover - optional, as for HRR: without it the feature stays off
-            return None
-        np = _np
+    if np is None and hrr.has_numpy():
+        np = hrr.np
     return np
 
 logger = logging.getLogger(__name__)
@@ -329,8 +326,10 @@ class Embedder:
     def unavailable(self) -> str:
         """Why the endpoint cannot be used at all ("" when it can): numpy, the address, the key. Never the key's value:
         a key with a line break inside would make the HTTP library raise an error quoting the header."""
-        if _numpy() is None:
+        if np is None and not hrr.numpy_findable():  # asked without importing it: the provider asks this at start
             return "numpy is not installed"
+        if np is None and hrr.numpy_error():
+            return f"numpy did not load ({hrr.numpy_error()})"
         if self._refused:
             return self._refused
         name = self.settings.key_env
@@ -358,7 +357,7 @@ class Embedder:
         return text
 
     def usable(self) -> bool:
-        return self.status() == "ready"
+        return self.status() == "ready" and _numpy() is not None  # the import: here, before a vector is needed
 
     def embed(self, texts: list[str], budget: float | None = None) -> list | None:
         """Vectors of *texts* (each cut to TEXT_MAX_CHARS), or None: unusable, or a request failed (logged; paused).

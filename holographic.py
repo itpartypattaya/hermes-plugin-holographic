@@ -5,23 +5,32 @@ to cosine similarity; atoms derive deterministically from SHA-256 so representat
 machines, and Python versions. References: Plate (1995) HRRs; Gayler (2004) Vector Symbolic Architectures."""
 
 import hashlib
+import importlib.util
+import logging
 import math
 import struct
+import sys
 
 np = None  # numpy is loaded on first use (see _numpy): this module is imported from inside the
 # plugin loader's lock while a managed worker starts its reader thread, and a top-level numpy
 # import there deadlocked Kanban workers inside numpy._core._multiarray_umath's create_module.
 _TRIED = False  # _numpy() has tried already; np alone cannot say (None is both "not yet" and "missing")
+_ERROR = ""  # why a numpy that is installed did not load; "" when it loaded, is missing, or was not tried yet
+logger = logging.getLogger(__name__)
 
 
 def _numpy():
-    """numpy, imported on first use; None when it is not installed."""
-    global np, _TRIED
+    """numpy, imported on first use; None when it is not installed or does not load."""
+    global np, _TRIED, _ERROR
     if not _TRIED:
         try:
             import numpy as np
-        except ImportError:
+        except Exception as exc:  # noqa: BLE001 - installed but broken (a wheel without its DLL: OSError too)
             np = None
+            if numpy_findable():  # missing is a setup and stays silent, as before; broken is said once
+                _ERROR = f"{type(exc).__name__}: {exc}"[:200]
+                logger.warning("holographic: numpy is installed but did not load (%s); structural recall and search "
+                               "by meaning stay off in this process, recall goes on by words", _ERROR)
         # Publish only a completed attempt. Concurrent callers must reach Python's
         # import lock rather than mistake an in-progress import for missing numpy.
         _TRIED = True
@@ -32,6 +41,33 @@ def has_numpy() -> bool:
     """Whether numpy can be imported (tried once, then cached): the gates that used to read a
     module-level flag ask this instead, so "not loaded yet" is never read as "not installed"."""
     return _numpy() is not None
+
+
+def numpy_installed() -> bool:
+    """Whether numpy is there, WITHOUT importing it: the answer of the import once one was tried, else whether
+    Python can find the package. For checks made while the provider starts (the system prompt line, the store's
+    vector repair), where an import would only load numpy early: on Windows a Kanban worker hangs on that load
+    (NousResearch/hermes-agent#145156). A package found here may still fail to import; the first real use
+    (has_numpy) then says so."""
+    if _TRIED:
+        return np is not None
+    return numpy_findable()
+
+
+def numpy_findable() -> bool:
+    """Whether Python can find numpy, without importing it and whatever an earlier import attempt said."""
+    loaded = sys.modules.get("numpy", ...)
+    if loaded is not ...:  # imported elsewhere, or blocked with sys.modules["numpy"] = None
+        return loaded is not None
+    try:
+        return importlib.util.find_spec("numpy") is not None
+    except (ImportError, ValueError):
+        return False
+
+
+def numpy_error() -> str:
+    """Why an installed numpy did not load, once an import was tried; "" otherwise."""
+    return _ERROR
 
 _TWO_PI = 2.0 * math.pi
 _FLOAT32_BLOB_PREFIX = b"HRR1"

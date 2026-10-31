@@ -10,6 +10,46 @@
   (`ensure_ascii=False`); network payloads (`embeddings`, `rerank`), stored digests (`experience`, `history`) and
   the memory-map export are untouched, and ASCII-only results stay byte-identical. Tests:
   `tests/test_holographic_ensure_ascii.py`.
+- **Starting the provider no longer imports numpy; the first search that scores by structure does.** PR #45 moved
+  the module-level imports to first use, but the first use still came at start: opening the store asked
+  `has_numpy()` (which imports) for its vector checks, the retriever asked it to settle its weights, and
+  `system_prompt_block()` asked it for the "numpy is not installed" line. Now `holographic.numpy_installed()`
+  answers those start-time questions without importing (the import's own answer once one was tried, else whether
+  Python can find the package); the retriever settles its weights on its first search; the store's vector repair
+  imports numpy only when there is a vector to write, and leaves the store as it was when that import fails (a
+  changed `hrr_dim` keeps the old size on record). On a store that needs no repair, the usual open, a provider that
+  only starts (a Windows Kanban worker, NousResearch/hermes-agent#145156) leaves numpy unloaded. Still loading it at
+  open: a store whose vectors need re-encoding (facts added without numpy, another `hrr_dim`, new entity rules), and
+  search by meaning when on (the endpoint check). That alone does not stop the hang there: the first recall still
+  loads numpy, and the fix is in core (NousResearch/hermes-agent#144287, #146471). Tests:
+  `tests/test_holographic_numpy_not_at_startup.py`.
+- **Search by meaning on no longer imports numpy at start either, and a broken numpy no longer takes memory down.** The
+  provider's constructor asked `Embedder.unavailable()`, which imported numpy; it now asks
+  `holographic.numpy_findable()` (no import), the import moves to `Embedder.usable()` before a vector is needed, and a
+  recall checks that the store holds a vector of the model before that. numpy that Python finds but that fails to import
+  is treated as missing whatever it raises: a DLL that does not load comes out as ImportError, but numpy's own BLAS
+  sanity check at import raises RuntimeError, and its Windows wheel's DLL setup can raise OSError. Either used to raise
+  from the provider's constructor with search by meaning on; otherwise every write failed (`fact_store add failed
+  (OSError)`), and on 0.25.2 memory was off for the session as "cannot open … if the file is damaged". Now recall goes
+  on by words, the log says `numpy is installed but did not load (…)` once per process, and `stats` gives the reason
+  (`structural_recall: off (numpy did not load: …)`, search by meaning `unavailable: numpy did not load (…)`). Tests:
+  `tests/test_holographic_numpy_broken_or_embeddings.py`.
+- **A Latin word or identifier written into Chinese text is found by itself** (NousResearch/hermes-agent#83593).
+  FTS5 indexes `用户用keyring保存密钥` as one token, letters and characters together, and the substring path ran only
+  for a query with Chinese in it, so `keyring`, `watchdog`, `ppid`, `HERMES_PARENT_PID` or `web_server` alone found
+  nothing while `密钥` did, and an English question about them recalled nothing before the turn. Search now also looks
+  for the query's ASCII words in the facts where a letter or digit touches Chinese, Japanese, Korean or Thai script,
+  as a whole word (`key` is not in `keyring`, `pid` not in `ppid`), and the recall gate counts those facts as holding
+  the word. The list of such facts is kept until a fact's text may have changed (a write other than the recall counts,
+  or a commit by another process), so a store without them reads nothing more per message: on 3,000 English facts
+  search and prefetch take the same time as before. On the multilingual quality set (450 questions in 18 languages) two
+  answers changed, both toward the other languages: `HR24 Copilot能做什么` ranks the fact that ends in `HR24` higher,
+  and `hr-vpsのメモリはどれくらい？` also recalls the other `hr-vps` fact, as the English, Russian and Chinese questions
+  do. Codex review: a letter of another script next to the word is no edge (`яkeyring保存` holds no `keyring`), and
+  a fact the index already finds by the word (`keyring保存`, a prefix; the word also written apart) counts once in
+  its frequency (Codex review on GitHub found the same: `keyring保存密钥` fell out of the recall for "keyring watchdog
+  backend"). Codex review on GitHub: the list of such facts is built in linear time (a 30,000-character run with no
+  letter after it took 16 s). Not covered: other forms of the word (`keyrings`). Tests: `tests/test_holographic_latin_in_cjk.py`.
 
 ## 0.25.2 — 2026-10-30
 

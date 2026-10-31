@@ -8,7 +8,10 @@
   transliterated as escape sequences («Ловушка» as `\u041b\u043e\u0432\u0443\u0448\u043a\u0430` in enrich/history
   outputs; found while discussing recall forms in #59). The handlers now serialize through `_dumps`
   (`ensure_ascii=False`); network payloads (`embeddings`, `rerank`), stored digests (`experience`, `history`) and
-  the memory-map export are untouched, and ASCII-only results stay byte-identical. Tests:
+  the memory-map export are untouched, and ASCII-only results stay byte-identical. A payload that cannot be
+  encoded to UTF-8 (a lone surrogate, which can come from tool arguments) keeps the escaped form: `_dumps` falls
+  back, since the tool executor logs the result before anything else reads it. Expected side effect: the core's
+  size limits count characters, so Cyrillic results hit truncation or spillover less often. Tests:
   `tests/test_holographic_ensure_ascii.py`.
 - **Starting the provider no longer imports numpy; the first search that scores by structure does.** PR #45 moved
   the module-level imports to first use, but the first use still came at start: opening the store asked

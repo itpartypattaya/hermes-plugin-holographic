@@ -249,8 +249,14 @@ def _load_plugin_config() -> dict:
 
 def _dumps(value) -> str:
     """Tool output as JSON with raw Unicode: the model reads the fact's own words, not \\uXXXX escapes (the default
-    ensure_ascii=True transliterates every non-ASCII character of a stored fact in every result)."""
-    return json.dumps(value, ensure_ascii=False)
+    ensure_ascii=True transliterates every non-ASCII character of a stored fact in every result). A payload that
+    cannot be encoded (a lone surrogate, which can come from tool arguments) falls back to the escaped form."""
+    text = json.dumps(value, ensure_ascii=False)
+    try:
+        text.encode("utf-8")
+    except UnicodeEncodeError:  # keep it escaped, as before: the tool executor logs the result first
+        return json.dumps(value)
+    return text
 
 
 def _results(items: list, key: str = "results") -> str:

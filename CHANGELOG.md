@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.25.3 — 2026-10-31
+
 ### Fixed
 - **Tool results keep the fact's own words: raw Unicode instead of `\uXXXX` escapes.** All 33 `json.dumps` calls
   in the tool handlers defaulted to `ensure_ascii=True`, so a Cyrillic fact reached the model in every result
@@ -53,6 +55,51 @@
   its frequency (Codex review on GitHub found the same: `keyring保存密钥` fell out of the recall for "keyring watchdog
   backend"). Codex review on GitHub: the list of such facts is built in linear time (a 30,000-character run with no
   letter after it took 16 s). Not covered: other forms of the word (`keyrings`). Tests: `tests/test_holographic_latin_in_cjk.py`.
+- **`auto_extract` no longer stores a reply to the assistant as a preference** (NousResearch/hermes-agent#22907).
+  "I like that, sounds good", "ok, I love it", "I prefer this one, let's go with it" and «ок, я люблю это» matched
+  "I like / love / prefer …", but what they like is whatever the assistant just said: stored, such a fact says nothing
+  on its own. A sentence whose object is "it", or this / that / these / those with at most one word, and whose clause
+  ends there (a degree word such as "better" or "a lot" may follow) is skipped, unless the rest of the sentence states
+  a preference of its own ("I like that, I always use tabs" is stored). Kept: "I like it when answers are short", "I
+  like that you ask before deleting files", "I use this laptop for work", "them" and «его» (more often people than a
+  proposal: "I love them, my kids are my everything"), and "I always check git status before committing" — a habit
+  said as one, which is what the "always / never / usually" pattern is there for. Measured: of the 91 sentences of the
+  test suite and benchmark results the patterns take, none of the earlier ones is skipped; of 36 preferences written
+  for the check, none. Codex review: the reply also ends at a dash or an emoji ("I like that 👍", "I love it — sounds
+  good"), and not at a dot inside a name ("I use this Node.js library for all my projects." is stored). Codex
+  review on GitHub: nor at a colon ("I prefer this format: JSON with two-space indentation." is stored). Tests:
+  `tests/test_holographic_extract_reactions.py`.
+- **A prompt to an assistant is not stored as a fact, and one already stored is not recalled**
+  (NousResearch/hermes-agent#66380). A mail bridge stored each inbound email as "You are Henry, … You received an email
+  at the AgentMail inbox and should handle it like a normal Henry request. EMAIL METADATA …", and recall brought every
+  one back, framed as stored data, as a live task in each later session for weeks. A text that opens by telling its
+  reader who it is ("You are …", «Ты — …», «Вы — …») and hands it a task it received (an email, a message or a task,
+  an `EMAIL METADATA` block) is refused by `add`, `change`, `correct`, `update`, `revert`, `auto_extract` and the mirror
+  of built-in memory, with a reason that says to store what is true instead; `auto_extract` skips such a message whole.
+  One written before is left out of the recall before a turn (logged once), and `search` and `list` still show it, to
+  change or forget. Either half alone is no prompt: "You are allowed to push to main", "You are Mia, the family
+  assistant", "You received a parcel from DHL" are stored as before. English and Russian. Codex review: a standing
+  rule ("when I forward a message, you should handle it …") is no task received, so "should handle it" alone no
+  longer counts; «Вы — … Вам пришло письмо» does; the sentences of a pasted prompt are not extracted one by one; and
+  `revert` does not make such an earlier version current again. Measured: none of the 7,065 strings of the test suite
+  and benchmark results is refused; of 15 second-person rules and facts written for the check, none. A separate check
+  after `_fact_problem`, whose decisions stay 0.22.0's (`tests/test_holographic_screen_speed.py`). Tests:
+  `tests/test_holographic_role_prompt.py`.
+- **The agent's report of its own steps is not stored as a fact** (NousResearch/hermes-agent#117790). Besides
+  tool-call JSON (refused since 0.3.0), stores filled with "I just read the file and updated the config as requested."
+  A first-person action ("I read", "I've updated", "I ran", "I checked" …) together with words saying it was done for
+  the one the agent works for ("as requested", "as you asked", "per your request") is refused with a reason that says
+  to store what is now true instead. Both, so a person's own past ("I moved to Bangkok", "I switched to Postgres last
+  week", "I updated my passport in March") and a request of someone else ("as requested by the course") are stored as
+  before; a report without those words is still stored (the tool's description asks not to store task progress).
+  Codex review: a text the person said (`origin` `said` or `confirmed`, and `auto_extract`) is not screened so, since
+  there "I" is the person ("I updated my passport in March as you asked."); "just now" and "as requested by  you"
+  with two spaces no longer slip through. English only. Measured: none of the 7,065 strings of the test suite and benchmark results is refused; of 16
+  first-person facts and 36 preferences written for the check, none. Tests: `tests/test_holographic_narration.py`.
+
+### Documented
+- **`auto_extract` runs after each turn.** README and the setup description said "at session end and before context
+  compression"; extraction also runs after every completed turn (`sync_turn`), and in `scope: user` only then.
 
 ## 0.25.2 — 2026-10-30
 

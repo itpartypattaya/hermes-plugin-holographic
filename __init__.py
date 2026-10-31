@@ -35,8 +35,8 @@ from . import rerank
 from .history import ORIGINS, ChangedSince, HistoryTooNew, NotFound, NotOwned, parse_day
 from .store import DuplicateContentError, MemoryStore, unusable_names
 from .retrieval import FactRetriever, _warn_once, error_kind
-from .screen import (_EXTRACT_MAX_CHARS, _RE_QUESTION, _RE_SENTENCE, _extract_floor, _fact_problem, _recall_problem,
-                     _secret_in, _sendable)
+from .screen import (_EXTRACT_MAX_CHARS, _RE_QUESTION, _RE_SENTENCE, _extract_floor, _fact_problem, _not_a_fact,
+                     _recall_problem, _role_prompt, _secret_in, _sendable)
 from .screen import (  # noqa: F401 - re-exported: they lived here, and tests import them from the package
     _RE_EXFILTRATION, _SECRET_ENV_NAMES, _has_credential)
 from hermes_cli.config import cfg_get
@@ -218,6 +218,42 @@ _EXTRACT_CATEGORIES = (
                  r'(?:命名規則|命名规则|命名規範|命名规范|規範|规范|慣例|惯例)(?:是|為|为|採用|采用)[^。；！？?\n]{2,40}')],
      "project"),
 )
+# A reply to the assistant is not a preference (hermes-agent#22907): "I like that, sounds good", "ok, I love it", "I
+# prefer this one" like whatever the assistant just said, and stored they say nothing on their own. Their object is
+# "it", or this / that / these / those and at most one word, and the clause ends there (a degree word may follow:
+# "better", "a lot"). "I like it when …", "I like that you …" and "I use this laptop for work" go on, and are kept;
+# so are "them", «его», «их»: more often people ("I love them, my kids are my everything") than a proposal. The clause
+# ends at a mark, a dash or an emoji ("I like that 👍"), not at a dot inside a name ("this Node.js library"; Codex review)
+# nor at a colon, which says what the object is ("I prefer this format: JSON with two-space indentation."; Codex review
+# on GitHub).
+_REACTION_END = (r'(?:\s+(?:better|more|most|best|too|a\s+lot|very\s+much|so\s+much))*\s*'
+                 r'(?:[,;…)—–]|[.!](?!\w)|-(?=\s)|[☀-➿\U0001f300-\U0001faff]|$)')
+_RE_REACTION = re.compile(
+    r'\bI\s+(?:really\s+|also\s+|just\s+|totally\s+|do\s+)?(?:prefer|like|love|use)\s+'
+    r'(?:it|(?:this|that|these|those)(?:\s+[^\W\d_]+)?)' + _REACTION_END +
+    r'|(?:^|\s)я\s+(?:тоже\s+|очень\s+)?(?:предпочитаю|люблю|использую)\s+'
+    r'(?:это|то|такое|(?:этот|эта|это|эти|тот|та|те)\s+[^\W\d_]+)' + _REACTION_END,
+    re.IGNORECASE)
+
+
+def _reaction(sentence: str) -> bool:
+    """A sentence that states no preference but a reply to the assistant (_RE_REACTION), with nothing left that
+    would be extracted once the reply is taken out ("I like that, I always use tabs" keeps its second half)."""
+    if not _RE_REACTION.search(sentence):
+        return False
+    rest = _RE_REACTION.sub(" ", sentence)
+    return not any(p.search(rest) for patterns, _ in _EXTRACT_CATEGORIES for p in patterns)
+
+
+def _write_problem(content: str, person: bool = False) -> str | None:
+    """Why *content* is not stored, changed to or extracted as a fact: _fact_problem's reasons (0.22.0's decisions),
+    then what is no fact though nothing in it is unsafe (screen._not_a_fact; *person*: the person's own words)."""
+    return _fact_problem(content) or _not_a_fact(content, person)
+
+
+def _said(a: dict) -> bool:
+    """The text of a tool call is the person's own words (origin 'said' or 'confirmed')."""
+    return a.get("origin") in ("said", "confirmed")
 
 
 class _UnreadConfig(dict):
@@ -720,7 +756,7 @@ class HolographicMemoryProvider(MemoryProvider):
         return [
             {"key": "db_path", "description": "SQLite database path", "default": current("db_path", _DEFAULT_DB_PATH)},
             {"key": "auto_extract", "description": "Store user sentences that state a preference or decision "
-             "(English/Russian patterns), at session end and before context compression",
+             "(English, Russian and Chinese patterns) after each turn, before context compression and at session end",
              "default": current("auto_extract", "false"), "choices": ["true", "false"]},
             {"key": "default_trust", "description": "Default trust score for new facts", "default": current("default_trust", "0.5")},
             {"key": "hrr_dim", "description": "HRR vector dimensions", "default": current("hrr_dim", "1024")},
@@ -1383,7 +1419,8 @@ class HolographicMemoryProvider(MemoryProvider):
     def _recallable(self, fact: dict) -> bool:
         """False for a fact recall must not inject (_recall_problem); logged once per fact and process. fact_store
         search, list and history still show it: there the agent asked, and can change or forget it."""
-        problem = _recall_problem(fact.get("content", ""))
+        problem = _recall_problem(fact.get("content", "")) or (
+            "a prompt to an assistant" if _role_prompt(fact.get("content", "")) else None)
         if problem:
             self._observe("rejected_safety", [fact])
         if problem and fact.get("fact_id") not in self._withheld:
@@ -1569,7 +1606,7 @@ class HolographicMemoryProvider(MemoryProvider):
         entry is a change of its fact (history kept), a removed one is forgotten."""
         if not (self._writable and self._store and is_truthy_value(self._config.get("mirror_memory_writes", False))):
             return
-        if content and _fact_problem(content):
+        if content and _write_problem(content):
             return
         category = "user_pref" if target == "user" else "general"
         previous = (metadata or {}).get("previous_content") or ""
@@ -1657,7 +1694,7 @@ class HolographicMemoryProvider(MemoryProvider):
         return f"keywords: {problem}" if problem else ""
 
     def _add(self, a: dict) -> str:
-        problem = _fact_problem(a["content"]) or self._keyword_problem(a)
+        problem = _write_problem(a["content"], _said(a)) or self._keyword_problem(a)
         if problem:
             return tool_error(f"Not stored: {problem}.")
         category, entities = a.get("category", "general"), self._entities(a)
@@ -1811,7 +1848,7 @@ class HolographicMemoryProvider(MemoryProvider):
             return tool_error(missing or f"fact #{fact_id} does not exist (it may have been forgotten); nothing was changed.")
 
     def _change(self, a: dict, missing: str = "") -> str:
-        problem = _fact_problem(a.get("content") or "") or self._keyword_problem(a)
+        problem = _write_problem(a.get("content") or "", _said(a)) or self._keyword_problem(a)
         if not (a.get("content") or "").strip():
             return tool_error("change needs the new text in 'content'.")
         if problem:
@@ -1842,7 +1879,7 @@ class HolographicMemoryProvider(MemoryProvider):
     def _correct(self, a: dict) -> str:
         if a.get("content") is None and not a.get("valid_from"):
             return tool_error("correct needs the right text in 'content' and/or the right start in 'valid_from'.")
-        problem = _fact_problem(a["content"]) if a.get("content") is not None else ""
+        problem = _write_problem(a["content"], _said(a)) if a.get("content") is not None else ""
         if problem:
             return tool_error(f"Not corrected: {problem}.")
         return self._fact_call(a, lambda fact_id: _dumps(self._store.correct_fact(
@@ -2083,7 +2120,7 @@ class HolographicMemoryProvider(MemoryProvider):
         return run()
 
     def _update(self, a: dict) -> str:
-        problem = (_fact_problem(a["content"]) if a.get("content") is not None else "") or self._keyword_problem(a)
+        problem = (_write_problem(a["content"], _said(a)) if a.get("content") is not None else "") or             self._keyword_problem(a)
         if problem:
             return tool_error(f"Not updated: {problem}.")
         tags = a.get("tags")
@@ -2207,7 +2244,8 @@ class HolographicMemoryProvider(MemoryProvider):
             "end": lambda self, a: self._fact_call(a, lambda fact_id: _dumps(
                 self._store.end_fact(fact_id, valid_to=a.get("valid_to")))),
             "correct": lambda self, a: self._correct(a),
-            "revert": lambda self, a: self._fact_call(a, lambda fact_id: _dumps(self._store.revert_fact(fact_id))),
+            "revert": lambda self, a: self._fact_call(a, lambda fact_id: _dumps(self._store.revert_fact(
+                fact_id, screen=_write_problem))),
             "forget": lambda self, a: self._forget(a),
             "merge": lambda self, a: self._merge(a),
             "history": lambda self, a: self._fact_call(a, lambda fact_id: _dumps(self._store.history(fact_id))),
@@ -2252,11 +2290,11 @@ class HolographicMemoryProvider(MemoryProvider):
                 content = pre
             elif content is None or is_compaction_summary_message(msg):
                 continue
-            if not isinstance(content, str) or len(content) < _extract_floor(content):
-                continue
+            if not isinstance(content, str) or len(content) < _extract_floor(content) or _role_prompt(content):
+                continue  # a prompt pasted whole: its sentences pass one by one (Codex review), none is the user's
             for sentence in (m.group(0).strip() for m in _RE_SENTENCE.finditer(content)):
                 if len(sentence) < _extract_floor(sentence) or len(sentence) > _EXTRACT_MAX_CHARS \
-                        or _fact_problem(sentence) or _RE_QUESTION.search(sentence):
+                        or _write_problem(sentence, person=True) or _RE_QUESTION.search(sentence) or _reaction(sentence):
                     continue
                 for patterns, category in _EXTRACT_CATEGORIES:
                     if any(p.search(sentence) for p in patterns):

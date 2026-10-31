@@ -88,7 +88,7 @@ In `config.yaml` under `plugins.hermes-memory-store`:
 | Key | Default | Description |
 |-----|---------|-------------|
 | `db_path` | `$HERMES_HOME/memory_store.db` | SQLite database path |
-| `auto_extract` | `false` | Store user sentences that state a preference or decision (English, Russian, Chinese) at session end and before context compression, at trust 0.4; questions and restatements of a stored fact are skipped |
+| `auto_extract` | `false` | Store user sentences that state a preference or decision (English, Russian, Chinese) after each completed turn, and also before context compression and at session end (not in `scope: user`, where a whole transcript cannot be attributed), at trust 0.4; questions, replies to the assistant ("I like that, sounds good") and restatements of a stored fact are skipped |
 | `mirror_memory_writes` | `false` | Also store every built-in memory `add` (MEMORY.md / USER.md) as a fact |
 | `default_trust` | `0.5` | Trust score of a new fact |
 | `min_trust_threshold` | `0.3` | Facts below this trust are not recalled |
@@ -1063,7 +1063,8 @@ for commercial use. The plugin ships neither model.
 - Subagents and flush contexts read the store but never write to it (facts, feedback, counters, extraction). A cron
   job writes facts only through its explicit tool calls (`cron_writes`, on by default); the one automatic write it
   makes is a fact's vector when search by meaning is on.
-- With `auto_extract` on, user messages matching the preference/decision patterns are stored at session end.
+- With `auto_extract` on, user sentences matching the preference/decision patterns are stored after each turn and,
+  outside `scope: user`, before context compression and at session end.
 - `retrieval_count` counts how often a fact was handed to the model; nothing else is tracked.
 - For statistics, `logger.debug` stage traces name fact ids, never their text: `embed` — the fact vectors stored
   after a turn, the facts the meaning stage admitted before a turn and the meaning matches a tool search returned;

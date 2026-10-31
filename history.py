@@ -617,9 +617,10 @@ class HistoryMixin:
                 self._drop_confirmations(fact_id)
             return {"fact_id": fact_id, "status": "corrected", "version": seq}
 
-    def revert_fact(self, fact_id: int) -> dict:
+    def revert_fact(self, fact_id: int, screen=None) -> dict:
         """Undo the last change, correction or end: the last version is closed as `corrected` and the one before it
-        is current again (an ended fact is current again)."""
+        is current again (an ended fact is current again). *screen*: why a text must not be current again, or None
+        (the provider's write screen: an older version may hold what later rules refuse; Codex review, #66380)."""
         self.require_history()
         with self._tx():
             self._reconcile_history()
@@ -632,6 +633,7 @@ class HistoryMixin:
                     raise NotFound(f"fact_id {fact_id} not found")
                 if self._one("SELECT 1 FROM facts WHERE content = ?", (last["content"],)):
                     raise ValueError("another current fact already says this; forget one of them instead")
+                self._screened(last["content"], screen)
                 self._write("UPDATE fact_versions SET status = 'current', valid_to = NULL, valid_to_exact = 1, "
                             "closed_at = NULL, superseded_by = NULL WHERE version_id = ?", (last["version_id"],))
                 self._insert_fact_row(fact_id, self._version(last["version_id"]),
@@ -652,6 +654,7 @@ class HistoryMixin:
                 return {"fact_id": fact_id, "status": "reverted", "ended": prev["valid_to"]}
             if self._one("SELECT 1 FROM facts WHERE content = ? AND fact_id != ?", (prev["content"], fact_id)):
                 raise ValueError("another current fact already says what the previous version said; forget one of them")
+            self._screened(prev["content"], screen)
             self._write("UPDATE fact_versions SET status = 'current', valid_to = NULL, valid_to_exact = 1, closed_at = NULL, "
                         "superseded_by = NULL WHERE version_id = ?", (prev["version_id"],))
             self._fix_predecessor(prev["version_id"])
@@ -661,6 +664,13 @@ class HistoryMixin:
             self._rewrite_fact(fact_id, prev["content"], prev["category"], prev["tags"], old_category=fact["category"],
                                trust=trust, restore=self._take_version_names(prev["version_id"], cur["version_id"]))
             return {"fact_id": fact_id, "status": "reverted", "current_version": int(prev["seq"])}
+
+    @staticmethod
+    def _screened(content: str, screen) -> None:
+        """Raise ValueError when *screen* refuses the text a revert would make current again."""
+        problem = screen(content) if screen is not None else None
+        if problem:
+            raise ValueError(f"not reverted: the earlier version {problem}")
 
     def forget_fact(self, fact_id: int) -> dict:
         """The user asked to forget it: the fact and every version are deleted for good (see docs/history.md,

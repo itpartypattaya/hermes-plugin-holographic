@@ -958,6 +958,57 @@ def _recall_problem(content: str) -> str | None:
     return None
 
 
+# A prompt to an assistant stored as a fact (hermes-agent#66380): a mail bridge stored each inbound email as "You are
+# Henry, … You received an email at the AgentMail inbox and should handle it like a normal Henry request. EMAIL
+# METADATA …", and recall brought every one back as a live task for weeks. The text opens by telling its reader who it
+# is ("You are …", «Ты — …», «Вы — …») and hands it a task it received: an email, a message or a task, or an EMAIL
+# METADATA block. Both: a rule for the assistant ("You are allowed to push to main"; "when I forward a message, you
+# should handle it …", Codex review) and a second-person fact ("You received a parcel from DHL") stay facts. English
+# and Russian. Not in _fact_problem: its decisions are 0.22.0's to the string, which
+# tests/test_holographic_screen_speed.py holds them to; the writes and recall ask both.
+_RE_ROLE_OPEN = re.compile(r"\A\s*(?:you\s+are|you['’]re|(?:ты|вы)\s*[—–-])\s*\S", re.IGNORECASE)
+_RE_ROLE_TASK = re.compile(
+    r"\byou\s+(?:have\s+)?(?:just\s+)?received\s+(?:an?\s+|a\s+new\s+)?(?:e-?mail|message|task|request|ticket)"
+    r"|\byou\s+have\s+(?:an?\s+)?new\s+(?:e-?mail|message|task|request|ticket)"
+    r"|^\s*(?:e-?mail|message|task)\s+metadata\s*$"
+    r"|(?:тебе|вам)\s+(?:пришло|пришла|пришёл|поступило|поступила)\s+(?:новое\s+|новая\s+)?(?:письмо|сообщение|задача"
+    r"|задание|заявка)",
+    re.IGNORECASE | re.MULTILINE)
+
+
+# The agent's account of its own steps (hermes-agent#117790): "I just read the file and updated the config as
+# requested." is no fact about anyone. A first-person action ("I read", "I've updated", "I ran") done for the one the
+# agent works for ("as requested", "as you asked", "per your request"): both, so a person's own past ("I moved to
+# Bangkok", "I switched to Postgres") and a request of someone else ("as requested by the course") stay facts. A report
+# without those words is still stored; the tool's description asks not to store task progress.
+_STEP_VERBS = (r"(?:read|updated|edited|created|ran|run|executed|checked|fixed|wrote|written|saved|opened|installed"
+               r"|deleted|removed|modified|changed|added|applied|committed|pushed|restarted|searched|looked\s+(?:at|through)"
+               r"|reviewed|renamed|moved|copied|downloaded|uploaded|sent|replied|tested|refactored|patched|deployed"
+               r"|cleaned\s+up)")
+_RE_OWN_STEP = re.compile(r"\bI(?:['’]ve|\s+have)?\s+(?:(?:just|now|already)\s+)*" + _STEP_VERBS + r"\b", re.IGNORECASE)
+_RE_FOR_YOU = re.compile(r"\bas\s+(?:you\s+)?(?:requested|asked|instructed)\b(?!\s+by\s+(?!\s*you\b))"
+                         r"|\bper\s+your\s+(?:request|instructions?)\b|\bas\s+you\s+(?:said|wanted)\b", re.IGNORECASE)
+
+
+def _role_prompt(content: str) -> bool:
+    """A prompt to an assistant, not a fact (_RE_ROLE_OPEN and _RE_ROLE_TASK)."""
+    text = content or ""
+    return _RE_ROLE_OPEN.search(text) is not None and _RE_ROLE_TASK.search(text) is not None
+
+
+def _not_a_fact(content: str, person: bool = False) -> str | None:
+    """Why *content*, though nothing in it is unsafe, is no fact to store (asked after _fact_problem), or None.
+    *person*: the person wrote or said it (origin 'said' or 'confirmed', auto_extract), so "I" is the person and a
+    report of steps is theirs to keep ("I updated my passport in March as you asked"; Codex review)."""
+    if _role_prompt(content):
+        return ("reads like a prompt to an assistant (who it is and a task it received), not a fact: store what is true, "
+                "e.g. 'Henry handles the deal-flow inbox', and keep tasks out of memory")
+    if not person and _RE_OWN_STEP.search(content or "") and _RE_FOR_YOU.search(content or ""):
+        return ("reads like a report of steps taken for the person, not a fact: store what is now true, e.g. 'The "
+                "config uses port 8080', or nothing")
+    return None
+
+
 # Search by meaning sends text out: besides a credential (_has_credential: a credential word with its value, or a
 # token's own shape), the shapes a secret takes in configuration — an environment assignment (OPENAI_API_KEY=…), an
 # Authorization header — and a long encoded blob keep a message or a fact at home. Best effort, by pattern (review

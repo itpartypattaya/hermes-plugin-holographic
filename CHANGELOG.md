@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.26.0 — 2026-11-02
+
 ### Added (experimental)
 - **Presence gate for prefetch (`prefetch_presence_gate`, off by default; #72, issue #59).** With it on, a fact this
   provider injected is held back past the six-turn repeat window only while the model can verifiably still see

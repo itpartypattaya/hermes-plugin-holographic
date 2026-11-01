@@ -575,9 +575,10 @@ class HistoryMixin:
         self._delete_fact_row(fact["fact_id"], fact["category"])
 
     def correct_fact(self, fact_id: int, content: str | None = None, *, valid_from=None, entities=(),
-                     source: dict | None = None) -> dict:
+                     source: dict | None = None, tags: str | None = None) -> dict:
         """It was wrong: the current version is closed as `corrected` (never returned as the past) and the corrected
-        text and/or start date become the current version."""
+        text and/or start date become the current version. *tags*: the corrected version's tags (None keeps the
+        fact's; issue #73: keywords given with a correction were dropped)."""
         today = self._today()
         start = parse_day(valid_from, field="valid_from", today=today) if valid_from not in (None, "") else None
         text = (content or "").strip() if content is not None else None
@@ -605,16 +606,19 @@ class HistoryMixin:
                     out["entities_linked"] = [n for n in entities if isinstance(n, str) and n.strip()]
                 return out
             source = self._with_origin(source, cur)
-            seq = self._replace_current(fact_id, "corrected", new_text, fact["category"], fact["tags"],
+            new_tags = fact["tags"] if tags is None else tags
+            seq = self._replace_current(fact_id, "corrected", new_text, fact["category"], new_tags,
                                         valid_from=new_start, source=source, trust=fact["trust_score"])
             if new_text != fact["content"]:
                 # A new text is a new claim: what the wrong one earned (helpful marks, recalls, confirmations) is not
                 # its; it starts at its origin's trust, as a change does (F1 research, 2026-10-29). The wrong text's
                 # trust stays in its closed version: a revert brings it back. A new date alone keeps everything.
-                self._rewrite_fact(fact_id, new_text, fact["category"], fact["tags"], entities=entities,
+                self._rewrite_fact(fact_id, new_text, fact["category"], new_tags, entities=entities,
                                    old_category=fact["category"], reset_trust=True,
                                    trust=self.start_trust((source or {}).get("origin")))
                 self._drop_confirmations(fact_id)
+            elif new_tags != fact["tags"]:  # a new date alone, with keywords: the current fact and its index take them
+                self._write("UPDATE facts SET tags = ? WHERE fact_id = ?", (new_tags, fact_id))
             return {"fact_id": fact_id, "status": "corrected", "version": seq}
 
     def revert_fact(self, fact_id: int, screen=None) -> dict:

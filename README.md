@@ -253,9 +253,9 @@ A fact that stops being current is not overwritten. The agent says what happened
 
 | action | when | effect |
 |---|---|---|
-| `change {fact_id, content, valid_from?}` | it changed (moved, new job, new price) | the old text becomes a past version of the **same** fact id |
+| `change {fact_id, content, valid_from?, keywords?}` | it changed (moved, new job, new price) | the old text becomes a past version of the **same** fact id; the old text's keywords go unless given again (the result names those dropped) |
 | `end {fact_id, valid_to?}` | it no longer holds and nothing replaces it | the fact leaves the current store; its history stays |
-| `correct {fact_id, content?, valid_from?}` | it was wrong | the wrong version is never shown as the past |
+| `correct {fact_id, content?, valid_from?, keywords?}` | it was wrong | the wrong version is never shown as the past; keywords given replace the fact's, otherwise they stay |
 | `revert {fact_id}` | undo the last change, correction or end | the previous version is current again |
 | `merge {fact_id, from, keywords?, expect?}` | two or more facts say the same thing (0.19.0) | the copies leave the present into the keep; each keeps its history under its own id |
 | `forget {fact_id}` | the user asks to forget it | deleted for good, every version included; only a tombstone without text stays |

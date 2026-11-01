@@ -2,9 +2,22 @@
 
 ## Unreleased
 
-## 0.25.3 — 2026-10-31
+### Added (experimental)
+- **Presence gate for prefetch (`prefetch_presence_gate`, off by default; #72, issue #59).** With it on, a fact this
+  provider injected is held back past the six-turn repeat window only while the model can verifiably still see
+  it: its exact emitted line inside a `<memory-context>` block the core fenced, or its `(fact_id, content)`
+  in a `fact_store` result. Anything unclear falls back to the window. Off, recall is unchanged. Design and limits:
+  `docs/presence-gate.md`; duplicate counter `tools/duplicate_count.py`. Tests: `tests/test_holographic_presence_gate.py`.
 
 ### Fixed
+- **`change` says which keywords it dropped, and `correct` writes the keywords it is given** (#73, KostinPavel). A
+  `change` without `keywords` drops the old text's keywords (they describe the old text) but said nothing, so the
+  agent could not know to give the new text its own; the result now carries `keywords_cleared` with those keywords
+  and how to set new ones. A `correct` with `keywords` dropped them without a word: they now replace the fact's,
+  for a new text or a new start date alone, through the same write screen as on `add` and `change`, and the result
+  reports them as `add` / `change` / `update` do; a correction that changes nothing writes none and says so
+  (`keywords_not_set`). The tool description and the prompt now say both. Tests:
+  `tests/test_holographic_keywords_change_correct.py`.
 - **Tool results keep the fact's own words: raw Unicode instead of `\uXXXX` escapes.** All 33 `json.dumps` calls
   in the tool handlers defaulted to `ensure_ascii=True`, so a Cyrillic fact reached the model in every result
   transliterated as escape sequences («Ловушка» as `\u041b\u043e\u0432\u0443\u0448\u043a\u0430` in enrich/history
@@ -15,6 +28,10 @@
   back, since the tool executor logs the result before anything else reads it. Expected side effect: the core's
   size limits count characters, so Cyrillic results hit truncation or spillover less often. Tests:
   `tests/test_holographic_ensure_ascii.py`.
+
+## 0.25.3 — 2026-10-31
+
+### Fixed
 - **Starting the provider no longer imports numpy; the first search that scores by structure does.** PR #45 moved
   the module-level imports to first use, but the first use still came at start: opening the store asked
   `has_numpy()` (which imports) for its vector checks, the retriever asked it to settle its weights, and

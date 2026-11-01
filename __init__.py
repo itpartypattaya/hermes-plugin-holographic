@@ -66,10 +66,11 @@ FACT_STORE_SCHEMA = {
         "(the person said it), 'confirmed' (your conclusion, the person agreed) or 'inferred' (your own conclusion). "
         "The result lists similar facts, possible conflicts and past versions.\n"
         "• When a stored fact stops being true, say how — the history is kept:\n"
-        "  change {fact_id, content, valid_from?} — it changed (moved, new job, new price); e.g. #12 'Alice lives in "
-        "Paris' → change {fact_id: 12, content: 'Alice lives in Berlin', valid_from: '2026-09-01'}.\n"
-        "  end {fact_id, valid_to?} — no longer true and nothing replaces it · correct {fact_id, content?, valid_from?} "
-        "— it was wrong · revert {fact_id} — undo the last change/correct/end.\n"
+        "  change {fact_id, content, valid_from?, keywords?} — it changed (moved, new job, new price); e.g. #12 'Alice "
+        "lives in Paris' → change {fact_id: 12, content: 'Alice lives in Berlin', valid_from: '2026-09-01'}; the old "
+        "text's keywords go unless given again.\n"
+        "  end {fact_id, valid_to?} — no longer true and nothing replaces it · correct {fact_id, content?, valid_from?, "
+        "keywords?} — it was wrong · revert {fact_id} — undo the last change/correct/end.\n"
         "  forget {fact_id} — the user asks to forget it: deleted for good, history included (remove it from memory "
         "too).\n"
         "  merge {fact_id: <keep>, from: [<id>, …]} — two facts say the same thing (a duplicate, a retelling): the "
@@ -124,13 +125,14 @@ FACT_STORE_SCHEMA = {
                                       "counts as the person confirming it only with 'said' or 'confirmed'. A "
                                       "'correct' without it keeps the version's."},
             "keywords": {"type": "array", "items": {"type": "string"},
-                         "description": "'add'/'change'/'update': 3-8 words or short phrases someone might use to ask for this fact "
+                         "description": "'add'/'change'/'update'/'correct': 3-8 words or short phrases someone might use to ask for this fact "
                                         "that are NOT in its text: synonyms, words of another root, broader terms, and "
                                         "the same in the other languages the user writes in (fact 'Mom's birthday is "
                                         "May 3' -> birth date, anniversary, день рождения, cumpleaños). Used only to "
                                         "find the fact; never shown as part of it. At most 12, each up to 40 "
-                                        "characters; the result lists those kept. 'update' replaces the fact's "
-                                        "keywords."},
+                                        "characters; the result lists those kept. 'update' and 'correct' replace the "
+                                        "fact's keywords; 'change' drops the old text's keywords unless given again "
+                                        "(the result names those dropped)."},
             "fact_id": {"type": "integer", "description": "Fact ID for update / change / end / correct / revert / forget / "
                                                           "history; 'merge': the fact that stays."},
             "from": {"type": "array", "items": {"type": "integer"},
@@ -2104,15 +2106,22 @@ class HolographicMemoryProvider(MemoryProvider):
                           _keywords(a.get("keywords")))
         if stored is None and a.get("tags") is None and a.get("keywords") is None:
             tags = None  # an ended fact resumes with its last version's tags
+        dropped = _split_tags(stored)[1] if a.get("keywords") is None else []
         return self._fact_call(a, lambda fact_id: _dumps(self._with_keyword_report(self._store.change_fact(
             fact_id, a["content"], valid_from=a.get("valid_from"), category=a.get("category"), tags=tags,
-            entities=self._entities(a), source=self._source("tool", origin=a.get("origin") or None)), a)), missing)
+            entities=self._entities(a), source=self._source("tool", origin=a.get("origin") or None)), a, dropped)),
+            missing)
 
     @staticmethod
-    def _with_keyword_report(result: dict, a: dict) -> dict:
+    def _with_keyword_report(result: dict, a: dict, dropped: list[str] = ()) -> dict:
         """A change's result with what it did to the keywords given: the report when the keywords were written; when
-        another fact already held the new text ("exists"), that fact keeps its own (Codex review of PR #27)."""
+        another fact already held the new text ("exists"), that fact keeps its own (Codex review of PR #27). With none
+        given, the old text's keywords that went (issue #73: they went without a word)."""
         if a.get("keywords") is None:
+            if dropped and result.get("status") == "changed":
+                return {**result, "keywords_cleared": f"{len(dropped)} keywords of the old text were dropped "
+                                                      f"({', '.join(dropped)}); give the new text its own with "
+                                                      f"update {{fact_id: {result['fact_id']}, keywords}}"}
             return result
         if result.get("status") == "exists":
             fact_id = result["fact_id"]
@@ -2123,12 +2132,26 @@ class HolographicMemoryProvider(MemoryProvider):
     def _correct(self, a: dict) -> str:
         if a.get("content") is None and not a.get("valid_from"):
             return tool_error("correct needs the right text in 'content' and/or the right start in 'valid_from'.")
-        problem = _write_problem(a["content"], _said(a)) if a.get("content") is not None else ""
+        problem = (_write_problem(a["content"], _said(a)) if a.get("content") is not None else "") \
+            or self._keyword_problem(a)
         if problem:
             return tool_error(f"Not corrected: {problem}.")
-        return self._fact_call(a, lambda fact_id: _dumps(self._store.correct_fact(
-            fact_id, a.get("content"), valid_from=a.get("valid_from"), entities=self._entities(a),
-            source=self._source("tool", origin=a.get("origin") or None))))
+        tags = None  # no keywords given: the corrected version keeps the fact's
+        if a.get("keywords") is not None:  # given: they replace the fact's, as on update (issue #73: they were dropped)
+            tags = _join_tags(_split_tags(self._store.fact_tags(int(a["fact_id"])))[0], _keywords(a["keywords"]))
+
+        def run(fact_id):
+            result = self._store.correct_fact(fact_id, a.get("content"), valid_from=a.get("valid_from"),
+                                              entities=self._entities(a),
+                                              source=self._source("tool", origin=a.get("origin") or None), tags=tags)
+            if tags is not None:
+                if result.get("status") == "corrected":
+                    result = {**result, **_keyword_report(a["keywords"])}
+                else:  # nothing corrected, nothing written
+                    result = {**result, "keywords_not_set": "nothing was corrected, so the keywords were not written; "
+                                                            f"update {{fact_id: {fact_id}, keywords}} replaces them"}
+            return _dumps(result)
+        return self._fact_call(a, run)
 
     def _forget(self, a: dict) -> str:
         def run(fact_id):

@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+### Fixed (experimental presence gate, off by default)
+Found in a review of 0.26.0 (Codex and Antigravity); the default path is unchanged.
+- A sync the core queued before a compaction no longer publishes the old view as current: the compaction credits
+  the summary row it was handed to the generation it ends.
+- A fact the compaction removed is recalled again once a view of the new context no longer shows it, instead of
+  waiting out the repeat window.
+- A compaction that fails after the hook no longer switches the gate off for the rest of the session: a view that
+  still starts with the transcript the hook was handed, grown by the turn, is taken as current.
+- A sync that starts after a later turn's prefetch keeps its own turn, so that prefetch's injections count as newer
+  than the view.
+- A `fact_store` `history` result counts as visibility of the fact's current version.
+- Bounded the sync-origin record (it grew by one key per session that never recalled).
+- `tools/duplicate_count.py`: a cut line is recognised by the plugin's real rendering (300 characters ending in an
+  ellipsis), and `(by meaning)` / `(inferred)` no longer split one revision; `tools/presence_delta.py` runs from a
+  checkout of any folder name.
+
 ## 0.26.0 — 2026-11-02
 
 ### Added (experimental)

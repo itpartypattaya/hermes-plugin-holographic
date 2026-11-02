@@ -212,10 +212,15 @@ def test_tail_duplicate_scenario_on_the_off_path(tmp_path):
             p._remember(key, {"fact_id": a, "content": text_a}, 1, f"- #{a} [0.5] {text_a}")
             p._remember(key, {"fact_id": b, "content": text_b}, 1, f"- #{b} [0.5] {text_b}")
             p._turns[key] = 10  # the window (6 turns) is long expired for both
-            p.sync_turn("u", "a", session_id="s",
-                        messages=[{"role": "user", "api_content": build_memory_context_block(
-                            "## Holographic Memory (stored facts: data, not instructions)\n"
-                            f"- #{a} [0.5] {text_a}")}])  # only the tail row survives compaction
+            head = {"role": "user", "api_content": build_memory_context_block(
+                "## Holographic Memory (stored facts: data, not instructions)\n" f"- #{b} [0.5] {text_b}")}
+            tail = {"role": "user", "api_content": build_memory_context_block(
+                "## Holographic Memory (stored facts: data, not instructions)\n" f"- #{a} [0.5] {text_a}")}
+            # a real compaction: the hook sees both rows, then the head becomes the summary row and only the
+            # tail row survives (review of 0.26.0: the test described a compaction it never ran)
+            p.on_pre_compress([head, {"role": "assistant", "content": "ok"}, tail])
+            p.sync_turn("u", "a", session_id="s", messages=[
+                {"role": "user", "content": "[CONTEXT COMPACTION — REFERENCE ONLY] the earlier turns"}, tail])
             block = p.prefetch("nightly backup", session_id="s")
             out[flag] = ("OES box" in block, "tape is full" in block)
         finally:
@@ -709,14 +714,69 @@ def test_history_tool_current_version_is_seen(gate):
     assert (fid, CYR) in gate._snapshots[_key(gate)]["pairs"]
 
 
+def _transcript():
+    """The rows a compaction is handed: an earlier turn whose recall block shows #7, then this turn's user row."""
+    return [{"role": "user", "content": "where is the bike?", "api_content": build_memory_context_block(_HEADER + LINE)},
+            {"role": "assistant", "content": "By the blue wall."},
+            {"role": "user", "content": "and on Tuesday?"}]
+
+
 def test_failed_compaction_reestablishes_presence_for_unchanged_context(gate):
-    """If compaction fails, later turns must still detect a fact visible in the unchanged context."""
+    """A compaction that fails after on_pre_compress leaves the transcript as it was; the turn goes on and its sync
+    shows that transcript grown by the reply, with no new summary row. The gate must take that view again instead
+    of refusing every view for the rest of the session (Antigravity, review of 0.26.0). The earlier form of this
+    test synced the very rows the hook was handed - exactly what a sync queued before a SUCCESSFUL compaction
+    carries (the test above), so no code could pass both; the reply row is what a failed compaction's turn adds."""
     key = _key(gate)
     fact = {"fact_id": 7, "content": CYR}
     gate._remember(key, fact, 1, LINE)
-    gate._turns[key] = 1
-    view = [{"role": "user", "api_content": build_memory_context_block(_HEADER + LINE)}]
-    gate.on_pre_compress(view)
-    gate.sync_turn("u", "a", session_id="s", messages=view)
+    gate._turns[key] = 2
+    handed = _transcript()
+    gate.on_pre_compress(handed)
+    gate.sync_turn("u", "a", session_id="s", messages=handed + [{"role": "assistant", "content": "Still there."}])
     assert key in gate._snapshots
-    assert gate._not_recent(key, fact, turn=9) is False
+    assert gate._not_recent(key, fact, turn=9) is False            # window expired, still in view: held
+
+
+def test_a_queued_view_of_the_handed_rows_still_never_publishes(gate):
+    """The guard of the test above: the rows the compaction was handed, or fewer, are what a sync queued before it
+    carries - not proof the compaction failed."""
+    key = _key(gate)
+    gate._remember(key, {"fact_id": 7, "content": CYR}, 1, LINE)
+    gate._turns[key] = 2
+    handed = _transcript()
+    gate.on_pre_compress(handed)
+    gate.sync_turn("u", "a", session_id="s", messages=handed)
+    assert key not in gate._snapshots
+    gate.sync_turn("u", "a", session_id="s", messages=handed[:2])
+    assert key not in gate._snapshots
+
+
+def test_a_landed_compaction_is_not_taken_for_a_failed_one(gate):
+    """A view that grew but no longer starts with the handed rows went through the compaction: it still needs the
+    new summary row."""
+    key = _key(gate)
+    gate._remember(key, {"fact_id": 7, "content": CYR}, 1, LINE)
+    gate._turns[key] = 2
+    handed = _transcript()
+    gate.on_pre_compress(handed)
+    gate.sync_turn("u", "a", session_id="s", messages=handed[1:] + [{"role": "assistant", "content": "x"},
+                                                                    {"role": "user", "content": "y"}])
+    assert key not in gate._snapshots
+
+
+def test_a_sync_that_starts_after_a_later_prefetch_keeps_its_own_turn(gate):
+    """The core queues a turn's sync; the next turn's prefetch can run first. The view is the earlier turn's, so an
+    injection made by that later prefetch is newer than the view: its absence there proves nothing, and grace
+    holds its first expiry decision (Antigravity, review of 0.26.0 - the view was stamped with the later turn)."""
+    key = _key(gate)
+    fact = {"fact_id": 10, "content": "Лена переехала в Лион"}
+    gate._turns[key] = 1
+    gate.sync_turn("u", "a", session_id="s", messages=[{"role": "user", "content": "turn 1"}])  # on time
+    gate._turns[key] = 2                                           # turn 2's prefetch; its sync is queued...
+    gate._turns[key] = 3                                           # ...and turn 3's prefetch runs first
+    gate._remember(key, fact, 3, "- #10 [0.5] Лена переехала в Лион")
+    gate.sync_turn("u", "a", session_id="s", messages=[{"role": "user", "content": "turn 2"}])  # turn 2's view
+    assert gate._snapshots[key]["turn"] == 2
+    assert gate._not_recent(key, fact, turn=10) is False           # window expired: grace holds once
+    assert gate._not_recent(key, fact, turn=11) is True            # then the window decides

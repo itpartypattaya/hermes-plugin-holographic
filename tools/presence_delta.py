@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import importlib.util
 import os
 import shutil
 import statistics
@@ -42,7 +43,15 @@ for _p in (str(_AGENT), str(_REPO.parent)):
         sys.path.insert(0, _p)
 
 from agent.memory_context import build_memory_context_block  # noqa: E402
-from hermes_plugin_holographic import _PREFETCH_HEADER, HolographicMemoryProvider  # noqa: E402
+
+# Worktrees may have any directory name; load this checkout as a package with its relative imports.
+_spec = importlib.util.spec_from_file_location(
+    "hermes_plugin_holographic", _REPO / "__init__.py", submodule_search_locations=[str(_REPO)])
+_package = importlib.util.module_from_spec(_spec)
+sys.modules[_spec.name] = _package
+_spec.loader.exec_module(_package)
+_PREFETCH_HEADER = _package._PREFETCH_HEADER
+HolographicMemoryProvider = _package.HolographicMemoryProvider
 
 _FACT = "The nightly backup number {0} runs from box {0}."
 _QUERIES = ("nightly backup", "backup runs", "which box runs the backup")

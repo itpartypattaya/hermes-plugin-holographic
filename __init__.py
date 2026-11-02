@@ -504,6 +504,13 @@ def _iter_fact_pairs(payload):
         if ("fact_id" in payload and isinstance(payload.get("content"), str)
                 and isinstance(payload["fact_id"], (int, str))):  # a scalar id: unhashable ids yield nothing
             yield payload["fact_id"], payload["content"]
+        # A history result holds the parent fact_id outside its version entries. Only its current version
+        # demonstrates visibility of the current claim; an old version must not suppress a new one.
+        fid, versions = payload.get("fact_id"), payload.get("versions")
+        if isinstance(fid, (int, str)) and isinstance(versions, list) and payload.get("current") is True:
+            for version in versions:
+                if isinstance(version, dict) and version.get("status") == "current" and isinstance(version.get("content"), str):
+                    yield fid, version["content"]
         for value in payload.values():
             yield from _iter_fact_pairs(value)
     elif isinstance(payload, list):
@@ -726,7 +733,10 @@ class HolographicMemoryProvider(MemoryProvider):
         self._presence_grace = 0  # suppressions by a snapshot that predates the injection (lag measurement)
         self._presence_lag_events = 0  # condition 3: syncs that started after a LATER turn's prefetch already ran
         self._presence_lag_turns = 0  # how many turns those syncs were behind, summed (measured apart from grace)
-        self._last_sync_origin: dict[str, int] = {}  # prefetch turn at which the previous sync started
+        # prefetch turn at which the previous sync started; a bounded LRU of keys: a session that never recalls
+        # never reaches the session eviction in _remember
+        self._last_sync_origin: OrderedDict[str, int] = OrderedDict()
+        self._compacted_at: dict[str, int] = {}  # key -> prefetch turn of its last compaction (gate on)
         self._state_epoch = 0  # advances when tracked state is cleared: a snapshot captured earlier must not publish
         self._summary_signature: dict[str, str] = {}  # key -> signature of the last summary row a publish credited
         self._graced: dict[str, dict] = {}  # key -> revision -> prefetch turn whose decision grace answered
@@ -1513,6 +1523,8 @@ class HolographicMemoryProvider(MemoryProvider):
         keep = seen is None or turn - seen > self._repeat_turns
         if keep and seen is not None and self._presence_gate and self._presence_holds(session, fact, seen, turn):
             keep = False  # injected by us, window expired, still held: a repeat (issue #59)
+        elif not keep and self._presence_gate and self._compacted_away(session, fact, seen):
+            keep = True  # inside the window, but a view of the new context proves the compaction took it
         if not keep:
             self._observe("rejected_repeat", [fact])
         return keep
@@ -1540,10 +1552,27 @@ class HolographicMemoryProvider(MemoryProvider):
             if decided_at == turn:
                 return True  # same prefetch turn: a later call site must get the same answer (review round 2)
             # grace spent for this revision: only an earlier emission's own line still counts as visibility below
+        return self._visible(session, fact, snapshot)
+
+    def _visible(self, session: str, fact: dict, snapshot: dict) -> bool:
         emitted = self._emitted.get(session, {}).get(_revision(fact), ())
         if any(line in snapshot["lines"] for line in emitted):
             return True
         return (fact.get("fact_id"), fact.get("content") or "") in snapshot["pairs"]
+
+    def _compacted_away(self, session: str, fact: dict, injected_turn: int) -> bool:
+        """Gate off, a compaction clears the record and the fact can come back next turn; gate on, the record is
+        kept (condition 0), so the repeat window alone would keep a fact the compaction removed out of recall for
+        up to prefetch_repeat_turns. Released inside the window only on proof: injected before the last
+        compaction, and a snapshot of THIS generation (its summary row checked at publish), taken at or after the
+        injection, no longer shows it. No such snapshot yet: the window holds, as before."""
+        compacted = self._compacted_at.get(session)
+        snapshot = self._snapshots.get(session)
+        if compacted is None or snapshot is None or injected_turn > compacted or injected_turn > snapshot["turn"]:
+            return False
+        if not snapshot["generation"] or snapshot["generation"] != self._generations.get(session, 0):
+            return False
+        return not self._visible(session, fact, snapshot)
 
     def _remember(self, session: str, fact: dict, turn: int, line: str | None = None) -> None:
         facts = self._injected.setdefault(session, OrderedDict())
@@ -1577,6 +1606,7 @@ class HolographicMemoryProvider(MemoryProvider):
             self._summary_signature.pop(dropped, None)
             self._graced.pop(dropped, None)
             self._last_sync_origin.pop(dropped, None)
+            self._compacted_at.pop(dropped, None)
 
     @_serialized
     def recall_status(self):
@@ -1668,6 +1698,9 @@ class HolographicMemoryProvider(MemoryProvider):
                 logger.debug("holographic: sync lag: started %d turn(s) after the last sync (prefetch turn %d, "
                              "last sync at turn %d)", missed, origin, previous)
             self._last_sync_origin[key] = origin
+            self._last_sync_origin.move_to_end(key)
+            while len(self._last_sync_origin) > _MAX_TRACKED_SESSIONS:
+                self._last_sync_origin.popitem(last=False)
             snapshot = self._snapshot_of(messages, session_id=session_id) if messages else None
             self._sync_turn(user_content, assistant_content, session_id=session_id, messages=messages,
                             turn_author=turn_author, snapshot=snapshot)
@@ -1757,6 +1790,7 @@ class HolographicMemoryProvider(MemoryProvider):
             dropped_key, _ = self._snapshots.popitem(last=False)
             self._summary_signature.pop(dropped_key, None)  # no residue: a stale signature would refuse
             self._generations.pop(dropped_key, None)        # future views of a key nothing tracks
+            self._compacted_at.pop(dropped_key, None)
 
     @_serialized
     def _sync_turn(self, user_content: str, assistant_content: str, *, session_id: str = "", messages=None,
@@ -1805,11 +1839,18 @@ class HolographicMemoryProvider(MemoryProvider):
             # Condition 0 (issue #59): clearing the record here would forget the tail's facts before the gate can
             # see them - advance the compaction generation and mark the snapshots stale instead; the next snapshot
             # decides what left the context.
+            # The messages compacted here show the summary row this compaction replaces: credit it to the
+            # generation now ending, so a sync the core queued before the compaction (its copy of the view still
+            # shows that row) cannot publish under the new generation as if it were current (review of 0.26.0).
+            old_summary = _summary_row([m for m in messages if isinstance(m, dict)]) if messages else None
             keys = {k for k in list(self._injected) + list(self._snapshots)
                     if k.split("|", 1)[0] == self._session_id}
             for key in keys:
                 self._snapshots.pop(key, None)
+                if old_summary is not None:
+                    self._summary_signature[key] = (self._generations.get(key, 0), old_summary)
                 self._generations[key] = self._generations.get(key, 0) + 1
+                self._compacted_at[key] = self._turns.get(key, 0)
         else:
             for key in [k for k in self._injected if k.split("|", 1)[0] == self._session_id]:
                 self._injected.pop(key, None)
@@ -1837,7 +1878,7 @@ class HolographicMemoryProvider(MemoryProvider):
             for key in [k for k in holder if k.split("|", 1)[0] in sessions]:
                 holder.pop(key, None)
         for plain in (self._turns, self._generations, self._summary_signature, self._graced,
-                      self._last_sync_origin):
+                      self._last_sync_origin, self._compacted_at):
             for key in [k for k in plain if k.split("|", 1)[0] in sessions]:
                 plain.pop(key, None)
 

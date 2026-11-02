@@ -11,6 +11,8 @@
   earlier attempt was never written, still records an attempt. If the earlier block never reached the model (a
   prefetch the core timed out), the refresh arrives without an attempt id; the plugin cannot tell.
 
+## 0.26.1 — 2026-11-03
+
 ### Fixed (experimental presence gate, off by default)
 Found in a review of 0.26.0 (Codex and Antigravity); the default path is unchanged.
 - A sync the core queued before a compaction no longer publishes the old view as current: the compaction credits

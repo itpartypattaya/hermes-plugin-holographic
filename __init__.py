@@ -733,6 +733,9 @@ class HolographicMemoryProvider(MemoryProvider):
         self._pending: dict[str, Counter] = {}  # store key -> buffered recall counts for THAT database
         # session|store -> {(fact_id, content hash): prefetch turn it was last injected}; bounded LRU of sessions.
         self._injected: OrderedDict[str, OrderedDict] = OrderedDict()
+        # session|store -> revisions an injection recorded a memory attempt for: only those can be refreshed without
+        # a new attempt (a failed journal write leaves the revision to record on its next injection).
+        self._receipted: OrderedDict[str, set] = OrderedDict()
         # Presence gate (issue #59): compaction generation per session|store, the context snapshot of the last
         # sync_turn, and the exact line each tracked injection emitted (filled only while the gate is on).
         self._generations: dict[str, int] = {}
@@ -1185,6 +1188,7 @@ class HolographicMemoryProvider(MemoryProvider):
                          + self._recall_suffix(sources.get(f["fact_id"])) for f in fresh]
                 if self._max_tokens:
                     fresh, lines = self._within_budget(fresh, lines)
+            refresh = self._refresh_only(key, fresh)  # read before _remember moves the injection turns
             # only what goes into the block counts as recalled: a skipped fact may come next turn; the line
             # rides along for the presence gate (the exact emitted form, cut and suffixes included)
             for fact, line in zip(fresh, lines):
@@ -1196,7 +1200,14 @@ class HolographicMemoryProvider(MemoryProvider):
             if not fresh:  # nothing emitted: no receipt, no journal transaction on a quiet turn (0.20.2)
                 self._experience_stages = []
                 return ""
-            attempt = self._record_experience("prefetch", fresh)
+            if refresh:  # the earlier block's attempt still names these facts; a new one would keep a covered block alive
+                self._experience_stages = []
+                attempt = None
+            else:
+                attempt = self._record_experience("prefetch", fresh)
+                if attempt:
+                    self._receipted.setdefault(key, set()).update(_revision(f) for f in fresh)
+                    self._receipted.move_to_end(key)
             self._counted(fresh)
             return _PREFETCH_HEADER + "\n" + "\n".join(lines) + (f"{_ATTEMPT_PREFIX}{attempt}" if attempt else "")
         except Exception as e:  # noqa: BLE001 - recall never takes the turn down; _recall_failed says why
@@ -1538,6 +1549,25 @@ class HolographicMemoryProvider(MemoryProvider):
             self._observe("rejected_repeat", [fact])
         return keep
 
+    def _refresh_only(self, session: str, facts: list[dict]) -> bool:
+        """Every fact is one this session already injected with a recorded attempt, and nothing showed it leaving: no
+        compaction since (gate off, a compaction clears the record), and no presence view to check (gate on, a view that
+        let the fact through says it is not visible). Whether that earlier block reached the model (a prefetch the core
+        timed out, a turn that sent no recall) is not known here; such a refresh arrives without an attempt id. The window's safety net re-delivers such facts in case the context was trimmed
+        silently; if the earlier block is still there, the core drops the repeated bullets
+        (NousResearch/hermes-agent#148069) and that block's attempt line still names them, so a refresh records no
+        attempt: a new attempt line would be the one line the window does not carry, and keep a covered block alive."""
+        if not facts or session in self._snapshots:
+            return False
+        injected = self._injected.get(session, {})
+        receipted = self._receipted.get(session, ())
+        compacted = self._compacted_at.get(session)
+        for fact in facts:
+            seen = injected.get(_revision(fact))
+            if seen is None or _revision(fact) not in receipted or (compacted is not None and seen <= compacted):
+                return False
+        return True
+
     def _presence_holds(self, session: str, fact: dict, injected_turn: int, turn: int) -> bool:
         """Presence gate (issue #59): hold back what this key injected when the model can still read it - the exact
         line the injection emitted is whole in a `<memory-context>` block of the snapshot, or the fact's
@@ -1604,12 +1634,15 @@ class HolographicMemoryProvider(MemoryProvider):
             dropped_rev, _ = facts.popitem(last=False)
             if session in self._emitted:
                 self._emitted[session].pop(dropped_rev, None)
+            if session in self._receipted:
+                self._receipted[session].discard(dropped_rev)
             if session in self._graced:
                 self._graced[session].pop(dropped_rev, None)  # the evicted revision's grace mark goes with it
         while len(self._injected) > _MAX_TRACKED_SESSIONS:
             dropped, _ = self._injected.popitem(last=False)
             self._turns.pop(dropped, None)
             self._emitted.pop(dropped, None)
+            self._receipted.pop(dropped, None)
             self._snapshots.pop(dropped, None)
             self._generations.pop(dropped, None)
             self._summary_signature.pop(dropped, None)
@@ -1885,6 +1918,7 @@ class HolographicMemoryProvider(MemoryProvider):
             for key in [k for k in self._injected if k.split("|", 1)[0] == self._session_id]:
                 self._injected.pop(key, None)
                 self._emitted.pop(key, None)
+                self._receipted.pop(key, None)
                 self._snapshots.pop(key, None)
         self._flush_counts()
         return ""
@@ -1904,7 +1938,7 @@ class HolographicMemoryProvider(MemoryProvider):
         """All presence state for keys of the given sessions - injected turns, emitted lines, snapshots,
         generations, summary attributions, grace marks and sync-origin bindings dropped together, so nothing
         survives a reset (issue #59)."""
-        for holder in (self._injected, self._emitted, self._snapshots):
+        for holder in (self._injected, self._emitted, self._receipted, self._snapshots):
             for key in [k for k in holder if k.split("|", 1)[0] in sessions]:
                 holder.pop(key, None)
         for plain in (self._turns, self._generations, self._summary_signature, self._graced,

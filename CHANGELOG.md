@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Changed
+- A prefetch that only refreshes facts this session already injected with a recorded attempt (the repeat window
+  expired, and no compaction or view of the context showed them leaving) records no memory attempt and carries no
+  `Memory attempt:` line. The earlier block and its attempt line are still what the model reads; with the core's
+  window dedupe (NousResearch/hermes-agent#148069) the repeated bullets are dropped, and the new attempt line was the
+  only thing left, keeping a heading-only block alive every few turns. Any new fact in the block, or a fact whose
+  earlier attempt was never written, still records an attempt. If the earlier block never reached the model (a
+  prefetch the core timed out), the refresh arrives without an attempt id; the plugin cannot tell.
+
 ### Fixed (experimental presence gate, off by default)
 Found in a review of 0.26.0 (Codex and Antigravity); the default path is unchanged.
 - A sync the core queued before a compaction no longer publishes the old view as current: the compaction credits

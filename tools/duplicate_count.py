@@ -4,8 +4,8 @@ A key is ``(session, fact_id, revision_text)``: the revision text is the line's 
 revisions of one fact are two keys — differing text under one ``#N`` is **not** a duplicate but a fact whose
 wording changed (counted separately, as information). A duplicate is one revision showing in two or more rows
 that are live now. Lines are read structurally only: ``<memory-context>`` blocks and the plugin's
-``- #N [trust] `` line shape, never prose; a cut rendering (``… (cut)``) counts as its own text, because that
-is what the message actually carried. Twins (both rows share the same ``api_content``) stay in the count, per
+``- #N [trust] `` line shape, never prose. A cut rendering (prefetch cuts a fact to 300 characters, the last one
+an ellipsis) is left out: two revisions that share their start render the same line, so it names no revision. Twins (both rows share the same ``api_content``) stay in the count, per
 the maintainer. The cause between a pair's rows — a summary row (``_compressed_summary = 1``) of the **same
 session** strictly between the two row ids means compaction-preceded, otherwise window expiry ("preceded by",
 not "caused by").
@@ -32,6 +32,8 @@ from pathlib import Path
 _BLOCK = re.compile(r"<memory-context>(.*?)</memory-context>", re.S)
 _LINE = re.compile(r"^- #(\d+) \[[^\]]*\] (.*)$", re.M)
 _SUFFIX = re.compile(r" \(recorded [^)]*\)$")  # the recall suffix is presentation, not the revision
+_MARKS = re.compile(r"(?: \((?:by meaning|inferred)\))+$")  # the line's other suffixes, before the recall one
+_CUT_CHARS = 300  # the plugin's _PREFETCH_LINE_CHARS: a cut text is exactly this long and ends in an ellipsis
 
 
 def _default_db() -> Path:
@@ -77,9 +79,11 @@ def main() -> int:
         for block in _BLOCK.findall(api):
             for fid, text in _LINE.findall(block):
                 text = text.strip()
-                if text.endswith("(cut)"):
-                    continue  # a cut rendering carries no stable revision text: it must never merge
                 text = _SUFFIX.sub("", text)  # suffix changes do not split one revision either
+                core = _MARKS.sub("", text)
+                if len(core) == _CUT_CHARS and core.endswith("\u2026"):
+                    continue  # a cut rendering carries no stable revision text: it must never merge
+                text = core
                 injections[(sess, int(fid), text)].append((rid, active, api))
                 if active == 1:  # the wording info is over LIVE rows only (its label says so)
                     texts_per_fact[(sess, int(fid))].add(text)

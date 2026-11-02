@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Changed
+- A prefetch that only refreshes facts this session already injected with a recorded attempt (the repeat window
+  expired, and no compaction or view of the context showed them leaving) records no memory attempt and carries no
+  `Memory attempt:` line. The earlier block and its attempt line are still what the model reads; with the core's
+  window dedupe (NousResearch/hermes-agent#148069) the repeated bullets are dropped, and the new attempt line was the
+  only thing left, keeping a heading-only block alive every few turns. Any new fact in the block, or a fact whose
+  earlier attempt was never written, still records an attempt. If the earlier block never reached the model (a
+  prefetch the core timed out), the refresh arrives without an attempt id; the plugin cannot tell.
+
 ## 0.26.1 — 2026-11-03
 
 ### Fixed (experimental presence gate, off by default)

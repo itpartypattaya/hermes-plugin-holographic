@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.26.2 — 2026-11-03
+
 ### Changed
 - A prefetch that only refreshes facts this session already injected with a recorded attempt (the repeat window
   expired, and no compaction or view of the context showed them leaving) records no memory attempt and carries no

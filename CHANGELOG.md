@@ -142,7 +142,7 @@
 - **A short Russian name in another case no longer drops a fact found by meaning.** `names_fit` keeps a fact offered
   on meaning alone only when it mentions whoever the message names, in any word form; «Ева» / «Еву», «Ира» / «Иру»,
   «Оля» / «Олю», «Яна» / «Яне», «Аня» / «Ане» share only a two-letter stem, which plain Russian text keeps out of a
-  word's keys (`_MIN_STEM`), so the fact read as being about someone else. Seen in the holographic-memory bridge
+  word's keys (`_MIN_STEM`), so the fact read as being about someone else. Seen in holographic-memory
   (engine of 0.24.0, text-embedding-3-small): «Где Ева будет учиться в Чиангмае?» left out the store's closest fact,
   «…устроить Еву в школу…» (cosine 0.70, z 3.97 over the bar of 3.67). A name now also meets a word of the fact written
   with a capital that shares a stem with it read as a name (`text.name_forms`), whether or not the store knows the

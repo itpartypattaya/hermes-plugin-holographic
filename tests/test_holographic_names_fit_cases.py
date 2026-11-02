@@ -1,6 +1,6 @@
 """A fact offered on meaning alone mentions a short Russian name in another case than the message (2026-10-30).
 
-The holographic-memory bridge, 2026-10-30, search by meaning on (text-embedding-3-small): «Где Ева будет учиться в
+The holographic-memory plugin, 2026-10-30, search by meaning on (text-embedding-3-small): «Где Ева будет учиться в
 Чиангмае?» left out «…семья хочет устроить Еву в школу…» (entities ["Ева"]), although it was the store's closest fact
 (cosine 0.70, z 3.97 over the bar of 3.67). names_fit asks that a fact offered on meaning alone hold every name the
 message names, in any word form; «Ева» and «Еву» share only the stem «ев», which plain Russian text drops as a key

@@ -91,3 +91,19 @@ def test_recall_marks_do_not_split_one_revision(tmp_path):
     dup_keys, multi = _run(tmp_path, rows)
     assert dup_keys == 2
     assert multi == 0
+
+
+def test_a_recall_suffix_without_a_date_does_not_split_one_revision(tmp_path):
+    """A fact without a recorded-on date renders its source suffix without "recorded": " (this chat)",
+    " (Alice · another chat)". It is presentation like the dated one and must not split one revision."""
+    def block(lines):
+        return "<memory-context>\n" + "\n".join(lines) + "\n</memory-context>"
+
+    rows = [
+        (1, "s", 1, block(["- #6 [0.5] Lena moved to Lyon (this chat)"])),
+        (2, "s", 1, block(["- #6 [0.5] Lena moved to Lyon (Alice · another chat)"])),
+        (3, "s", 1, block([f"- #6 [0.5] Lena moved to Lyon{_SUFFIX}"])),
+    ]
+    dup_keys, multi = _run(tmp_path, rows)
+    assert dup_keys == 1
+    assert multi == 0

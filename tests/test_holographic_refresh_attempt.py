@@ -177,3 +177,38 @@ def test_a_failed_attempt_after_a_compaction_does_not_leave_the_old_receipt(make
 
     assert FACT in block and "Memory attempt:" in block  # the journal is back: this delivery records its attempt
     assert len(attempts(p)) == recorded + 1
+
+
+def test_with_a_view_after_the_compaction_the_delivery_records_its_attempt(make):
+    """Guard (review of 0.26.3): the test above runs without any view of the context; with the gate on the core
+    also syncs after the compaction. A view that no longer shows the fact makes its return a real delivery, which
+    records an attempt — with or without the receipt left from before."""
+    p = make(prefetch_presence_gate="true")
+    add(p, FACT)
+    assert "Memory attempt:" in p.prefetch(QUERY, session_id="s")
+    p.on_pre_compress([{"role": "user", "content": QUERY}])
+    p.sync_turn("u", "a", session_id="s", messages=[
+        {"role": "user", "content": "[CONTEXT COMPACTION — REFERENCE ONLY] the earlier turns"}])
+    expire_window(p)
+
+    block = p.prefetch(QUERY, session_id="s")
+
+    assert FACT in block and "Memory attempt:" in block
+
+
+def test_a_refresh_within_the_token_budget_does_not_pay_for_an_attempt_line(make):
+    """A refresh carries no attempt line, so the budget must not keep room for one: with exactly the header and
+    the fact's line, the refresh delivers the fact instead of dropping it."""
+    from hermes_plugin_holographic import _PREFETCH_HEADER, approx_tokens
+
+    p = make()
+    add(p, FACT)
+    first = p.prefetch(QUERY, session_id="s")
+    assert FACT in first and "Memory attempt:" in first
+    line = next(x for x in first.split("\n") if FACT in x)
+    p._max_tokens = approx_tokens(_PREFETCH_HEADER) + approx_tokens("\n" + line)
+    expire_window(p)
+
+    refresh = p.prefetch(QUERY, session_id="s")
+
+    assert FACT in refresh and "Memory attempt:" not in refresh

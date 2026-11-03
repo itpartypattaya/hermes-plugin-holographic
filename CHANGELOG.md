@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.26.4 — 2026-11-03
+
 ### Fixed
 Found in an Antigravity review of 0.26.1–0.26.3; with the presence gate off (the default) nothing changes except the
 last two items.

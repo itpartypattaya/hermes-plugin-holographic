@@ -148,3 +148,32 @@ def test_with_the_gate_on_a_fact_shown_gone_records_its_attempt(make):
     block = p.prefetch(QUERY, session_id="s")
 
     assert FACT in block and "Memory attempt:" in block
+
+
+def test_a_failed_attempt_after_a_compaction_does_not_leave_the_old_receipt(make, monkeypatch):
+    """Gate on: the fact was injected with an attempt, a compaction followed, and its re-delivery could not write
+    its attempt (the journal was locked). The old receipt names the block before the compaction, which may be gone;
+    kept, it made every later delivery of the fact a "refresh", and the fact never got an attempt again
+    (Codex review of #79)."""
+    p = make(prefetch_presence_gate="true")
+    add(p, FACT)
+    first = p.prefetch(QUERY, session_id="s")
+    assert "Memory attempt:" in first
+    p.on_pre_compress([{"role": "user", "content": QUERY}])
+    expire_window(p)
+    written = p._store.record_attempt
+
+    def locked(*_args, **_kwargs):
+        raise sqlite3.OperationalError("database is locked")
+
+    monkeypatch.setattr(p._store, "record_attempt", locked)
+    redelivery = p.prefetch(QUERY, session_id="s")
+    assert FACT in redelivery and "Memory attempt:" not in redelivery  # the write failed: no id to show
+    monkeypatch.setattr(p._store, "record_attempt", written)
+    recorded = len(attempts(p))
+
+    expire_window(p)
+    block = p.prefetch(QUERY, session_id="s")
+
+    assert FACT in block and "Memory attempt:" in block  # the journal is back: this delivery records its attempt
+    assert len(attempts(p)) == recorded + 1

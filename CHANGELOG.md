@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Fixed
+- With the task-outcome journal and the presence gate on, a fact whose re-delivery after a compaction could not write
+  its attempt (a locked journal) kept the receipt of the block before the compaction, so every later delivery counted
+  as a refresh and the fact never recorded an attempt again. A delivery that needed an attempt and got none now drops
+  that receipt; the next delivery records its own (review of #79).
+
 ## 0.26.2 — 2026-11-03
 
 ### Changed

@@ -1205,9 +1205,13 @@ class HolographicMemoryProvider(MemoryProvider):
                 attempt = None
             else:
                 attempt = self._record_experience("prefetch", fresh)
+                receipts = self._receipted.setdefault(key, set())
                 if attempt:
-                    self._receipted.setdefault(key, set()).update(_revision(f) for f in fresh)
-                    self._receipted.move_to_end(key)
+                    receipts.update(_revision(f) for f in fresh)
+                else:  # a delivery that needed an attempt and got none: an older receipt no longer names what the
+                    # model reads (a compaction came between), so the next delivery records its own (#79 review)
+                    receipts.difference_update(_revision(f) for f in fresh)
+                self._receipted.move_to_end(key)
             self._counted(fresh)
             return _PREFETCH_HEADER + "\n" + "\n".join(lines) + (f"{_ATTEMPT_PREFIX}{attempt}" if attempt else "")
         except Exception as e:  # noqa: BLE001 - recall never takes the turn down; _recall_failed says why

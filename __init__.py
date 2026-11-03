@@ -22,7 +22,7 @@ import re
 import threading
 import time
 import unicodedata
-from collections import Counter, OrderedDict
+from collections import Counter, OrderedDict, deque
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -400,6 +400,7 @@ _PREFETCH_LINE_CHARS = 300
 _COUNT_FLUSH_AT = 25  # buffered recall counts are written in one go at this many, and at session boundaries
 _MAX_TRACKED_SESSIONS, _MAX_TRACKED_FACTS = 16, 512
 _MAX_EMITTED_PER_REV = 8
+_MAX_TURN_QUERIES = 16  # prefetch turns remembered per key: a sync further behind than this falls back to counting
 _MAX_SNAPSHOT_LINES = 1024  # a snapshot's line set is bounded: over the cap this turn publishes nothing
 _MAX_SNAPSHOT_PAIRS = 1024  # (reject -> drop -> today's window) instead of keeping an unbounded set  # emitted lines kept per revision: the renderings a session can show
 _MAX_OPEN_STORES = 16  # per-user stores kept open; the least recently used one is closed beyond this
@@ -496,6 +497,13 @@ def _summary_row(messages: list) -> str | None:
         elif _SUMMARY_MARK in text and earliest is None:
             earliest = hashlib.sha1(text.encode()).hexdigest()[:12]
     return flagged or earliest
+
+
+def _query_digest(text: str) -> str:
+    """Digest of a turn's message as prefetch and sync_turn both see it (spacing and case aside, capped as prefetch caps
+    its query): it ties a sync to the prefetch of its own turn."""
+    flat = " ".join((text or "").split())[:_PREFETCH_QUERY_CHARS].casefold()
+    return hashlib.sha1(flat.encode()).hexdigest()[:16]
 
 
 def _rows_digest(rows: list) -> str:
@@ -746,6 +754,8 @@ class HolographicMemoryProvider(MemoryProvider):
         # never reaches the session eviction in _remember
         self._last_sync_origin: OrderedDict[str, int] = OrderedDict()
         self._compacted_at: dict[str, int] = {}  # key -> prefetch turn of its last compaction (gate on)
+        # key -> the last prefetch turns and their messages' digests (gate on): a sync names its turn by its message
+        self._turn_queries: OrderedDict[str, deque] = OrderedDict()  # bounded LRU of keys
         # key -> (generation it opened, rows compacted, digest of all but the last): recognises the transcript the
         # compaction was handed when a later view still starts with it - the compaction never landed
         self._precompact: dict[str, tuple] = {}
@@ -1147,6 +1157,11 @@ class HolographicMemoryProvider(MemoryProvider):
         try:
             key = f"{session_id or self._session_id or ''}|{self._scope_key or ''}"
             turn = self._turns[key] = self._turns.get(key, 0) + 1
+            if self._presence_gate:  # the sync of this turn will carry the same message: it names its turn
+                self._turn_queries.setdefault(key, deque(maxlen=_MAX_TURN_QUERIES)).append((turn, _query_digest(query)))
+                self._turn_queries.move_to_end(key)
+                while len(self._turn_queries) > _MAX_TRACKED_SESSIONS:
+                    self._turn_queries.popitem(last=False)
             meaning = self._meaning_of(query, before_turn=True)
             # Rescoring widens the first stage's pool so the cross-encoder sees several times the final need (a fact
             # BM25 buried at 20-50 can be lifted to the top, RFC #9). The pool must reach at least rerank_top_k.
@@ -1186,8 +1201,8 @@ class HolographicMemoryProvider(MemoryProvider):
                          + (" (by meaning)" if f["fact_id"] in by_meaning else "")
                          + (" (inferred)" if (origins.get(f["fact_id"]) or {}).get("origin") == "inferred" else "")
                          + self._recall_suffix(sources.get(f["fact_id"])) for f in fresh]
-                if self._max_tokens:
-                    fresh, lines = self._within_budget(fresh, lines)
+                if self._max_tokens:  # a refresh carries no attempt line: no room is kept for one
+                    fresh, lines = self._within_budget(fresh, lines, attempt_line=not self._refresh_only(key, fresh))
             refresh = self._refresh_only(key, fresh)  # read before _remember moves the injection turns
             # only what goes into the block counts as recalled: a skipped fact may come next turn; the line
             # rides along for the presence gate (the exact emitted form, cut and suffixes included)
@@ -1218,13 +1233,14 @@ class HolographicMemoryProvider(MemoryProvider):
             self._recall_failed(e)
             return ""
 
-    def _within_budget(self, facts: list[dict], lines: list[str]) -> tuple[list[dict], list[str]]:
+    def _within_budget(self, facts: list[dict], lines: list[str], *,
+                       attempt_line: bool = True) -> tuple[list[dict], list[str]]:
         """The facts whose lines fit prefetch_max_tokens with the header (and the journal's attempt line), in ranking
         order. A line that does not fit is left out whole, never cut here — a cut fact can lose its "not", its condition
         or its date; a later, shorter one may still fit. The lines arrive already capped by _one_line (300
         characters), which the budget neither adds nor lifts. Counts and ids are reported, never text."""
         used = approx_tokens(_PREFETCH_HEADER)
-        if self._experience and self._tool_writable:  # the receipt line is known only after; its length is fixed
+        if attempt_line and self._experience and self._tool_writable:  # known only after; its length is fixed
             used += approx_tokens(_ATTEMPT_PREFIX + "0" * _ATTEMPT_ID_CHARS)
         kept, kept_lines, dropped = [], [], []
         for fact, line in zip(facts, lines):
@@ -1737,20 +1753,21 @@ class HolographicMemoryProvider(MemoryProvider):
         if self._presence_gate:
             key = self._presence_key(session_id)
             with self._op_lock:  # prefetch advances _turns on another thread
-                origin = self._turns.get(key, 0)  # the turn this sync started at (condition 3 measurement)
-                previous = self._last_sync_origin.get(key)
-                view_turn = origin
-                if previous is not None and origin > previous + 1:
-                    missed = origin - previous - 1  # a later turn's prefetch already ran before this sync started
-                    view_turn = previous + 1  # so the view is that earlier turn's, not the prefetch's (review)
+                origin = self._turns.get(key, 0)  # the prefetch turn when this sync started (condition 3 measurement)
+                previous = self._last_sync_origin.get(key)  # the turn the previous sync's view was bound to
+                view_turn = self._view_turn(key, user_content, origin, previous)
+                if view_turn < origin:
+                    missed = origin - view_turn  # later turns' prefetches already ran before this sync started
                     self._presence_lag_events += 1
                     self._presence_lag_turns += missed
-                    logger.debug("holographic: sync lag: started %d turn(s) after the last sync (prefetch turn %d, "
-                                 "last sync at turn %d)", missed, origin, previous)
-                self._last_sync_origin[key] = origin
+                    logger.debug("holographic: sync lag: started %d turn(s) after its view's turn %d (prefetch turn %d)",
+                                 missed, view_turn, origin)
+                # the view's own turn, not the prefetch's: two late syncs in a row each keep theirs (review of 0.26.3)
+                self._last_sync_origin[key] = view_turn
                 self._last_sync_origin.move_to_end(key)
                 while len(self._last_sync_origin) > _MAX_TRACKED_SESSIONS:
                     self._last_sync_origin.popitem(last=False)
+                self._trim_presence()
             snapshot = self._snapshot_of(messages, session_id=session_id, view_turn=view_turn) if messages else None
             self._sync_turn(user_content, assistant_content, session_id=session_id, messages=messages,
                             turn_author=turn_author, snapshot=snapshot)
@@ -1759,6 +1776,29 @@ class HolographicMemoryProvider(MemoryProvider):
             self._sync_turn(user_content, assistant_content, session_id=session_id, messages=messages,
                             turn_author=turn_author)
         self._catch_up_vectors()
+
+    def _view_turn(self, key: str, user_content: str, origin: int, previous: int | None) -> int:
+        """The turn a sync's view belongs to. The core queues syncs on one worker, so later turns' prefetches may
+        already have run. The turn's message names it: the earliest prefetch after the previous view with the same
+        message. When none matches (a multimodal turn summarised differently), the turn after the previous view,
+        never later than the current prefetch: a lower turn only makes grace hold a newer injection once."""
+        digest = _query_digest(user_content)
+        after = previous if previous is not None else 0
+        named = [t for t, d in self._turn_queries.get(key, ()) if d == digest and after < t <= origin]
+        if named:
+            return min(named)
+        if previous is not None and origin > previous + 1:
+            return previous + 1
+        return origin
+
+    def _trim_presence(self) -> None:
+        """Per-key presence records live only while the key is tracked somewhere bounded (injections, snapshots, the
+        recent syncs): a quiet session that compacted kept its generation and compaction records for the life of the
+        process (review of 0.26.3)."""
+        live = set(self._injected) | set(self._snapshots) | set(self._last_sync_origin)
+        for record in (self._generations, self._compacted_at, self._precompact, self._summary_signature):
+            for key in [k for k in record if k not in live]:
+                record.pop(key, None)
 
     def _presence_key(self, session_id: str = "") -> str:
         return f"{session_id or self._session_id or ''}|{self._scope_key or ''}"
@@ -1918,6 +1958,7 @@ class HolographicMemoryProvider(MemoryProvider):
                     self._precompact[key] = (self._generations[key], len(handed), _rows_digest(handed[:-1]))
                 else:
                     self._precompact.pop(key, None)
+            self._trim_presence()
         else:
             for key in [k for k in self._injected if k.split("|", 1)[0] == self._session_id]:
                 self._injected.pop(key, None)
@@ -1946,7 +1987,7 @@ class HolographicMemoryProvider(MemoryProvider):
             for key in [k for k in holder if k.split("|", 1)[0] in sessions]:
                 holder.pop(key, None)
         for plain in (self._turns, self._generations, self._summary_signature, self._graced,
-                      self._last_sync_origin, self._compacted_at, self._precompact):
+                      self._last_sync_origin, self._compacted_at, self._precompact, self._turn_queries):
             for key in [k for k in plain if k.split("|", 1)[0] in sessions]:
                 plain.pop(key, None)
 

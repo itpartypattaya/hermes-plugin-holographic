@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+### Fixed
+Found in an Antigravity review of 0.26.1–0.26.3; with the presence gate off (the default) nothing changes except the
+last two items.
+- Presence gate: two late syncs in a row each keep their own turn. The first used to record the prefetch's turn, so
+  the second view was stamped with a later turn than its own and grace did not hold a newer injection. A sync now
+  finds its turn by its message (the prefetch of that turn saw the same one) and otherwise counts on from the
+  previous view, so an interrupted turn no longer leaves the views one turn behind.
+- Presence gate: a session that synced views, never recalled a fact and then compacted kept its generation,
+  compaction and summary records for the life of the process. They now live only while the session is tracked.
+- With the journal on and `prefetch_max_tokens` set, a refresh (which carries no attempt line) no longer keeps room
+  for one, so a fact that fits is not dropped.
+- `tools/duplicate_count.py`: a recall suffix without a recorded-on date (`(this chat)`, `(Alice · another chat)`)
+  no longer splits one revision.
+
 ## 0.26.3 — 2026-11-03
 
 ### Fixed

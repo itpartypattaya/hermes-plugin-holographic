@@ -780,3 +780,52 @@ def test_a_sync_that_starts_after_a_later_prefetch_keeps_its_own_turn(gate):
     assert gate._snapshots[key]["turn"] == 2
     assert gate._not_recent(key, fact, turn=10) is False           # window expired: grace holds once
     assert gate._not_recent(key, fact, turn=11) is True            # then the window decides
+
+
+# -- Review of 0.26.3 (Antigravity, 2026-11-03) -----------------------------------------------------------------
+
+def test_two_late_syncs_in_a_row_each_keep_their_own_turn(gate):
+    """The worker can be two syncs behind: turns 2 and 3 queued while turn 4's prefetch already ran. Each view is
+    its own turn's; the second used to inherit the prefetch's turn because the first recorded that one."""
+    key = _key(gate)
+    gate._turns[key] = 1
+    gate.sync_turn("u1", "a1", session_id="s", messages=[{"role": "user", "content": "turn 1"}])
+    gate._turns[key] = 4
+    gate.sync_turn("u2", "a2", session_id="s", messages=[{"role": "user", "content": "turn 2"}])
+    assert gate._snapshots[key]["turn"] == 2
+    gate.sync_turn("u3", "a3", session_id="s", messages=[{"role": "user", "content": "turn 3"}])
+    assert gate._snapshots[key]["turn"] == 3
+    gate.sync_turn("u4", "a4", session_id="s", messages=[{"role": "user", "content": "turn 4"}])
+    assert gate._snapshots[key]["turn"] == 4
+
+
+def test_a_sync_finds_its_turn_by_the_message_after_a_turn_without_sync(gate):
+    """An interrupted turn has a prefetch and no sync. The next sync's message names its own turn (the prefetch
+    saw the same message), so the view is not left one turn behind from then on."""
+    key = _key(gate)
+    view = [{"role": "user", "content": "x"}]
+    gate.prefetch("where does the backup run", session_id="s")            # turn 1
+    gate.sync_turn("where does the backup run", "a", session_id="s", messages=view)
+    gate.prefetch("and what about the tape", session_id="s")              # turn 2: interrupted, no sync
+    gate.prefetch("who changes the tape on Fridays", session_id="s")      # turn 3
+    gate.sync_turn("who changes the tape on Fridays", "a", session_id="s", messages=view)
+    assert gate._snapshots[key]["turn"] == 3
+    gate.prefetch("and on holidays", session_id="s")                      # turn 4
+    gate.sync_turn("and on holidays", "a", session_id="s", messages=view)
+    assert gate._snapshots[key]["turn"] == 4
+
+
+def test_compacted_quiet_sessions_leave_no_unbounded_state(gate):
+    """A session that synced views but never recalled a fact, then compacted, left its key in the generation,
+    compaction and summary records for the life of the process (they were evicted only with injections or
+    snapshots, and the compaction had just dropped the snapshot)."""
+    from hermes_plugin_holographic import _MAX_TRACKED_SESSIONS
+
+    for i in range(_MAX_TRACKED_SESSIONS * 5):
+        gate.on_session_switch(f"quiet{i}")
+        sid = f"quiet{i}"
+        gate.sync_turn("u", "a", session_id=sid, messages=[{"role": "user", "content": "hello"},
+                                                             {"role": "assistant", "content": "hi"}])
+        gate.on_pre_compress([{"role": "user", "content": "hello"}, {"role": "assistant", "content": "hi"}])
+    for record in (gate._generations, gate._compacted_at, gate._precompact, gate._summary_signature):
+        assert len(record) <= 3 * _MAX_TRACKED_SESSIONS, len(record)

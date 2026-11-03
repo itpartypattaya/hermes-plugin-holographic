@@ -31,7 +31,9 @@ from pathlib import Path
 
 _BLOCK = re.compile(r"<memory-context>(.*?)</memory-context>", re.S)
 _LINE = re.compile(r"^- #(\d+) \[[^\]]*\] (.*)$", re.M)
-_SUFFIX = re.compile(r" \(recorded [^)]*\)$")  # the recall suffix is presentation, not the revision
+# the recall suffix is presentation, not the revision: dated, or (no date) a name and this / another chat; a bare
+# name alone cannot be told from the fact's own text and stays (review of 0.26.3)
+_SUFFIX = re.compile(r" \((?:recorded [^)]*|[^()]*\b(?:this|another) chat)\)$")
 _MARKS = re.compile(r"(?: \((?:by meaning|inferred)\))+$")  # the line's other suffixes, before the recall one
 _CUT_CHARS = 300  # the plugin's _PREFETCH_LINE_CHARS: a cut text is exactly this long and ends in an ellipsis
 

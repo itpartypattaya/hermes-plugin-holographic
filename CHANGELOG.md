@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Internal
+- A comment in `screen.py` used a real home city as its example of a person's own past; it now says "I moved to
+  Lisbon". hermes-dreaming vendors this file verbatim into a skill whose copies must not name the maintainer's
+  places. No behaviour change.
+
 ## 0.26.4 — 2026-11-03
 
 ### Fixed

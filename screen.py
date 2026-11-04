@@ -979,7 +979,7 @@ _RE_ROLE_TASK = re.compile(
 # The agent's account of its own steps (hermes-agent#117790): "I just read the file and updated the config as
 # requested." is no fact about anyone. A first-person action ("I read", "I've updated", "I ran") done for the one the
 # agent works for ("as requested", "as you asked", "per your request"): both, so a person's own past ("I moved to
-# Bangkok", "I switched to Postgres") and a request of someone else ("as requested by the course") stay facts. A report
+# Lisbon", "I switched to Postgres") and a request of someone else ("as requested by the course") stay facts. A report
 # without those words is still stored; the tool's description asks not to store task progress.
 _STEP_VERBS = (r"(?:read|updated|edited|created|ran|run|executed|checked|fixed|wrote|written|saved|opened|installed"
                r"|deleted|removed|modified|changed|added|applied|committed|pushed|restarted|searched|looked\s+(?:at|through)"

@@ -199,6 +199,11 @@ _EXTRACT_CATEGORIES = (
       re.compile(r'\bI\s+(?:always|never|usually)\s+\S', re.IGNORECASE),
       re.compile(r'(?:^|\s)я\s+(?:предпочитаю|люблю|использую|пользуюсь|обычно|всегда|никогда|не\s+ем|не\s+пью)\s+\S', re.IGNORECASE),
       re.compile(r'(?:^|\s)мо[йяеи]\s+любим\w+\s+\S', re.IGNORECASE),
+      # French: only a sentence-leading first-person statement, not a quote, conditional or one-off want/need.
+      # Deictic objects ("j'aime bien ça", "je préfère celui-ci") are replies, not stand-alone preferences.
+      re.compile(r"^(?:je\s+(?:pr[ée]f[èe]re|n['’]aime\s+pas)|j['’](?:aime|adore|utilise))\s+"
+                 r"(?!(?:(?:bien|beaucoup|vraiment)\s+)*(?:que|qu['’]|ça|cela|ceci|ce|cet|cette|ces|celui|celle|"
+                 r"ceux|celles|quoi|qui|quel|quelle|quels|quelles|comment|pourquoi|où|quand|combien)\b)\S", re.IGNORECASE),
       # Chinese, Traditional and Simplified (after itpartypattaya/hermes-plugin-holographic#2 by au61987ai-code). The
       # sentence must open with the preference — "I" or no subject — so "你喜歡什麼" (what do YOU like) and "他喜歡吃辣"
       # (HE likes spicy food) are not the user's; "不用" (no need) and "我覺得 / 以我來看" (passing opinions) are left out.
@@ -210,6 +215,8 @@ _EXTRACT_CATEGORIES = (
       re.compile(r'\bthe\s+project\s+(?:uses|needs|requires)\s+\S', re.IGNORECASE),
       re.compile(r'(?:^|\s)мы\s+(?:решили|договорились|выбрали)\s+\S', re.IGNORECASE),
       re.compile(r'(?:^|\s)в\s+проекте\s+(?:используем|используется|нужен|нужна|нужно)\s+\S', re.IGNORECASE),
+      re.compile(r"^(?:nous\s+avons|on\s+a|j['’]ai)\s+(?:d[ée]cid[ée]|choisi|convenu)\s+"
+                 r"(?!(?:quoi|qui|quel|quelle|quels|quelles|comment|pourquoi|où|quand|combien|si)\b)\S", re.IGNORECASE),
       # Chinese: an explicit deciding subject ("你必須先備份" is an order to the assistant, not a decision), or the
       # project / its rules as the subject, as "the project uses …" is in English.
       re.compile(r'^(?:我們|我们|大家|團隊|团队|雙方|双方)(?:已經|已经|最後|最后|一致)?'
@@ -845,7 +852,7 @@ class HolographicMemoryProvider(MemoryProvider):
         return [
             {"key": "db_path", "description": "SQLite database path", "default": current("db_path", _DEFAULT_DB_PATH)},
             {"key": "auto_extract", "description": "Store user sentences that state a preference or decision "
-             "(English, Russian and Chinese patterns) after each turn, before context compression and at session end",
+             "(English, Russian, Chinese and French patterns) after each turn, before context compression and at session end",
              "default": current("auto_extract", "false"), "choices": ["true", "false"]},
             {"key": "default_trust", "description": "Default trust score for new facts", "default": current("default_trust", "0.5")},
             {"key": "hrr_dim", "description": "HRR vector dimensions", "default": current("hrr_dim", "1024")},

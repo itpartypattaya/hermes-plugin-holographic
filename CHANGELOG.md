@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Added
+- Opt-in `auto_extract` also recognises sentence-leading French preferences and completed decisions. Straight and
+  curly apostrophes are accepted; questions, conditional introductions, one-off wants/needs and deictic replies
+  such as "J'aime bien ça" are left out. Facts use the existing categories, trust and write screens.
+
 ## 0.26.4 — 2026-11-03
 
 ### Fixed

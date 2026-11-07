@@ -212,3 +212,55 @@ def test_a_refresh_within_the_token_budget_does_not_pay_for_an_attempt_line(make
     refresh = p.prefetch(QUERY, session_id="s")
 
     assert FACT in refresh and "Memory attempt:" not in refresh
+
+
+@pytest.mark.parametrize("gate", ["false", "true"])
+def test_a_failed_attempt_without_a_compaction_keeps_the_earlier_receipt(make, monkeypatch, gate):
+    """No compaction came between: the fact's first block, with its attempt line, is still what the model reads.
+    A later block that also carried a new fact and could not write its attempt does not make the fact's next
+    refresh record an attempt again (review of 0.26.4: 0.26.3 dropped the receipt with or without a compaction)."""
+    p = make(prefetch_presence_gate=gate)
+    add(p, FACT)
+    first = p.prefetch("Alice Smith", session_id="s")
+    assert FACT in first and "Memory attempt:" in first
+    add(p, OTHER)
+    expire_window(p)
+    written = p._store.record_attempt
+
+    def locked(*_args, **_kwargs):
+        raise sqlite3.OperationalError("database is locked")
+
+    monkeypatch.setattr(p._store, "record_attempt", locked)
+    both = p.prefetch("Alice Smith and Bob Jones", session_id="s")
+    assert FACT in both and OTHER in both and "Memory attempt:" not in both
+    monkeypatch.setattr(p._store, "record_attempt", written)
+    recorded = len(attempts(p))
+
+    expire_window(p)
+    refresh = p.prefetch("Alice Smith", session_id="s")
+
+    assert FACT in refresh and OTHER not in refresh
+    assert "Memory attempt:" not in refresh
+    assert len(attempts(p)) == recorded
+
+
+def test_a_block_the_budget_turns_into_a_refresh_does_not_pay_for_an_attempt_line(make):
+    """A new fact that does not fit is left out; what remains is a refresh, which carries no attempt line, so the
+    room kept for one must not push out a fact that fits with the header alone (review of 0.26.4)."""
+    from hermes_plugin_holographic import _PREFETCH_HEADER, approx_tokens
+
+    p = make()
+    add(p, FACT)
+    first = p.prefetch(QUERY, session_id="s")
+    assert FACT in first and "Memory attempt:" in first
+    line = next(x for x in first.split("\n") if FACT in x)
+    longer = ("Alice Smith also leads the observatory outreach programme for the local schools every summer, "
+              "writes the reports for the board and keeps the visitor logs")
+    add(p, longer)
+    p._max_tokens = approx_tokens(_PREFETCH_HEADER) + approx_tokens("\n" + line)
+    expire_window(p)
+
+    block = p.prefetch(QUERY, session_id="s")
+
+    assert FACT in block and longer not in block and "Memory attempt:" not in block
+    assert p._budget_last["kept"] == 1 and p._budget_last["dropped"] == 1

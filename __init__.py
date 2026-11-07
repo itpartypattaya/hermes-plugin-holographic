@@ -1152,13 +1152,16 @@ class HolographicMemoryProvider(MemoryProvider):
             self._budget_last = {"kept": 0, "dropped": 0, "tokens": 0}
         if not self._retriever or not query:
             return ""
+        # the digest reads the whole message, as sync_turn's does: cut first, a long message's runs of spaces made
+        # the two differ (review of 0.26.4); the digest caps itself
+        digest = _query_digest(query) if self._presence_gate else ""
         query = query[:_PREFETCH_QUERY_CHARS]  # a pasted log of 60 KB took seconds under the provider lock
         self._recall_error = ""
         try:
             key = f"{session_id or self._session_id or ''}|{self._scope_key or ''}"
             turn = self._turns[key] = self._turns.get(key, 0) + 1
             if self._presence_gate:  # the sync of this turn will carry the same message: it names its turn
-                self._turn_queries.setdefault(key, deque(maxlen=_MAX_TURN_QUERIES)).append((turn, _query_digest(query)))
+                self._turn_queries.setdefault(key, deque(maxlen=_MAX_TURN_QUERIES)).append((turn, digest))
                 self._turn_queries.move_to_end(key)
                 while len(self._turn_queries) > _MAX_TRACKED_SESSIONS:
                     self._turn_queries.popitem(last=False)
@@ -1202,8 +1205,14 @@ class HolographicMemoryProvider(MemoryProvider):
                          + (" (inferred)" if (origins.get(f["fact_id"]) or {}).get("origin") == "inferred" else "")
                          + self._recall_suffix(sources.get(f["fact_id"])) for f in fresh]
                 if self._max_tokens:  # a refresh carries no attempt line: no room is kept for one
-                    fresh, lines = self._within_budget(fresh, lines, attempt_line=not self._refresh_only(key, fresh))
+                    fresh, lines = self._budgeted(key, fresh, lines)
             refresh = self._refresh_only(key, fresh)  # read before _remember moves the injection turns
+            # receipts older than the last compaction, read before _remember moves the injection turns: only these
+            # may name a block the model no longer reads
+            compacted = self._compacted_at.get(key)
+            injected = self._injected.get(key, {})
+            stale = {_revision(f) for f in fresh if compacted is not None
+                     and injected.get(_revision(f)) is not None and injected[_revision(f)] <= compacted}
             # only what goes into the block counts as recalled: a skipped fact may come next turn; the line
             # rides along for the presence gate (the exact emitted form, cut and suffixes included)
             for fact, line in zip(fresh, lines):
@@ -1223,15 +1232,33 @@ class HolographicMemoryProvider(MemoryProvider):
                 receipts = self._receipted.setdefault(key, set())
                 if attempt:
                     receipts.update(_revision(f) for f in fresh)
-                else:  # a delivery that needed an attempt and got none: an older receipt no longer names what the
-                    # model reads (a compaction came between), so the next delivery records its own (#79 review)
-                    receipts.difference_update(_revision(f) for f in fresh)
+                else:  # a delivery that needed an attempt and got none: a receipt from before a compaction no longer
+                    # names what the model reads, so the next delivery records its own (#79 review); without a
+                    # compaction between, the earlier block and its attempt line are still there (review of 0.26.4)
+                    receipts.difference_update(stale)
                 self._receipted.move_to_end(key)
             self._counted(fresh)
             return _PREFETCH_HEADER + "\n" + "\n".join(lines) + (f"{_ATTEMPT_PREFIX}{attempt}" if attempt else "")
         except Exception as e:  # noqa: BLE001 - recall never takes the turn down; _recall_failed says why
             self._recall_failed(e)
             return ""
+
+    def _budgeted(self, key: str, facts: list[dict], lines: list[str]) -> tuple[list[dict], list[str]]:
+        """_within_budget for this block: room for the attempt line is kept only if the block will carry one. A block
+        whose new facts the budget left out is a refresh, which carries none; it is fitted again without that room,
+        from its refreshable facts, so the reserve does not push out a fact that fits (review of 0.26.4)."""
+        if self._refresh_only(key, facts):
+            return self._within_budget(facts, lines, attempt_line=False)
+        kept, kept_lines = self._within_budget(facts, lines)
+        if kept and not self._refresh_only(key, kept):  # it carries a new fact, and the attempt line with it
+            return kept, kept_lines
+        pairs = [(f, ln) for f, ln in zip(facts, lines) if self._refresh_only(key, [f])]
+        self._budget_dropped -= self._budget_last["dropped"]  # the first fit's count is replaced, not added to
+        kept, kept_lines = self._within_budget([f for f, _ in pairs], [ln for _, ln in pairs], attempt_line=False)
+        left_out = len(facts) - len(pairs)  # the new facts: they did not fit with the room they need
+        self._budget_last["dropped"] += left_out
+        self._budget_dropped += left_out
+        return kept, kept_lines
 
     def _within_budget(self, facts: list[dict], lines: list[str], *,
                        attempt_line: bool = True) -> tuple[list[dict], list[str]]:
@@ -1670,6 +1697,7 @@ class HolographicMemoryProvider(MemoryProvider):
             self._last_sync_origin.pop(dropped, None)
             self._compacted_at.pop(dropped, None)
             self._precompact.pop(dropped, None)
+            self._turn_queries.pop(dropped, None)  # its turn count restarts: old messages would name old turns
 
     @_serialized
     def recall_status(self):

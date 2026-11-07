@@ -120,6 +120,12 @@ entity). With nothing visible the behaviour is exactly today's window, top-5 inc
   plugin's store at the same time: MEMORY.md / USER.md sit in the system prompt in full, so such a fact can be
   re-injected once its block leaves. Prose stays out of scope by the maintainer's decision; whether a third
   zone is wanted belongs in #59, not in this PR.
+- A sync finds its view's turn by its message: the earliest prefetch after the previous view with the same
+  text. When none has it (a multimodal turn the core summarises differently for the two calls), the view is
+  counted as the turn after the previous one, so after an interrupted turn the views stay one turn low until a
+  message matches again; a message re-sent after an interruption names the interrupted turn once. Both errors
+  go the safe way: a lower turn only makes grace hold a newer injection, or a compacted fact wait for the
+  window, as with the gate off, and the sync-lag counters then over-count.
 - A forged, never-before-seen `[CONTEXT COMPACTION ...]` text typed inside a compaction window could still pass
   as that compaction's summary (no database flag arrives with a live message); a paste of an already-credited
   row cannot.

@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+### Fixed
+Found in a review of 0.26.3–0.26.4 (Claude Fable 5.1); with the presence gate off and no `prefetch_max_tokens`, only
+the third item applies.
+- Presence gate: a message longer than recall reads (4000 characters, a pasted log) with runs of spaces or newlines
+  no longer loses its turn. The prefetch reduced it after cutting, the sync before, so the two never matched and an
+  interrupted turn before it left the views a turn behind.
+- Presence gate: a session pushed out of the bounded records forgets its turns' messages with its turn count; a
+  message repeated after it came back could name a turn number from before.
+- With the journal on, a delivery that could not write its attempt drops only the receipts older than the last
+  compaction. Without a compaction between, the earlier block and its attempt line are still in context, and the
+  fact's next refresh no longer records an attempt again.
+- With the journal on and `prefetch_max_tokens` set, a block whose new facts do not fit is fitted again as the
+  refresh it has become, without room for an attempt line, so a fact that fits is not dropped for it.
+- `docs/presence-gate.md`: the limits of finding a sync's turn by its message.
+
 ## 0.26.4 — 2026-11-03
 
 ### Fixed

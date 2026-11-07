@@ -829,3 +829,45 @@ def test_compacted_quiet_sessions_leave_no_unbounded_state(gate):
         gate.on_pre_compress([{"role": "user", "content": "hello"}, {"role": "assistant", "content": "hi"}])
     for record in (gate._generations, gate._compacted_at, gate._precompact, gate._summary_signature):
         assert len(record) <= 3 * _MAX_TRACKED_SESSIONS, len(record)
+
+
+def test_a_long_pasted_message_still_names_its_turn(gate):
+    """Recall reads the first 4000 characters of a message; a pasted log is longer and full of runs of spaces and
+    newlines. The sync carries the whole message, so the two sides must reduce it the same way, or an interrupted
+    turn before it leaves the view one turn behind (review of 0.26.4)."""
+    key = _key(gate)
+    view = [{"role": "user", "content": "x"}]
+    log = "the backup failed again, the log:\n" + "".join(
+        f"2026-11-07 03:{i % 60:02d}:00    ERROR    tape   drive   {i}   not   ready\n\n" for i in range(150))
+    assert len(log) > 4000
+    gate.prefetch("where does the backup run", session_id="s")            # turn 1
+    gate.sync_turn("where does the backup run", "a", session_id="s", messages=view)
+    gate.prefetch("and what about the tape", session_id="s")              # turn 2: interrupted, no sync
+    gate.prefetch(log, session_id="s")                                    # turn 3
+    gate.sync_turn(log, "a", session_id="s", messages=view)
+    assert gate._snapshots[key]["turn"] == 3
+
+
+def test_a_session_the_provider_forgot_leaves_no_message_to_match(tmp_path):
+    """A session pushed out of the bounded records restarts its turn count when it comes back. The messages of its
+    earlier turns must go with it: one of them repeated later would name an old turn number (review of 0.26.4)."""
+    from hermes_plugin_holographic import _MAX_TRACKED_SESSIONS
+
+    p = _provider(tmp_path, prefetch_presence_gate=True)
+    try:
+        p.handle_tool_call("fact_store", {"action": "add", "origin": "said",
+                                          "content": "Alice Smith works on the observatory project"})
+        view = [{"role": "user", "content": "x"}]
+        p.prefetch("Alice observatory", session_id="A")                   # A, turn 1: injects
+        for i in range(_MAX_TRACKED_SESSIONS - 1):
+            p.prefetch("Alice observatory", session_id=f"other{i}")
+        p.prefetch("same thing again please", session_id="A")             # A, turn 2: nothing new
+        p.prefetch("Alice observatory", session_id="last")                # A leaves the injection record
+        assert _key(p, "A") not in p._injected
+        p.prefetch("tell me more", session_id="A")                        # A again, turn 1: interrupted
+        p.prefetch("and the rest", session_id="A")                        # turn 2: interrupted
+        p.prefetch("same thing again please", session_id="A")             # turn 3
+        p.sync_turn("same thing again please", "a", session_id="A", messages=view)
+        assert p._snapshots[_key(p, "A")]["turn"] == 3
+    finally:
+        p.shutdown()

@@ -1,6 +1,6 @@
 [project]
 name = "hermes-plugin-holographic"
-version = "0.26.4"
+version = "0.26.5"
 description = "Hermes Agent memory provider plugin: holographic"
 requires-python = ">=3.11"
 license = { text = "MIT" }

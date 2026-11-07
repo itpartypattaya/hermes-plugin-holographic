@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.26.5 — 2026-11-08
+
 ### Fixed
 Found in a review of 0.26.3–0.26.4 (Claude Fable 5.1); with the presence gate off and no `prefetch_max_tokens`, only
 the third item applies.

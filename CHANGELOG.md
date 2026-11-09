@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Fixed
+- Windows: a Hermes process no longer gives ~225 MB of commit charge to numpy's OpenBLAS once the plugin recalls.
+  OpenBLAS commits a buffer of ~32 MB per CPU thread when its DLL loads; Hermes core does not import numpy, the
+  plugin does on the first recall, and its math needs one thread. The plugin now sets `OPENBLAS_NUM_THREADS=1` for
+  that import only and removes it after, so the commands Hermes runs in child processes keep a numpy as before.
+  Measured on an 8-thread laptop: 243 MB of commit charge after the first recall, 18 MB now; the working set is the
+  same. Left alone: numpy loaded before the plugin, a thread count the person set (`OPENBLAS_NUM_THREADS`,
+  `GOTO_NUM_THREADS`, `OMP_NUM_THREADS`, `OPENBLAS_DEFAULT_NUM_THREADS`), and Linux and macOS, where the buffers cost
+  no resident memory. A child process started during that import (a fraction of a second) inherits the variable.
+
 ## 0.26.5 — 2026-11-08
 
 ### Fixed

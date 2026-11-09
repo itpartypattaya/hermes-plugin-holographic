@@ -8,6 +8,7 @@ import hashlib
 import importlib.util
 import logging
 import math
+import os
 import struct
 import sys
 
@@ -18,11 +19,29 @@ _TRIED = False  # _numpy() has tried already; np alone cannot say (None is both 
 _ERROR = ""  # why a numpy that is installed did not load; "" when it loaded, is missing, or was not tried yet
 logger = logging.getLogger(__name__)
 
+# The variables OpenBLAS reads for its thread count: any of them set means the person chose, and it stays theirs.
+_BLAS_THREAD_VARS = ("OPENBLAS_NUM_THREADS", "GOTO_NUM_THREADS", "OMP_NUM_THREADS", "OPENBLAS_DEFAULT_NUM_THREADS")
+
+
+def _one_blas_thread_for_the_import() -> bool:
+    """On Windows, numpy's OpenBLAS commits ~32 MB per CPU thread when its DLL loads (measured 2026-11-10 on an
+    8-thread laptop: 242 MB of commit charge after the import, 17 MB on one thread; the working set is the same).
+    Hermes core does not import numpy, the plugin does on the first recall, and its math (a matrix-vector product,
+    FFTs) needs one thread. OpenBLAS reads the count once, when the DLL loads, so OPENBLAS_NUM_THREADS=1 is set for
+    the import only: the commands Hermes runs in child processes must not inherit a one-thread numpy. Not when numpy
+    is already loaded (it has its threads), not when the person set a count, not elsewhere (on Linux the buffers cost
+    no resident memory). Returns whether it was set, so the caller removes it."""
+    if sys.platform != "win32" or "numpy" in sys.modules or any(v in os.environ for v in _BLAS_THREAD_VARS):
+        return False
+    os.environ["OPENBLAS_NUM_THREADS"] = "1"
+    return True
+
 
 def _numpy():
     """numpy, imported on first use; None when it is not installed or does not load."""
     global np, _TRIED, _ERROR
     if not _TRIED:
+        one_thread = _one_blas_thread_for_the_import()
         try:
             import numpy as np
         except Exception as exc:  # noqa: BLE001 - installed but broken (a wheel without its DLL: OSError too)
@@ -31,6 +50,10 @@ def _numpy():
                 _ERROR = f"{type(exc).__name__}: {exc}"[:200]
                 logger.warning("holographic: numpy is installed but did not load (%s); structural recall and search "
                                "by meaning stay off in this process, recall goes on by words", _ERROR)
+        finally:
+            # Only the value set above: a count set meanwhile by other code is not ours to remove.
+            if one_thread and os.environ.get("OPENBLAS_NUM_THREADS") == "1":
+                del os.environ["OPENBLAS_NUM_THREADS"]
         # Publish only a completed attempt. Concurrent callers must reach Python's
         # import lock rather than mistake an in-progress import for missing numpy.
         _TRIED = True

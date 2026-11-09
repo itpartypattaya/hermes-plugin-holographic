@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.26.6 — 2026-11-10
+
 ### Fixed
 - Windows: a Hermes process no longer gives ~225 MB of commit charge to numpy's OpenBLAS once the plugin recalls.
   OpenBLAS commits a buffer of ~32 MB per CPU thread when its DLL loads; Hermes core does not import numpy, the

@@ -207,6 +207,9 @@ class FactRetriever:
         # prefetch_clause_coverage (an experiment, off by default): relevant() gives a fact it left out a second look
         # against each of a message's two questions (_clause_rescue)
         self.clause_coverage = False
+        # Graph recall (Phase 4), off by default until it is measured on a real store: a discovery is a fact the
+        # words never matched, reached through a co-occurrence edge.
+        self.graph_expansion = False
 
     def _settled(self) -> tuple[float, float, float]:
         """(fts, jaccard, hrr) weights, settled on first use: without numpy the HRR share goes to the words. Asking
@@ -281,15 +284,19 @@ class FactRetriever:
         # "ночная подработка Марины", and "The walker" matches the prefix "walk"* as fully as a fact with "walk". When
         # any candidate meets any term only through a root (its own or the fact's), all of them are ranked by the
         # weighted share of the query they hold, which counts the root at _DERIV_WEIGHT (as as_of always is).
-        # Graph recall: one hop out of the entities the query resolves to. Only over the current facts and only in
-        # the roots=True mode a user's query takes (write_check's exact mode asks a different question).
-        expanded = self._expand_by_graph(query, candidates, category, min_trust) \
-            if corpus is self._current and roots else set()
+        # Ranking runs on the TEXT candidates, before any discovery is added: a discovery carries fts_rank 0 by
+        # construction, but one that holds part of a query word would otherwise flip the coverage test for the whole
+        # set and rewrite every text hit's rank — text order must not depend on the graph.
         if corpus is not self._current:
             self._corpus_rank(query, terms, list(candidates.values()), category, min_trust, corpus)
         elif roots and any(0.0 < t.match(analyze(_fact_text(f))) < 1.0
                            for f in candidates.values() for t in terms):
             self._coverage_rank(query, terms, list(candidates.values()))
+        # Graph recall: one hop out of the entities the query resolves to. Only over the current facts, only in
+        # the roots=True mode a user's query takes (write_check's exact mode asks a different question), and only
+        # when the graph is enabled.
+        expanded = self._expand_by_graph(query, candidates, category, min_trust) \
+            if self.graph_expansion and corpus is self._current and roots else set()
         return self._rerank(query, list(candidates.values()), limit,
                             meaning if corpus is self._current else None, expanded=expanded)
 
@@ -300,37 +307,37 @@ class FactRetriever:
         project every fact mentions), and expanding from it — or into it — offers arbitrary neighbours, not related
         ones. Facts are added through _rows so category and min_trust still filter them.
         """
-        # Seed from the names the query MENTIONS, not from per-word lookups: "Realm Forge" and "llama.cpp" are one
-        # entity each, and entity_ids("Realm") finds nothing, so a whitespace split never seeds a multi-word name.
+        # Seed from the names the query MENTIONS only: "Realm Forge" and "llama.cpp" are one entity each, while a
+        # whitespace split never seeds a multi-word name and turns a generic word ("the", "please") into a seed.
         entity_ids: set[int] = set(self.store.mentioned_entity_ids(query or ""))
-        for word in dict.fromkeys(w for w in (query or "").split() if len(w) > 2):
-            entity_ids.update(self.store.entity_ids(word))
         if not entity_ids:
             return set()
         degree = self.store.entity_degrees(list(entity_ids))
         specific = [eid for eid in entity_ids if degree.get(eid, 0) <= GRAPH_MAX_ENTITY_DEGREE]
         if not specific:
             return set()
-        connected = self.store.entity_neighbors(specific, min_trust=max(min_trust, 0.0),
-                                                limit=GRAPH_NEIGHBOUR_CAP, max_degree=GRAPH_MAX_ENTITY_DEGREE)
+        connected = self.store.entity_neighbors(specific, limit=GRAPH_NEIGHBOUR_CAP,
+                                                max_degree=GRAPH_MAX_ENTITY_DEGREE)
         if not connected:
             return set()
         rows = self.store.read("SELECT DISTINCT fact_id FROM fact_entities WHERE entity_id IN ("
                                + ",".join("?" * len(connected)) + ") ORDER BY fact_id", list(connected))
+        wanted = [int(r["fact_id"]) for r in rows if int(r["fact_id"]) not in candidates]
+        # One read for every neighbour fact, not one per fact: prefetch runs this on every turn, and the old loop
+        # cost a query per link.
+        found = {f["fact_id"]: f for f in self._rows(wanted, category, min_trust)} if wanted else {}
         expanded: set[int] = set()
-        # The cap counts candidates that survive _rows (category, min_trust), not raw links: slicing the rows first let
-        # forty ineligible facts spend the whole budget and starve the discoveries that do qualify.
-        for row in rows:
+        # The cap counts candidates that survive _rows (category, min_trust), not raw links: counting the links first
+        # let forty ineligible facts spend the whole budget and starve the discoveries that do qualify.
+        for fact_id in wanted:
             if len(expanded) >= _GRAPH_FACT_CAP:
                 break
-            fact_id = int(row["fact_id"])
-            if fact_id in candidates:
+            fact = found.get(fact_id)
+            if fact is None:
                 continue
-            found = self._rows([fact_id], category, min_trust)
-            if found:
-                found[0]["fts_rank"] = 0.0  # a discovery matches no query word: it is reached through the graph
-                candidates[fact_id] = found[0]
-                expanded.add(fact_id)
+            fact["fts_rank"] = 0.0  # a discovery matches no query word: it is reached through the graph
+            candidates[fact_id] = fact
+            expanded.add(fact_id)
         return expanded
 
     def _corpus_rank(self, query: str, terms, candidates: list[dict], category, min_trust, corpus: _Corpus) -> None:

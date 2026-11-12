@@ -51,6 +51,20 @@ BEGIN
   WHERE fe1.fact_id = NEW.fact_id AND fe2.fact_id = NEW.fact_id
     AND fe1.entity_id < fe2.entity_id;
 END;
+
+-- Forget has to reach derived data: when a link goes away, so does the edge it implied, unless another
+-- current fact still links the same pair. Removing a link to E can only destroy pairs that involve E, so
+-- the check is confined to E's edges (both indexes). An update is a DELETE plus an INSERT, so it is covered.
+CREATE TRIGGER IF NOT EXISTS trg_fact_entities_unedge
+AFTER DELETE ON fact_entities
+BEGIN
+  DELETE FROM entity_relations
+  WHERE (src_entity_id = OLD.entity_id OR dst_entity_id = OLD.entity_id)
+    AND NOT EXISTS (
+      SELECT 1 FROM fact_entities fe1 JOIN fact_entities fe2 ON fe1.fact_id = fe2.fact_id
+      WHERE fe1.entity_id = entity_relations.src_entity_id
+        AND fe2.entity_id = entity_relations.dst_entity_id);
+END;
 """
 
 GRAPH_NEIGHBOUR_CAP = 25       # neighbour entities traversed per query
@@ -58,9 +72,9 @@ GRAPH_MAX_ENTITY_DEGREE = 40   # entities with more edges than this are hubs: ne
 
 
 class GraphMixin:
-    """The graph half of MemoryStore. Expects read, _write, _tx, _one and _bump of MemoryStore."""
+    """The graph half of MemoryStore. Expects read, _write, _tx, _one, _bump, _meta and _set_meta of MemoryStore."""
 
-    def entity_neighbors(self, entity_ids: list[int], min_trust: float = 0.0, limit: int = 50,
+    def entity_neighbors(self, entity_ids: list[int], limit: int = 50,
                          max_degree: int | None = None) -> set[int]:
         """Entity ids one hop from *entity_ids* (excluding them).
 
@@ -74,12 +88,12 @@ class GraphMixin:
             return set()
         marks = ", ".join("?" * len(ids))
         sql = ("SELECT dst_entity_id AS eid FROM entity_relations "
-               f"WHERE src_entity_id IN ({marks}) AND trust_score >= ? "
+               f"WHERE src_entity_id IN ({marks}) "
                "UNION ALL "
                "SELECT src_entity_id AS eid FROM entity_relations "
-               f"WHERE dst_entity_id IN ({marks}) AND trust_score >= ? "
+               f"WHERE dst_entity_id IN ({marks}) "
                "ORDER BY eid")
-        params: list = [*ids, min_trust, *ids, min_trust]
+        params: list = [*ids, *ids]
         if max_degree is None:
             sql += " LIMIT ?"
             params.append(limit)
@@ -123,10 +137,10 @@ class GraphMixin:
         return int(self._one("SELECT COUNT(*) FROM entity_relations")[0]) - before
 
     def prune_graph(self) -> int:
-        """Delete the edges no current fact implies (a fact's links changed, or it was forgotten); returns the count.
+        """Delete the edges no current fact implies; returns the count.
 
-        The graph is derived data, so this is safe at any time; it is not run automatically because the full scan
-        costs as much as a rebuild and the stale edges are harmless: they only widen one hop slightly.
+        The delete trigger keeps the graph true on the normal paths (forget, relink, entity delete), so this is a
+        repair for stores written before the trigger existed, or by a release that wrote fact_entities without it.
         """
         if not self._graph_ready():
             return 0
@@ -141,11 +155,15 @@ class GraphMixin:
         return before - int(self._one("SELECT COUNT(*) FROM entity_relations")[0])
 
     def _migrate_graph(self) -> None:
-        """Backfill the graph once for a store written before ``entity_relations`` existed (inside _migrate's tx)."""
-        if int(self._one("SELECT COUNT(*) FROM entity_relations")[0]) or \
-                not int(self._one("SELECT COUNT(*) FROM fact_entities")[0]):
+        """Backfill the graph once for a store that predates it (inside _migrate's tx).
+
+        Keyed on a meta mark, not on "the table is empty": the table and its trigger exist after any writer open,
+        so a few edges written before the first migrating writer would otherwise make the legacy pairs look done.
+        """
+        if self._meta("graph_backfilled") is not None:
             return
         added = self.rebuild_graph()
+        self._set_meta("graph_backfilled", "1")
         if added:
             logger.info("holographic: memory graph backfilled with %d co-occurrence edges", added)
 

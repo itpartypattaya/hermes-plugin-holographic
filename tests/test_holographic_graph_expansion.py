@@ -23,12 +23,6 @@ def _store(tmp_path) -> MemoryStore:
     return MemoryStore(str(tmp_path / "facts.db"), hrr_dim=DIM)
 
 
-def _names(store, fact_id):
-    return {r["name"].lower() for r in store.read(
-        "SELECT e.name FROM fact_entities fe JOIN entities e ON e.entity_id = fe.entity_id WHERE fe.fact_id = ?",
-        (fact_id,))}
-
-
 def test_a_fact_linking_two_entities_creates_their_edge(tmp_path):
     """The write path lives in the schema: a fact naming X and Y makes X-Y a graph neighbour."""
     store = _store(tmp_path)
@@ -75,17 +69,19 @@ def test_rebuild_graph_recreates_edges_from_fact_entities(tmp_path):
     assert store.rebuild_graph() == 0  # idempotent
 
 
-def test_prune_graph_drops_edges_no_fact_implies(tmp_path):
-    """The graph is derived data: an edge whose fact stopped linking the pair is pruned, a live one is kept."""
+def test_prune_graph_repairs_a_stale_edge(tmp_path):
+    """A link removed by an older release left its edge behind: prune_graph repairs it, a live edge is kept."""
     store = _store(tmp_path)
     store.add_fact_status("pruneship links keptleaf", category="general", entities=["pruneship", "keptleaf"])
     store.add_fact_status("pruneship links dropleaf", category="general", entities=["pruneship", "dropleaf"])
-    with store._tx():  # simulate a fact whose links a later write removed (the trigger never deletes edges)
-        store._write("DELETE FROM fact_entities WHERE entity_id = (SELECT entity_id FROM entities WHERE name = 'dropleaf')")
+    pruneship, dropleaf = store.entity_ids("pruneship")[0], store.entity_ids("dropleaf")[0]
+    with store._tx():  # the old state: links gone, edge still there
+        store._write("DELETE FROM fact_entities WHERE entity_id = ?", (dropleaf,))
+        store._write("INSERT OR IGNORE INTO entity_relations (src_entity_id, dst_entity_id, relation) VALUES (?, ?, ?)",
+                     (min(pruneship, dropleaf), max(pruneship, dropleaf), "co_occurs"))
     assert store.prune_graph() >= 1
-    left = store.entity_ids("pruneship")
-    assert store.entity_ids("keptleaf")[0] in store.entity_neighbors(left)
-    assert store.entity_ids("dropleaf")[0] not in store.entity_neighbors(left)
+    assert store.entity_ids("keptleaf")[0] in store.entity_neighbors([pruneship])
+    assert store.entity_ids("dropleaf")[0] not in store.entity_neighbors([pruneship])
 
 
 def test_expansion_is_capped_by_neighbour_and_fact_limits(tmp_path):
@@ -162,34 +158,17 @@ def test_graph_discoveries_fill_the_tail_and_never_displace(tmp_path):
     assert tight == [strong], "a discovery displaced the only text hit"
 
 
-def test_wiki_pointer_fact_links_namespace_and_page_topic(tmp_path):
-    """A wiki pointer line carries no capitalised name: the path supplies namespace and topic."""
-    store = _store(tmp_path)
-    fact, _ = store.add_fact_status(
-        "[WIKI HINT - consult when relevant] Wiki page: ai-agents/entities/llama-cpp.md | type: entity",
-        category="wiki")
-    assert _names(store, fact) == {"ai agents", "llama cpp"}
-    # The pair the trigger derives from that link is one edge.
-    assert store.read("SELECT COUNT(*) c FROM entity_relations")[0]["c"] == 1
-
-
-def test_wiki_structural_slugs_are_not_entities(tmp_path):
-    """index/schema/log pages are structure, not topics: only the namespace is linked."""
-    store = _store(tmp_path)
-    fact, _ = store.add_fact_status(
-        "[WIKI HINT - consult when relevant] Wiki page: operations/SCHEMA.md | type: schema", category="wiki")
-    assert _names(store, fact) == {"operations"}
-
-
 def test_edges_are_backfilled_for_a_store_written_before_the_table_existed(tmp_path):
     """A store with fact_entities but no entity_relations gets the graph on its first writer open."""
     path = str(tmp_path / "legacy.db")
     store = MemoryStore(path, hrr_dim=DIM)
     store.add_fact_status("alphaword links betaword", category="general", entities=["alphaword", "betaword"])
     assert store.read("SELECT COUNT(*) c FROM entity_relations")[0]["c"] == 1
-    with store._tx():  # what a pre-graph release left behind: links, no table, no trigger
+    with store._tx():  # what a pre-graph release left behind: links, no table, no triggers, no mark
         store._write("DROP TRIGGER IF EXISTS trg_fact_entities_edge")
+        store._write("DROP TRIGGER IF EXISTS trg_fact_entities_unedge")
         store._write("DROP TABLE entity_relations")
+        store._write("DELETE FROM meta WHERE key = 'graph_backfilled'")
     store.close()
 
     reopened = MemoryStore(path, hrr_dim=DIM)
@@ -239,10 +218,113 @@ def test_graph_expansion_stops_at_the_fact_cap(tmp_path):
     assert expanded <= made | {seed}, "a discovery came from outside the neighbour's facts"
 
 
-def test_wiki_pointer_paths_need_a_namespace_and_a_page():
-    """A bare file name is not a namespace/topic pair: <wiki>/page.md is the shortest accepted form."""
-    wiki_entities = MemoryStore._wiki_page_entities
-    assert wiki_entities("Wiki page: README.md | type: summary") == ()
-    assert wiki_entities("Wiki page: index") == ()
-    assert wiki_entities("no pointer here") == ()
-    assert wiki_entities("Wiki page: ai-agents/llama-cpp.md") == ("ai agents", "llama cpp")
+
+def test_forget_removes_the_edge_it_implied(tmp_path):
+    """Forget has to reach derived data: the association the fact created goes with it."""
+    store = _store(tmp_path)
+    link, _ = store.add_fact_status("Alice Cooper works with Bob Dylan", category="general")
+    store.add_fact_status("Alice Cooper likes tea", category="general")
+    store.add_fact_status("Bob Dylan likes coffee", category="general")
+    assert store.read("SELECT COUNT(*) c FROM entity_relations")[0]["c"] == 1
+    store.forget_fact(link)
+    assert not store.read("SELECT 1 FROM entity_relations"), "the edge the forgotten fact implied survived"
+
+
+def test_an_edge_survives_while_another_fact_links_the_pair(tmp_path):
+    """Only the pair's LAST linking fact removes the edge."""
+    store = _store(tmp_path)
+    first, _ = store.add_fact_status("Carol King meets Dan Brown", category="general")
+    store.add_fact_status("Carol King and Dan Brown share a publisher", category="general")
+    store.forget_fact(first)
+    assert store.read("SELECT COUNT(*) c FROM entity_relations")[0]["c"] == 1, \
+        "an edge still linked by a current fact was removed"
+
+
+def test_a_relink_drops_the_edge_the_old_links_implied(tmp_path):
+    """An update is a DELETE plus an INSERT: the edges of the old links go with them."""
+    store = _store(tmp_path)
+    fact, _ = store.add_fact_status("Erin Gray knows Finn Hale", category="general")
+    store.add_fact_status("Erin Gray knows Gus Hart", category="general")
+    with store._tx():
+        store._write("DELETE FROM fact_entities WHERE fact_id = ?", (fact,))
+        store._write("INSERT OR IGNORE INTO fact_entities (fact_id, entity_id) VALUES (?, ?)",
+                     (fact, store.entity_ids("gus hart")[0]))
+    erin, gus = store.entity_ids("Erin Gray")[0], store.entity_ids("Gus Hart")[0]
+    assert store.entity_neighbors([erin]) == {gus}
+    assert store.entity_ids("finn hale")[0] not in store.entity_neighbors([erin])
+
+
+def test_text_hit_order_is_identical_with_and_without_the_graph(tmp_path):
+    """A discovery must never change how the text hits rank; the coverage test runs on text candidates only."""
+    store = _store(tmp_path)
+    store.add_fact_status("hubnode bridging satellite device", category="general",
+                          entities=["hubnode", "satellite"])
+    store.add_fact_status("satellite weirdness in the review gate notes", category="general", entities=["satellite"])
+    store.add_fact_status("hubnode review gate blocks unverified commits", category="general")
+    store.add_fact_status("review gate wording", category="general")
+    retriever = FactRetriever(store, hrr_dim=DIM)
+    retriever.graph_expansion = False
+    text_only = [f["fact_id"] for f in retriever.search("hubnode review gate", limit=10)]
+    retriever.graph_expansion = True
+    with_graph = [f["fact_id"] for f in retriever.search("hubnode review gate", limit=10)]
+    assert with_graph[:len(text_only)] == text_only, "the graph reordered the text hits"
+
+
+def test_a_read_only_open_creates_no_graph_schema(tmp_path):
+    """migrate=False is a reader: it must not create tables, indexes or triggers."""
+    fresh = str(tmp_path / "fresh_reader.db")
+    reader = MemoryStore(fresh, hrr_dim=DIM, migrate=False)
+    try:
+        assert reader.read("SELECT name FROM sqlite_master WHERE name IN "
+                           "('entity_relations', 'trg_fact_entities_edge', 'trg_fact_entities_unedge')") == []
+    finally:
+        reader.close()
+
+
+def test_backfill_is_keyed_on_a_meta_mark_not_on_an_empty_table(tmp_path):
+    """Edges written before the first migrating writer must not make the legacy pairs look backfilled."""
+    path = str(tmp_path / "legacy.db")
+    store = MemoryStore(path, hrr_dim=DIM)
+    store.add_fact_status("alphaword links betaword", category="general", entities=["alphaword", "betaword"])
+    store.add_fact_status("gammaword links deltaword", category="general", entities=["gammaword", "deltaword"])
+    with store._tx():  # what an older writer of this version could leave: some edges, no mark
+        store._write("DELETE FROM meta WHERE key = 'graph_backfilled'")
+        store._write("DELETE FROM entity_relations WHERE src_entity_id = ?",
+                     (min(store.entity_ids("gammaword")[0], store.entity_ids("deltaword")[0]),))
+    store.close()
+    reopened = MemoryStore(path, hrr_dim=DIM)
+    try:
+        assert reopened.read("SELECT COUNT(*) c FROM entity_relations")[0]["c"] == 2
+        assert reopened._meta("graph_backfilled") is not None
+    finally:
+        reopened.close()
+
+
+def test_neighbour_facts_are_read_in_one_query(tmp_path, monkeypatch):
+    """Prefetch runs expansion every turn: N neighbour facts must not cost N reads."""
+    store = _store(tmp_path)
+    store.add_fact_status("onehub bridges onepage", category="general", entities=["onehub", "onepage"])
+    for i in range(5):
+        store.add_fact_status(f"note {i} on the page", category="general", entities=["onepage"])
+    retriever = FactRetriever(store, hrr_dim=DIM)
+    calls = []
+    original = retriever._rows
+
+    def counting(ids, *args, **kwargs):
+        calls.append(list(ids))
+        return original(ids, *args, **kwargs)
+
+    monkeypatch.setattr(retriever, "_rows", counting)
+    expanded = retriever._expand_by_graph("onehub", {}, None, 0.3)
+    assert len(expanded) > 1, "the fixture must yield several discoveries"
+    assert len(calls) == 1, f"neighbour facts cost {len(calls)} reads"
+
+
+def test_edge_trust_does_not_disable_the_graph(tmp_path):
+    """Edges default to 0.5; comparing that with min_trust switched the graph off for min_trust > 0.5."""
+    store = _store(tmp_path)
+    store.add_fact_status("highhub bridges highpage", category="general", entities=["highhub", "highpage"], trust=0.9)
+    discovered, _ = store.add_fact_status("highpage note worth remembering", category="general",
+                                          entities=["highpage"], trust=0.9)
+    expanded = FactRetriever(store, hrr_dim=DIM)._expand_by_graph("highhub", {}, None, min_trust=0.8)
+    assert discovered in expanded, "an edge's default trust filtered a fact the fact-level min_trust admits"

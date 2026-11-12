@@ -52,11 +52,11 @@ character n-grams or a word scan, reordered by meaning if that is on; a relevanc
 decide; up to five facts by their words, one by meaning alone and two of named entities go into the turn as
 data](diagram/recall.svg)
 
-The graph (0.27.0) is one bounded hop: a fact that names two entities makes those entities neighbours, and a search
-walks a single hop out of the entities its words resolve to, so a fact about a neighbouring entity is reachable without
-sharing a word with the query. Hub entities — a namespace, a project every fact mentions — are never traversed, and a
-discovery only fills the tail of the result list, never displacing a text hit. Bounds, measurements and repair:
-[docs/memory-graph.md](docs/memory-graph.md).
+The graph (`graph_expansion`, off by default) is one bounded hop: a fact that names two entities makes those entities
+neighbours, and a search walks a single hop out of the entities its words resolve to, so a fact about a neighbouring
+entity is reachable without sharing a word with the query. Hub entities — a namespace, a project every fact mentions —
+are never traversed, and a discovery only fills the tail of the result list, never displacing a text hit. Bounds,
+measurements and repair: [docs/memory-graph.md](docs/memory-graph.md).
 
 ## Install
 
@@ -103,6 +103,7 @@ In `config.yaml` under `plugins.hermes-memory-store`:
 | `hrr_weight` | `0.3` | Weight of the HRR term in search ranking |
 | `prefetch_min_coverage` | `0.3` | Share of a message's informative words (rarer words weigh more) a fact must match to be recalled before the turn; a fact sharing one word of a longer message is recalled only when no other fact holds that word or it may be a name (capitalized inside the sentence, or in a script without capitals) |
 | `prefetch_clause_coverage` | `off` | **Experimental.** `on`: a message that asks two separate questions (Russian or English) gives each of them a second look at the facts the coverage gate left out, so the answer to the shorter question is not lost. Only for a fact that holds two words of its question and names the person that question is about. Not in the setup wizard; a value it does not recognise reads as off. See [Two questions in one message](#two-questions-in-one-message-experimental) |
+| `graph_expansion` | `off` | `on`: search adds facts one co-occurrence edge out of the entities the message names, as discoveries in the tail of the result list. Off by default until it is measured on a real store; not in the setup wizard, and a value it does not recognise reads as off. See [docs/memory-graph.md](docs/memory-graph.md) |
 | `prefetch_repeat_turns` | `6` | A fact recalled before a turn is not injected again for this many turns of the session |
 | `prefetch_max_tokens` | `0` | Approximate tokens the block recalled before a turn may take, header and every line included (0.21.0). The budget never shortens a line: a fact whose line does not fit is left out whole; the rest keep their order. The older 300-character cap on each prefetch line still applies with or without a budget, so a longer fact's line ends in "…"; `stats` counts what was left out. `0` = off: up to five facts as before. See [docs/context-budget.md](docs/context-budget.md) |
 | `recall_source` | `off` | `short`: each fact recalled before a turn also says where it was written (`recorded 2026-10-12 · Anton · this chat`; no ids). Off by default: it costs tokens and tells the room which chat a fact came from. `list`, `history` and `export` always show the source in full |

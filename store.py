@@ -225,8 +225,8 @@ class MemoryStore(EntityMixin, GraphMixin, HistoryMixin, ExperienceMixin):
         to pre-HRR DBs, and narrow the FTS update trigger of DBs created by older versions."""
         from hermes_state_wal import apply_wal_with_fallback
         apply_wal_with_fallback(self._conn, db_label="memory_store.db (holographic)")
-        self._conn.executescript(_SCHEMA + GRAPH_SCHEMA)  # the graph table exists in every store this version
-                                                         # writes, whether or not _migrate() runs (migrate=False)
+        self._conn.executescript(_SCHEMA)  # the graph schema is a writer's business: _migrate() creates it, so a
+                                           # read-only open (migrate=False) creates nothing
         if "hrr_vector" not in {row[1] for row in self._conn.execute("PRAGMA table_info(facts)").fetchall()}:
             from hermes_cli.sqlite_util import add_column_if_missing
             add_column_if_missing(self._conn, "facts", "hrr_vector", "hrr_vector BLOB")

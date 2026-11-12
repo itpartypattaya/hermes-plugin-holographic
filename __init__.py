@@ -3,7 +3,7 @@ resolution, trust scoring, and HRR-based compositional retrieval. Original plugi
 Config in $HERMES_HOME/config.yaml under plugins.hermes-memory-store: db_path ($HERMES_HOME/memory_store.db),
 auto_extract (false), default_trust (0.5), min_trust_threshold (0.3), temporal_decay_half_life (0),
 hrr_dim (1024), hrr_weight (0.3), mirror_memory_writes (false), prefetch_min_coverage (0.3),
-prefetch_repeat_turns (6), prefetch_presence_gate (false), recall_indicator (true), recall_source (off | short), cron_writes (true), scope (profile |
+prefetch_repeat_turns (6), prefetch_presence_gate (false), graph_expansion (false), recall_indicator (true), recall_source (off | short), cron_writes (true), scope (profile |
 user | chat | thread); search by meaning, online and off by default: embeddings (off | on), embedding_url,
 embedding_model, embedding_key_env, embedding_dimensions, embedding_timeout, embedding_min_score,
 embedding_prefetch_facts, embedding_weight, embedding_space, embedding_catch_up_seconds (embeddings.py, README).
@@ -739,6 +739,9 @@ class HolographicMemoryProvider(MemoryProvider):
         self._repeat_turns = self._number("prefetch_repeat_turns", 6, int)
         # Presence gate (issue #59): an experiment, off by default; while off the code below never runs
         self._presence_gate = is_truthy_value(self._config.get("prefetch_presence_gate", False))
+        # Graph recall, off by default: a discovery is a fact the words never matched, reached through a
+        # co-occurrence edge. Off until it is measured on a real store (docs/memory-graph.md).
+        self._graph_expansion = is_truthy_value(self._config.get("graph_expansion", False))
         # Approximate tokens the block recalled before a turn may take (0.21.0); 0 = no limit beyond five facts
         raw = self._config.get("prefetch_max_tokens", 0)
         # int() would make 0.5 a 0 (no limit) and 60.9 a 60 without a word: a fraction is refused like a negative
@@ -1066,6 +1069,7 @@ class HolographicMemoryProvider(MemoryProvider):
         retriever = FactRetriever(store=store, hrr_dim=hrr_dim, hrr_weight=self._hrr_weight,
                                   temporal_decay_half_life=self._half_life)
         retriever.clause_coverage = self._clause_coverage
+        retriever.graph_expansion = self._graph_expansion
         if self._embedding is None and self._tool_writable:  # off: no vector of an outside model stays in the file
             try:
                 dropped = store.drop_vectors()

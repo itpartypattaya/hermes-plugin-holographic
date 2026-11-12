@@ -6,11 +6,16 @@ of the entities the query resolves to, so a fact about an entity next to the que
 word with the query.
 
 The table is not written by the retrieval path and is not a source of truth. `fact_entities` is: the edge is created
-by `trg_fact_entities_edge` (in `GRAPH_SCHEMA`, part of the schema init, so a fresh store has it), a merge repoints
-the edges of the entity it merges away (`_repoint_relations`), a delete drops them (`forget_relations`), and
-`rebuild_graph()` recreates every edge from `fact_entities` at any time. A store written before the table existed gets
-that backfill on its first writer open (`_migrate_graph`). `prune_graph()` removes the edges no current fact implies —
-stale, not wrong: they only widen one hop slightly, so it is not run automatically.
+by `trg_fact_entities_edge` and removed by `trg_fact_entities_unedge` (both in `GRAPH_SCHEMA`, created by a writer's
+`_migrate()` — a read-only open creates nothing), a merge repoints the edges of the entity it merges away
+(`_repoint_relations`), a delete drops them (`forget_relations`), and `rebuild_graph()` recreates every edge from
+`fact_entities` at any time. Forgetting a fact, or changing the entities a fact links, therefore removes the edge it
+implied unless another current fact still links the pair. A store written before the table existed gets a backfill on
+its first writer open (`_migrate_graph`), keyed on `meta.graph_backfilled` rather than on an empty table.
+`prune_graph()` repairs edges no current fact implies — for a store written before the delete trigger existed.
+
+The feature is off by default: `graph_expansion: false` in the config. Turn it on to measure it; the numbers below
+were taken with it on.
 
 ## The bounds
 
@@ -44,17 +49,14 @@ when nothing in the query matches it directly.
 Expansion runs only over the current facts and only in the mode a user's query takes; `as_of` searches and write-time
 conflict checks leave the graph alone.
 
-## Wiki pointer facts
-
-Bulk wiki ingest writes facts like "[WIKI HINT] Wiki page: ai-agents/entities/llama-cpp.md": no capitalised phrase,
-so the entity extractor found nothing and every re-ingested page stayed invisible to the graph. Such a line now
-contributes its namespace (`ai agents`) and page slug (`llama cpp`); structural slugs (index, schema, log, readme,
-overview, changelog, notes, todo) are dropped — they are the wiki's structure, not topics.
-
 ## What the graph does not do
 
 - It does not invent relations: only `co_occurs` exists, and only where one fact links both entities.
-- It does not override text relevance: a discovery below half the top score is never shown.
+- It does not filter edges by trust. `entity_relations.trust_score` is kept for maintenance and inspection
+  (`memory_graph_maintain`), but expansion never compares it with `min_trust`: that silently switched the graph off
+  for a search with `min_trust > 0.5`, because edges default to 0.5. Facts are filtered by `min_trust` on admission.
+- It does not override text relevance: a discovery below half the **weakest shown text hit** is never shown (the
+  tail-fill rule above, not half the top score).
 - It does not survive an entity reindex by itself: the first open of a store indexed under older entity rules
   rebuilds the entity index (upstream behaviour, `meta.entity_rules`), and the graph follows the new links — fewer,
   more accurate edges, not the old ones.

@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Added
+- **French auto-extraction** (`auto_extract`, off by default), after
+  [#86](https://github.com/itpartypattaya/hermes-plugin-holographic/pull/86) by @maxandrieux — thank you. A sentence
+  that opens with a preference (`Je préfère…`, `J'aime…`, `J'adore…`, `J'utilise…`, `Je n'aime pas / plus…`, `Je
+  n'utilise pas…`) is stored as `user_pref`, one that opens with a decision made together (`Nous avons décidé…`, `On a
+  choisi…`) as `project`, at the same trust and through the same screens as English. Replies to the assistant are
+  skipped whatever adverbs they carry (`Je n'aime pas du tout ça, merci`, `J'aime aussi cette proposition`, `Je
+  préfère celui-ci pour le moment`, `On a choisi ça`), while an object after a demonstrative is kept (`J'utilise ce
+  logiciel depuis dix ans`, `Je préfère celui de Paul`). `J'ai décidé…` is a one-off, as "I decided" is in English;
+  questions, `si…`, `que…` (an instruction) and lead-ins (`Moi, je préfère…`) are left out. A reply followed by a
+  French preference in the same sentence keeps the sentence (`J'aime ça, je préfère le thé vert`), as English does.
+
 ## 0.26.6 — 2026-11-10
 
 ### Fixed

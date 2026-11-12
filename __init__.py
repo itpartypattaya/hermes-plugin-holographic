@@ -186,6 +186,32 @@ FACT_EXPERIENCE_SCHEMA = {
 _ARGUMENTS = {schema["name"]: frozenset(schema["parameters"]["properties"])
               for schema in (FACT_STORE_SCHEMA, FACT_FEEDBACK_SCHEMA, FACT_EXPERIENCE_SCHEMA)}
 
+# French (after itpartypattaya/hermes-plugin-holographic#86 by maxandrieux): only a sentence that opens with the
+# first-person statement, so a quote ("Paul dit que je préfère …"), a lead-in ("Moi, je préfère …") or a condition
+# ("Si je préfère …") is not the user's. Straight and curly apostrophes. The adverbs that may stand between the verb
+# and its object, and the end of a clause after a reply ("j'aime bien ça", "on a choisi celle-là, merci") with the
+# degree words that may follow it; the clause ends as _REACTION_END's does, not at a colon ("ce format : JSON").
+_FR_ADVERB = r'(?:bien|beaucoup|vraiment|aussi|assez|trop|tellement|énormément|plutôt|toujours|pas|plus|jamais|moins|du\s+tout)'
+_FR_REACTION_END = (r'(?:\s+(?:aussi|beaucoup|bien|vraiment|plus|mieux|davantage))*\s*'
+                    r'(?:[,;…)—–]|[.!](?!\w)|-(?=\s)|[☀-➿\U0001f300-\U0001faff]|$)')
+# A demonstrative pronoun ("celui-ci", "celle-là") or "ça / cela / ceci" with nothing after it but the end of the
+# clause names nothing: it points at what the assistant just said. "Celui de Paul", "ça quand il pleut" go on.
+_FR_POINTER = r'(?:ça|cela|ceci|(?:celui|celle|ceux|celles)(?:-ci|-là)?)'
+_FR_EXTRACT = (
+    # Preferences. "Je n'aime pas / plus", "je n'utilise pas" are lasting dislikes, as Russian «не ем». Not after
+    # "que" (an instruction: "je préfère que tu vérifies") or a question word, adverbs in between or not. Replies
+    # ("j'aime bien ça") are taken out by the French branch of _RE_REACTION, not here, so "J'utilise ce logiciel
+    # depuis dix ans" is kept. "Nous préférons" is not matched, as "we prefer" is not in English.
+    re.compile(r"^(?:je\s+(?:pr[ée]f[èe]re|n['’](?:aime|utilise)\s+(?:pas|plus|jamais))|j['’](?:aime|adore|utilise))\s+"
+               r"(?!(?:" + _FR_ADVERB + r"\s+)*(?:que|qu['’]|quoi|qui|quel|quelle|quels|quelles|comment|pourquoi|où|"
+               r"quand|combien)\b)\S", re.IGNORECASE),
+    # Decisions: "we" only, as in English and Russian; "j'ai décidé de te poser une autre question" is a one-off.
+    # Not a question word, not "si", and not a bare pointer ("On a choisi ça.").
+    re.compile(r"^(?:nous\s+avons|on\s+a)\s+(?:d[ée]cid[ée]|choisi|convenu)\s+"
+               r"(?!(?:quoi|qui|quel|quelle|quels|quelles|comment|pourquoi|où|quand|combien|si)\b|"
+               + _FR_POINTER + _FR_REACTION_END + r")\S", re.IGNORECASE),
+)
+
 # Auto-extraction: (patterns, category) — preferences -> user_pref, decisions -> project. Matched per sentence; the
 # sentence is stored, not the whole message.
 _EXTRACT_CATEGORIES = (
@@ -199,6 +225,7 @@ _EXTRACT_CATEGORIES = (
       re.compile(r'\bI\s+(?:always|never|usually)\s+\S', re.IGNORECASE),
       re.compile(r'(?:^|\s)я\s+(?:предпочитаю|люблю|использую|пользуюсь|обычно|всегда|никогда|не\s+ем|не\s+пью)\s+\S', re.IGNORECASE),
       re.compile(r'(?:^|\s)мо[йяеи]\s+любим\w+\s+\S', re.IGNORECASE),
+      _FR_EXTRACT[0],
       # Chinese, Traditional and Simplified (after itpartypattaya/hermes-plugin-holographic#2 by au61987ai-code). The
       # sentence must open with the preference — "I" or no subject — so "你喜歡什麼" (what do YOU like) and "他喜歡吃辣"
       # (HE likes spicy food) are not the user's; "不用" (no need) and "我覺得 / 以我來看" (passing opinions) are left out.
@@ -210,6 +237,7 @@ _EXTRACT_CATEGORIES = (
       re.compile(r'\bthe\s+project\s+(?:uses|needs|requires)\s+\S', re.IGNORECASE),
       re.compile(r'(?:^|\s)мы\s+(?:решили|договорились|выбрали)\s+\S', re.IGNORECASE),
       re.compile(r'(?:^|\s)в\s+проекте\s+(?:используем|используется|нужен|нужна|нужно)\s+\S', re.IGNORECASE),
+      _FR_EXTRACT[1],
       # Chinese: an explicit deciding subject ("你必須先備份" is an order to the assistant, not a decision), or the
       # project / its rules as the subject, as "the project uses …" is in English.
       re.compile(r'^(?:我們|我们|大家|團隊|团队|雙方|双方)(?:已經|已经|最後|最后|一致)?'
@@ -234,17 +262,28 @@ _RE_REACTION = re.compile(
     r'\bI\s+(?:really\s+|also\s+|just\s+|totally\s+|do\s+)?(?:prefer|like|love|use)\s+'
     r'(?:it|(?:this|that|these|those)(?:\s+[^\W\d_]+)?)' + _REACTION_END +
     r'|(?:^|\s)я\s+(?:тоже\s+|очень\s+)?(?:предпочитаю|люблю|использую)\s+'
-    r'(?:это|то|такое|(?:этот|эта|это|эти|тот|та|те)\s+[^\W\d_]+)' + _REACTION_END,
+    r'(?:это|то|такое|(?:этот|эта|это|эти|тот|та|те)\s+[^\W\d_]+)' + _REACTION_END +
+    # French: any run of adverbs ("je n'aime pas du tout ça", "j'aime aussi cette proposition"), then "ça / cela /
+    # ceci", "ce / cet / cette / ces" and at most one word, or nothing ("J'aime bien, merci"), up to the end of the
+    # clause; or "celui-ci / celle-là" with a passing "pour le moment" at most ("Je préfère celui-ci pour le moment").
+    r"|\b(?:je\s+(?:pr[ée]f[èe]re|n['’](?:aime|utilise))|j['’](?:aime|adore|utilise))(?:\s+" + _FR_ADVERB + r"\b)*"
+    r"(?:(?:\s+(?:ça|cela|ceci|(?:ce|cet|cette|ces)(?:\s+[^\W\d_]+)?))?"
+    r"|\s+(?:celui|celle|ceux|celles)(?:-ci|-là)?(?:\s+pour\s+(?:le\s+moment|l['’]instant|aujourd['’]hui|ce\s+soir))?)"
+    + _FR_REACTION_END,
     re.IGNORECASE)
 
 
 def _reaction(sentence: str) -> bool:
     """A sentence that states no preference but a reply to the assistant (_RE_REACTION), with nothing left that
-    would be extracted once the reply is taken out ("I like that, I always use tabs" keeps its second half)."""
+    would be extracted once the reply is taken out ("I like that, I always use tabs" keeps its second half). The
+    French patterns open the sentence, so they are tried on what is left without its leading space ("J'aime ça, je
+    préfère le thé"); the others as it is, which keeps a Chinese reply after an English one out ("I like that,
+    我喜欢这个建议")."""
     if not _RE_REACTION.search(sentence):
         return False
     rest = _RE_REACTION.sub(" ", sentence)
-    return not any(p.search(rest) for patterns, _ in _EXTRACT_CATEGORIES for p in patterns)
+    return not (any(p.search(rest) for patterns, _ in _EXTRACT_CATEGORIES for p in patterns)
+                or any(p.search(rest.lstrip()) for p in _FR_EXTRACT))
 
 
 def _write_problem(content: str, person: bool = False) -> str | None:
@@ -845,7 +884,7 @@ class HolographicMemoryProvider(MemoryProvider):
         return [
             {"key": "db_path", "description": "SQLite database path", "default": current("db_path", _DEFAULT_DB_PATH)},
             {"key": "auto_extract", "description": "Store user sentences that state a preference or decision "
-             "(English, Russian and Chinese patterns) after each turn, before context compression and at session end",
+             "(English, Russian, Chinese and French patterns) after each turn, before context compression and at session end",
              "default": current("auto_extract", "false"), "choices": ["true", "false"]},
             {"key": "default_trust", "description": "Default trust score for new facts", "default": current("default_trust", "0.5")},
             {"key": "hrr_dim", "description": "HRR vector dimensions", "default": current("hrr_dim", "1024")},

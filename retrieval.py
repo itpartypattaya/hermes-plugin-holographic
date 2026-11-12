@@ -140,12 +140,11 @@ def _scan_language(query: str) -> bool:
     return analysis.determined and not _SCAN_LANGUAGES.isdisjoint(analysis.langs)
 
 
-# Graph recall (Phase 4) is bounded, and graph discoveries are INTERLEAVED (every Nth slot) instead of
-# score-boosted: they add recall without ever pushing a genuine text hit out of the top slots.
+# Graph recall (Phase 4) is bounded, and a graph discovery never displaces a text hit: it fills the result list
+# only where the text side left room. Measured on a keyword-rich live store (807 facts), a discovery scores ~0.05
+# against text hits of 0.17-0.42, so interleaving one into slot 4 would push a genuine hit out for filler.
 _GRAPH_FACT_CAP = 40        # extra facts admitted from the neighbours of the query's entities
-_GRAPH_SLOT_EVERY = 3       # one graph discovery per N result slots, starting at slot 4
-_GRAPH_FIRST_SLOT = 4       # discoveries never take ranks 1-3: the top text hits stay untouched
-_GRAPH_MIN_REL_RATIO = 0.5  # a discovery must carry >= half the best text score to be shown at all
+_GRAPH_MIN_REL_RATIO = 0.5  # a discovery must carry >= half the WEAKEST shown text hit to be shown at all
 
 
 class _Corpus:
@@ -608,25 +607,19 @@ class FactRetriever:
                 fact["score"] *= decays[i]
         ranked = sorted(candidates, key=lambda x: x["score"], reverse=True)
         if expanded:
-            # A graph discovery is not a better text match. Scored into the ranking, it either displaced real hits
-            # (a flat boost) or never surfaced (pure relevance); interleaved into every _GRAPH_SLOT_EVERY-th slot it
-            # adds recall and can never push a genuine text hit out of the top three.
+            # A graph discovery is not a better text match, and it never takes a text hit's place. It fills the tail
+            # of the list where the text side left room; when the text hits already fill `limit`, the graph is inert
+            # for that query. Measured on a keyword-rich live store: discoveries ~0.05 against text hits of
+            # 0.17-0.42, so any interleaving rule (slot 4, or a ratio against the top hit) either displaced real
+            # hits or never fired at all.
             text_hits = [f for f in ranked if f["fact_id"] not in expanded]
-            top_score = ranked[0]["score"] if ranked else 0.0
-            # Only discoveries plausibly about the query: a co-occurrence edge alone (0.05 against a 0.30 top hit)
-            # is not evidence. This keeps junk hub neighbours out while still surfacing related facts.
-            discoveries = [f for f in ranked
-                           if f["fact_id"] in expanded and f["score"] >= _GRAPH_MIN_REL_RATIO * top_score]
-            merged, next_discovery = [], 0
-            for fact in text_hits:
-                merged.append(fact)
-                slot = len(merged) + 1  # 1-based position the next appended result would take
-                if (next_discovery < len(discoveries) and slot >= _GRAPH_FIRST_SLOT
-                        and (slot - _GRAPH_FIRST_SLOT) % _GRAPH_SLOT_EVERY == 0):
-                    merged.append(discoveries[next_discovery])
-                    next_discovery += 1
-            merged.extend(discoveries[next_discovery:])
-            ranked = merged
+            room = limit - len(text_hits)
+            if room > 0:
+                floor = _GRAPH_MIN_REL_RATIO * (text_hits[-1]["score"] if text_hits else 0.0)
+                discoveries = [f for f in ranked if f["fact_id"] in expanded and f["score"] >= floor]
+                ranked = text_hits + discoveries[:room]
+            else:
+                ranked = text_hits
         results = ranked[:limit]
         for fact in results:
             fact.pop("hrr_vector", None)  # callers expect JSON-serializable dicts

@@ -23,9 +23,11 @@
   query admits at most `GRAPH_NEIGHBOUR_CAP` (25) neighbours and 40 facts. Measured on a 806-fact store: one generic
   token resolved to an entity of degree 57 and an unbounded expansion admitted 110 weakly related facts into the
   candidate pool.
-  A discovery is interleaved into every third result slot from the fourth on, and only with a score of at least half
-  the best text hit — never scored into the ranking, so it cannot displace a genuine hit: scored, it pushed real
-  results down (a flat boost) or never surfaced (pure relevance).
+  A discovery never displaces a text hit: it fills the tail of the result list where the text side left room, and
+  only at half the weakest shown text hit. Measured on a live 807-fact store, discoveries score ~0.05 against text
+  hits of 0.17-0.42, so a ratio against the top hit never fired (0 of 15 realistic queries) and interleaving at slot
+  4 with the ratio removed pushed genuine hits down for filler. The feature is live where recall is sparse — the case
+  it exists for — and silent where the words already answer.
   Edges follow the entity index: a merge repoints them (`_repoint_relations`), a delete drops them, and a store
   written before the table existed gets them backfilled from `fact_entities` on its first writer open. `prune_graph()`
   removes edges no current fact implies; `rebuild_graph()` recreates all of them.

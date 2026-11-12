@@ -25,13 +25,21 @@ The hop is the part that goes wrong, so both ends of it are bounded:
 Measured on an 806-fact store: one generic query token resolved to an entity of degree 57, and an unbounded expansion
 admitted 110 weakly related facts into the candidate pool.
 
-## Discoveries are interleaved, not promoted
+## Discoveries fill the tail, they never displace
 
-A graph-expanded fact is a *discovery*, not a better text match. Scored into the ranking it either displaced genuine
-hits (a flat boost) or never surfaced at all (pure relevance), so it is interleaved instead: one discovery every
-`_GRAPH_SLOT_EVERY` (3) slots from `_GRAPH_FIRST_SLOT` (4) on, and only when its score is at least
-`_GRAPH_MIN_REL_RATIO` (0.5) of the best text hit. A co-occurrence edge alone (0.05 against a 0.30 top hit) is not
-evidence.
+A graph-expanded fact is a *discovery*, not a better text match. It is shown only where the text side left room: the
+result list is the text hits first, then discoveries up to `limit`, each at least `_GRAPH_MIN_REL_RATIO` (0.5) of the
+**weakest shown text hit**. When the text hits already fill the list, the graph is inert for that query.
+
+That is a measurement, not a preference. On a live 807-fact store, discoveries score ~0.05 (`fts_rank` is 0 by
+construction, so they carry only the jaccard and HRR terms, times trust) while text hits score 0.17–0.42. A ratio
+against the top hit (0.5) therefore never fired — 0 of 15 realistic queries surfaced a discovery. Interleaving at slot
+4 with the ratio removed did fire, and pushed genuine hits down to make room for filler ("operations/code-review" under
+a Realm Forge query). Tail-fill is the only rule of the three that adds recall without subtracting any.
+
+The feature is therefore live where recall is sparse (few text hits, or a `limit` above what the words match) and silent
+where the words already answer. That is the case it exists for: a fact about an entity next to the query's, reachable
+when nothing in the query matches it directly.
 
 Expansion runs only over the current facts and only in the mode a user's query takes; `as_of` searches and write-time
 conflict checks leave the graph alone.

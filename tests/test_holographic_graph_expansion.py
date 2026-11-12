@@ -139,21 +139,25 @@ def test_a_multi_word_entity_name_seeds_expansion(tmp_path):
                                            + ",".join("?" * len(expanded)) + ")", list(expanded))}
 
 
-def test_graph_discoveries_are_interleaved_not_promoted(tmp_path):
-    """A related discovery surfaces below the direct hit; a zero-evidence discovery is never shown."""
+def test_graph_discoveries_fill_the_tail_and_never_displace(tmp_path):
+    """A discovery appears only where the text side left room, below every text hit; junk is never shown."""
     store = _store(tmp_path)
     store.add_fact_status("hubnode bridging satellite device", category="general",
                           entities=["hubnode", "satellite"])
     strong, _ = store.add_fact_status("hubnode review gate blocks unverified commits", category="general")
-    related, _ = store.add_fact_status("review gate notes about weather", category="general",
+    related, _ = store.add_fact_status("satellite review gate notes about weather", category="general",
                                        entities=["satellite"])
     junk, _ = store.add_fact_status("completely different topic filler", category="general",
                                     entities=["satellite"])
 
-    ranked = [f["fact_id"] for f in FactRetriever(store, hrr_dim=DIM).search("hubnode review gate", limit=10)]
-    assert related in ranked                       # recall: reachable through the graph
-    assert ranked.index(strong) < ranked.index(related)  # precision: below the direct text hit
-    assert junk not in ranked                      # a co-occurrence edge alone is not evidence
+    retriever = FactRetriever(store, hrr_dim=DIM)
+    roomy = [f["fact_id"] for f in retriever.search("hubnode review gate", limit=10)]
+    assert related in roomy                     # recall: reachable through the graph
+    assert roomy.index(strong) < roomy.index(related)  # precision: below every text hit
+    assert junk not in roomy                    # a co-occurrence edge alone is not evidence
+
+    tight = [f["fact_id"] for f in retriever.search("hubnode review gate", limit=1)]
+    assert tight == [strong], "a discovery displaced the only text hit"
 
 
 def test_wiki_pointer_fact_links_namespace_and_page_topic(tmp_path):

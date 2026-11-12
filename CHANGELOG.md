@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+### Added
 - **French auto-extraction** (`auto_extract`, off by default), after
   [#86](https://github.com/itpartypattaya/hermes-plugin-holographic/pull/86) by @maxandrieux — thank you. A sentence
   that opens with a preference (`Je préfère…`, `J'aime…`, `J'adore…`, `J'utilise…`, `Je n'aime pas / plus…`, `Je
@@ -13,6 +14,25 @@
   logiciel depuis dix ans`, `Je préfère celui de Paul`). `J'ai décidé…` is a one-off, as "I decided" is in English;
   questions, `si…`, `que…` (an instruction) and lead-ins (`Moi, je préfère…`) are left out. A reply followed by a
   French preference in the same sentence keeps the sentence (`J'aime ça, je préfère le thé vert`), as English does.
+- Memory graph (retrieval Phase 4): two entities a fact links get a `co_occurs` edge in `entity_relations` (the
+  `trg_fact_entities_edge` trigger, in the schema init so a fresh store has it), and search walks ONE hop out of the
+  entities the query resolves to. A fact about an entity next to the query's is then reachable without sharing a word
+  with it (docs/memory-graph.md).
+  Bounded, because the hop is the part that goes wrong: an entity touching more than `GRAPH_MAX_ENTITY_DEGREE` (40)
+  others is a hub — a namespace, a project every fact mentions — and is neither expanded from nor walked into, and a
+  query admits at most `GRAPH_NEIGHBOUR_CAP` (25) neighbours and 40 facts. Measured on a 806-fact store: one generic
+  token resolved to an entity of degree 57 and an unbounded expansion admitted 110 weakly related facts into the
+  candidate pool.
+  A discovery is interleaved into every third result slot from the fourth on, and only with a score of at least half
+  the best text hit — never scored into the ranking, so it cannot displace a genuine hit: scored, it pushed real
+  results down (a flat boost) or never surfaced (pure relevance).
+  Edges follow the entity index: a merge repoints them (`_repoint_relations`), a delete drops them, and a store
+  written before the table existed gets them backfilled from `fact_entities` on its first writer open. `prune_graph()`
+  removes edges no current fact implies; `rebuild_graph()` recreates all of them.
+  A wiki pointer fact ("Wiki page: ai-agents/entities/llama-cpp.md") contributes its namespace and page slug as
+  entities: such a line carries no capitalised phrase, so every re-ingested page used to stay invisible to the graph.
+  Structural slugs (index, schema, log, readme, ...) are dropped. The first open of a store indexed under older entity
+  rules rebuilds the entity index (upstream behaviour, `meta.entity_rules`), and the graph follows it.
 
 ## 0.26.6 — 2026-11-10
 

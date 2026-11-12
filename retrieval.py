@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from .store import MemoryStore
 
 from . import holographic as hrr
+from .graph import GRAPH_MAX_ENTITY_DEGREE, GRAPH_NEIGHBOUR_CAP
 from . import text as _text
 from .embeddings import Meaning, VectorIndex
 from .history import CLOSED, error_kind, version_state
@@ -137,6 +138,14 @@ def _scan_language(query: str) -> bool:
         return False
     analysis = analyze(query)
     return analysis.determined and not _SCAN_LANGUAGES.isdisjoint(analysis.langs)
+
+
+# Graph recall (Phase 4) is bounded, and graph discoveries are INTERLEAVED (every Nth slot) instead of
+# score-boosted: they add recall without ever pushing a genuine text hit out of the top slots.
+_GRAPH_FACT_CAP = 40        # extra facts admitted from the neighbours of the query's entities
+_GRAPH_SLOT_EVERY = 3       # one graph discovery per N result slots, starting at slot 4
+_GRAPH_FIRST_SLOT = 4       # discoveries never take ranks 1-3: the top text hits stay untouched
+_GRAPH_MIN_REL_RATIO = 0.5  # a discovery must carry >= half the best text score to be shown at all
 
 
 class _Corpus:
@@ -273,12 +282,51 @@ class FactRetriever:
         # "ночная подработка Марины", and "The walker" matches the prefix "walk"* as fully as a fact with "walk". When
         # any candidate meets any term only through a root (its own or the fact's), all of them are ranked by the
         # weighted share of the query they hold, which counts the root at _DERIV_WEIGHT (as as_of always is).
+        # Graph recall: one hop out of the entities the query resolves to. Only over the current facts and only in
+        # the roots=True mode a user's query takes (write_check's exact mode asks a different question).
+        expanded = self._expand_by_graph(query, candidates, category, min_trust) \
+            if corpus is self._current and roots else set()
         if corpus is not self._current:
             self._corpus_rank(query, terms, list(candidates.values()), category, min_trust, corpus)
         elif roots and any(0.0 < t.match(analyze(_fact_text(f))) < 1.0
                            for f in candidates.values() for t in terms):
             self._coverage_rank(query, terms, list(candidates.values()))
-        return self._rerank(query, list(candidates.values()), limit, meaning if corpus is self._current else None)
+        return self._rerank(query, list(candidates.values()), limit,
+                            meaning if corpus is self._current else None, expanded=expanded)
+
+    def _expand_by_graph(self, query: str, candidates: dict, category, min_trust: float) -> set[int]:
+        """Add the facts of entities one hop from the query's entities; returns their fact_ids.
+
+        Bounded on both ends: an entity touching more than GRAPH_MAX_ENTITY_DEGREE others is a hub (a namespace, a
+        project every fact mentions), and expanding from it — or into it — offers arbitrary neighbours, not related
+        ones. Facts are added through _rows so category and min_trust still filter them.
+        """
+        entity_ids: set[int] = set()
+        for word in dict.fromkeys(w for w in (query or "").split() if len(w) > 2):
+            entity_ids.update(self.store.entity_ids(word))
+        if not entity_ids:
+            return set()
+        degree = self.store.entity_degrees(list(entity_ids))
+        specific = [eid for eid in entity_ids if degree.get(eid, 0) <= GRAPH_MAX_ENTITY_DEGREE]
+        if not specific:
+            return set()
+        connected = self.store.entity_neighbors(specific, min_trust=max(min_trust, 0.0),
+                                                limit=GRAPH_NEIGHBOUR_CAP, max_degree=GRAPH_MAX_ENTITY_DEGREE)
+        if not connected:
+            return set()
+        rows = self.store.read("SELECT DISTINCT fact_id FROM fact_entities WHERE entity_id IN ("
+                               + ",".join("?" * len(connected)) + ")", list(connected))
+        expanded: set[int] = set()
+        for row in rows[:_GRAPH_FACT_CAP]:
+            fact_id = int(row["fact_id"])
+            if fact_id in candidates:
+                continue
+            found = self._rows([fact_id], category, min_trust)
+            if found:
+                found[0]["fts_rank"] = 0.0  # a discovery matches no query word: it is reached through the graph
+                candidates[fact_id] = found[0]
+                expanded.add(fact_id)
+        return expanded
 
     def _corpus_rank(self, query: str, terms, candidates: list[dict], category, min_trust, corpus: _Corpus) -> None:
         """FTS5's BM25 counts every row of its index; the versions index holds corrected versions and every other
@@ -534,7 +582,8 @@ class FactRetriever:
             fact["fts_rank"] = rank[fact[corpus.key]]
         return sorted(rows, key=lambda f: f["fts_rank"], reverse=True)
 
-    def _rerank(self, query: str, candidates: list[dict], limit: int, meaning: Meaning | None = None) -> list[dict]:
+    def _rerank(self, query: str, candidates: list[dict], limit: int, meaning: Meaning | None = None,
+                expanded: set[int] | None = None) -> list[dict]:
         query_tokens = content_stems(query)
         # Query vector is loop-invariant; encode lazily on the first candidate that carries an HRR vector
         # so stores whose hrr_vector was never backfilled don't pay for it.
@@ -555,7 +604,28 @@ class FactRetriever:
             fact["score"] = relevance * fact["trust_score"]
             if decays is not None:
                 fact["score"] *= decays[i]
-        results = sorted(candidates, key=lambda x: x["score"], reverse=True)[:limit]
+        ranked = sorted(candidates, key=lambda x: x["score"], reverse=True)
+        if expanded:
+            # A graph discovery is not a better text match. Scored into the ranking, it either displaced real hits
+            # (a flat boost) or never surfaced (pure relevance); interleaved into every _GRAPH_SLOT_EVERY-th slot it
+            # adds recall and can never push a genuine text hit out of the top three.
+            text_hits = [f for f in ranked if f["fact_id"] not in expanded]
+            top_score = ranked[0]["score"] if ranked else 0.0
+            # Only discoveries plausibly about the query: a co-occurrence edge alone (0.05 against a 0.30 top hit)
+            # is not evidence. This keeps junk hub neighbours out while still surfacing related facts.
+            discoveries = [f for f in ranked
+                           if f["fact_id"] in expanded and f["score"] >= _GRAPH_MIN_REL_RATIO * top_score]
+            merged, next_discovery = [], 0
+            for fact in text_hits:
+                merged.append(fact)
+                slot = len(merged) + 1  # 1-based position the next appended result would take
+                if (next_discovery < len(discoveries) and slot >= _GRAPH_FIRST_SLOT
+                        and (slot - _GRAPH_FIRST_SLOT) % _GRAPH_SLOT_EVERY == 0):
+                    merged.append(discoveries[next_discovery])
+                    next_discovery += 1
+            merged.extend(discoveries[next_discovery:])
+            ranked = merged
+        results = ranked[:limit]
         for fact in results:
             fact.pop("hrr_vector", None)  # callers expect JSON-serializable dicts
         return results

@@ -19,6 +19,11 @@ from .text import fold as text_fold
 
 logger = logging.getLogger(__name__)
 
+_RE_WIKI_PAGE = re.compile(r"Wiki page:\s*([^\s|]+)")
+_WIKI_STRUCTURAL_SLUGS = frozenset({
+    "index", "schema", "log", "readme", "wiki index", "wiki log", "overview", "changelog", "notes", "todo",
+})
+
 # Where an alias came from (entity_aliases.source, 0.16.0): 'user' (alias, rename, a merge someone asked for), 'aka'
 # ("X aka Y" in a fact's text: it goes with the last fact that says it) or 'legacy' (written before 0.16.0 or by an
 # older release since: kept like a given one, and dropped only when a forgotten fact said it as "X aka Y").
@@ -99,6 +104,7 @@ class EntityMixin:
         if src is None or tgt is None or source == target:
             return
         affected = [r[0] for r in self._conn.execute("SELECT fact_id FROM fact_entities WHERE entity_id IN (?, ?)", (source, target))]
+        self._repoint_relations(source, target)  # the graph follows the merge: edges of *source* become *target*'s
         self._conn.execute("INSERT OR IGNORE INTO fact_entities (fact_id, entity_id) SELECT fact_id, ? FROM fact_entities "
                            "WHERE entity_id = ?", (target, source))
         self._conn.execute("DELETE FROM fact_entities WHERE entity_id = ?", (source,))
@@ -569,11 +575,41 @@ class EntityMixin:
                 ids.add(self.add_alias(left, right, source="aka")["entity_id"])
         return ids
 
+    @staticmethod
+    def _wiki_page_entities(text: str) -> tuple[str, ...]:
+        """Entities for a wiki pointer fact: "<wiki>/[section/]page-slug.md" yields the wiki namespace and the page slug.
+
+        Bulk wiki ingest writes facts through the same add_fact path but with no names the extractor can see: a line
+        like "Wiki page: ai-agents/entities/llama-cpp.md" carries no capitalised phrase, so without this every
+        re-ingested page stays invisible to the memory graph. The namespace and the slug are the only proper nouns such
+        a line has. Hopeless slugs (index, schema, log, readme, the wiki root) are dropped: structural, not topics.
+        """
+        m = _RE_WIKI_PAGE.search(text or "")
+        if m is None:
+            return ()
+        path = m.group(1).strip().strip("<>[]()`'\"")
+        if path.lower().endswith(".md"):
+            path = path[:-3]
+        parts = [p for p in re.split(r"[/\\]+", path) if p and p not in {".", ".."}]
+        if len(parts) < 2:
+            return ()
+        named = [parts[0].replace("-", " ").replace("_", " "), parts[-1].replace("-", " ").replace("_", " ")]
+        out: list[str] = []
+        for name in (n.strip() for n in named):
+            key = entity_key(name)
+            if not key or key in _WIKI_STRUCTURAL_SLUGS or not _valid_entity(name):
+                continue
+            if key not in {entity_key(x) for x in out}:
+                out.append(name)
+        return tuple(out)
+
     def _link_entities(self, fact_id: int, content: str, declared=()) -> None:
         """Link the fact to its entities: names extracted from the text, names the caller declared (a one-word name
-        such as "Masha" is accepted here), and entities already known that the text mentions in any word form."""
+        such as "Masha" is accepted here), and entities already known that the text mentions in any word form.
+        A wiki pointer line contributes its namespace and page slug (see _wiki_page_entities)."""
         declared_keys = frozenset(entity_key(_clean_given(n)) for n in declared or ())
         ids = self._text_entity_ids(content, declared_keys) | self.mentioned_entity_ids(content)
+        ids |= {self._resolve_entity(name) for name in self._wiki_page_entities(content)}
         for entity_id in sorted(ids):
             self._write("INSERT OR IGNORE INTO fact_entities (fact_id, entity_id) VALUES (?, ?)", (fact_id, entity_id))
         self._link_declared(fact_id, declared)
@@ -708,6 +744,7 @@ class EntityMixin:
         """The entity's row and its aliases; the caller unlinks its facts first and bumps the index generation."""
         if self._entry.get("migrated"):  # a store no writer has migrated yet may lack entity_aliases
             self._write("DELETE FROM entity_aliases WHERE entity_id = ?", (entity_id,))
+        self.forget_relations(entity_id)  # a deleted entity leaves no edges behind (a merge already repointed them)
         self._write("DELETE FROM entities WHERE entity_id = ?", (entity_id,))
 
     def _drop_orphan_entities(self, keep_declared: bool = False) -> None:
@@ -726,6 +763,9 @@ class EntityMixin:
             self._bump()
         if self._entry.get("migrated"):
             self._write("DELETE FROM entity_aliases WHERE entity_id NOT IN (SELECT entity_id FROM entities)")
+        if self._graph_ready():  # a store written before the graph table existed has none to prune
+            self._write("DELETE FROM entity_relations WHERE src_entity_id NOT IN (SELECT entity_id FROM entities) "
+                        "OR dst_entity_id NOT IN (SELECT entity_id FROM entities)")
 
     def _aka_backing(self, entity_ids) -> set[tuple[int, str]]:
         """(entity_id, alias key) of every "X aka Y" that a current fact linked to one of *entity_ids* says."""

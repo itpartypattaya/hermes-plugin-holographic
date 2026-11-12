@@ -17,6 +17,7 @@ from .entity_names import (  # noqa: F401 - re-exported: they lived here, and th
     _without_code, unusable_names)
 from .history import HISTORY_SCHEMA, VERSION_NAMES_TRIGGERS, HistoryMixin, NotFound, error_kind, parse_day
 from .experience import ExperienceMixin
+from .graph import GRAPH_SCHEMA, GraphMixin
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +161,7 @@ def _restrict_permissions(db_path: Path) -> None:
                 logger.warning("holographic: could not make %s readable by its owner only (%s)", path, exc)
 
 
-class MemoryStore(EntityMixin, HistoryMixin, ExperienceMixin):
+class MemoryStore(EntityMixin, GraphMixin, HistoryMixin, ExperienceMixin):
     """SQLite-backed fact store with entity resolution and trust scoring.
 
     Process-wide shared connection registry: SQLite allows one writer at a time and several providers
@@ -224,7 +225,8 @@ class MemoryStore(EntityMixin, HistoryMixin, ExperienceMixin):
         to pre-HRR DBs, and narrow the FTS update trigger of DBs created by older versions."""
         from hermes_state_wal import apply_wal_with_fallback
         apply_wal_with_fallback(self._conn, db_label="memory_store.db (holographic)")
-        self._conn.executescript(_SCHEMA)
+        self._conn.executescript(_SCHEMA + GRAPH_SCHEMA)  # the graph table exists in every store this version
+                                                         # writes, whether or not _migrate() runs (migrate=False)
         if "hrr_vector" not in {row[1] for row in self._conn.execute("PRAGMA table_info(facts)").fetchall()}:
             from hermes_cli.sqlite_util import add_column_if_missing
             add_column_if_missing(self._conn, "facts", "hrr_vector", "hrr_vector BLOB")
@@ -249,7 +251,8 @@ class MemoryStore(EntityMixin, HistoryMixin, ExperienceMixin):
         by the user) and the tombstones of deleted names. The entity index is rebuilt after the migration, by
         _maybe_rebuild_entities. An older version reads such a store as before; one that writes to it as well may
         create a deleted name again from a new fact's text (its next open by this version does not notice that)."""
-        self._conn.executescript(HISTORY_SCHEMA + _EMBEDDINGS_SCHEMA + _ENTITY_SCHEMA + VERSION_NAMES_TRIGGERS)
+        self._conn.executescript(HISTORY_SCHEMA + _EMBEDDINGS_SCHEMA + _ENTITY_SCHEMA + GRAPH_SCHEMA
+                                 + VERSION_NAMES_TRIGGERS)
         with self._tx():
             if "source" not in {r[1] for r in self._conn.execute("PRAGMA table_info(entity_aliases)")}:
                 # 0.16.0. 'legacy': written before, or by an older release since; nothing says whether someone gave it
@@ -277,6 +280,7 @@ class MemoryStore(EntityMixin, HistoryMixin, ExperienceMixin):
             self._conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_entities_key ON entities(name_key) WHERE name_key IS NOT NULL")
             self._sync_hrr_dim()
             self._migrate_history()
+            self._migrate_graph()  # 0.27.0: edges for a store written before entity_relations existed
             self._bump()
             self._set_meta("schema_version", str(SCHEMA_VERSION))
 

@@ -88,7 +88,7 @@ In `config.yaml` under `plugins.hermes-memory-store`:
 | Key | Default | Description |
 |-----|---------|-------------|
 | `db_path` | `$HERMES_HOME/memory_store.db` | SQLite database path |
-| `auto_extract` | `false` | Store user sentences that state a preference or decision (English, Russian, Chinese) after each completed turn, and also before context compression and at session end (not in `scope: user`, where a whole transcript cannot be attributed), at trust 0.4; questions, replies to the assistant ("I like that, sounds good") and restatements of a stored fact are skipped |
+| `auto_extract` | `false` | Store user sentences that state a preference or decision (English, Russian, Chinese, French) after each completed turn, and also before context compression and at session end (not in `scope: user`, where a whole transcript cannot be attributed), at trust 0.4; questions, replies to the assistant ("I like that, sounds good") and restatements of a stored fact are skipped |
 | `mirror_memory_writes` | `false` | Also store every built-in memory `add` (MEMORY.md / USER.md) as a fact |
 | `default_trust` | `0.5` | Trust score of a new fact |
 | `min_trust_threshold` | `0.3` | Facts below this trust are not recalled |
@@ -745,7 +745,14 @@ weather this week?" still recalls it, as "wifi password?" recalls the one fact a
 the two apart. In a script without capitals (Hebrew, Hindi, Arabic) a name cannot be told from a common word, so
 there one shared word recalls as it did. Stems are search keys, not lemmas: an irregular form can miss (`ponies` / `pony`). A
 negation counts for the whole clause up to a "but" ("likes cats but not dogs" is detail, not a conflict), not for a
-single word. `auto_extract` recognises English, Russian and Chinese phrasing. The refusal of instruction-like text, of a
+single word. `auto_extract` recognises English, Russian, Chinese and French phrasing. French covers a sentence that
+opens with a preference (`Je préfère…`, `J'aime…`, `J'adore…`, `J'utilise…`, `Je n'aime pas / plus…`, `Je n'utilise
+pas…`) or with a decision made together (`Nous avons décidé…`, `On a choisi…`); straight and curly apostrophes.
+`J'ai décidé…` is left out, as "I decided" is in English, and so is `Nous préférons…`. Only the start of a sentence
+counts: `Moi, je préfère le thé.` and `Oui, je préfère…` are not extracted. Replies to the assistant are skipped
+(`J'aime bien ça`, `Je n'aime pas du tout ça`, `Je préfère celui-ci`, `On a choisi celle-là`), and so is a sentence
+that opens with `si`; a condition later in the sentence is not seen (`Nous avons décidé de partir si la météo le
+permet.` is stored, as its English equivalent is). The refusal of instruction-like text, of a
 credential with its value and of a request to send one covers all eighteen languages (0.15.1; English and Russian
 before). The
 main sets of all eighteen languages run in CI (`tests/test_holographic_languages.py`).

@@ -301,7 +301,9 @@ class FactRetriever:
         project every fact mentions), and expanding from it — or into it — offers arbitrary neighbours, not related
         ones. Facts are added through _rows so category and min_trust still filter them.
         """
-        entity_ids: set[int] = set()
+        # Seed from the names the query MENTIONS, not from per-word lookups: "Realm Forge" and "llama.cpp" are one
+        # entity each, and entity_ids("Realm") finds nothing, so a whitespace split never seeds a multi-word name.
+        entity_ids: set[int] = set(self.store.mentioned_entity_ids(query or ""))
         for word in dict.fromkeys(w for w in (query or "").split() if len(w) > 2):
             entity_ids.update(self.store.entity_ids(word))
         if not entity_ids:

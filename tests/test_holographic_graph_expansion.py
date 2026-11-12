@@ -126,6 +126,19 @@ def test_hub_entities_are_not_traversed(tmp_path):
     assert FactRetriever(store, hrr_dim=DIM)._expand_by_graph("hubspace", {}, None, 0.3) == set()
 
 
+def test_a_multi_word_entity_name_seeds_expansion(tmp_path):
+    """Seeding must use the names the query mentions: word-by-word lookup finds nothing for "Realm Forge"."""
+    store = _store(tmp_path)
+    store.add_fact_status("Realm Forge uses a text backend", category="general",
+                          entities=["Realm Forge", "textnode"])
+    store.add_fact_status("textnode keeps the parser small", category="general")
+    expanded = FactRetriever(store, hrr_dim=DIM)._expand_by_graph("Realm Forge", {}, None, 0.3)
+    assert expanded, "a multi-word entity name did not seed the graph"
+    assert store.entity_ids("textnode")[0] in {
+        r["entity_id"] for r in store.read("SELECT DISTINCT entity_id FROM fact_entities WHERE fact_id IN ("
+                                           + ",".join("?" * len(expanded)) + ")", list(expanded))}
+
+
 def test_graph_discoveries_are_interleaved_not_promoted(tmp_path):
     """A related discovery surfaces below the direct hit; a zero-evidence discovery is never shown."""
     store = _store(tmp_path)

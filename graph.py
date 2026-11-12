@@ -66,20 +66,24 @@ class GraphMixin:
 
         *max_degree* drops hub entities on both sides: an entity touching more than
         that many others says nothing about which neighbour is related to a query.
+        With *max_degree* the rows are filtered before the cap, so the cap is not spent
+        on hubs that the filter then discards; without it the SQL limit applies.
         """
         ids = [int(e) for e in entity_ids or ()]
         if not ids:
             return set()
         marks = ", ".join("?" * len(ids))
-        rows = self.read(
-            "SELECT dst_entity_id AS eid FROM entity_relations "
-            f"WHERE src_entity_id IN ({marks}) AND trust_score >= ? "
-            "UNION ALL "
-            "SELECT src_entity_id AS eid FROM entity_relations "
-            f"WHERE dst_entity_id IN ({marks}) AND trust_score >= ? "
-            "LIMIT ?",
-            [*ids, min_trust, *ids, min_trust, limit * 3 if max_degree is not None else limit],
-        )
+        sql = ("SELECT dst_entity_id AS eid FROM entity_relations "
+               f"WHERE src_entity_id IN ({marks}) AND trust_score >= ? "
+               "UNION ALL "
+               "SELECT src_entity_id AS eid FROM entity_relations "
+               f"WHERE dst_entity_id IN ({marks}) AND trust_score >= ? "
+               "ORDER BY eid")
+        params: list = [*ids, min_trust, *ids, min_trust]
+        if max_degree is None:
+            sql += " LIMIT ?"
+            params.append(limit)
+        rows = self.read(sql, params)
         found = {int(r["eid"]) for r in rows} - set(ids)
         if max_degree is not None and found:
             degree = self.entity_degrees(list(found))
@@ -148,16 +152,24 @@ class GraphMixin:
     def _repoint_relations(self, source: int, target: int) -> None:
         """Move *source*'s edges onto *target* (entity merge; inside the caller's transaction).
 
-        An edge that becomes a self-loop or collides with an existing one is dropped:
-        ``UPDATE OR IGNORE`` leaves the colliding row untouched, and the DELETE that
-        follows removes it on the losing side only.
+        Every edge touching *source* is read, deleted and re-inserted as one canonical direction
+        (smaller id first) with INSERT OR IGNORE, so a self-loop, a duplicate or the reverse of an
+        edge *target* already has collapses into one row instead of surviving as a half-move.
         """
         if source == target or not self._graph_ready():
             return
-        for column in ("src_entity_id", "dst_entity_id"):
-            self._write(f"UPDATE OR IGNORE entity_relations SET {column} = ? WHERE {column} = ?", (target, source))
-            self._write(f"DELETE FROM entity_relations WHERE {column} = ?", (source,))
-        self._write("DELETE FROM entity_relations WHERE src_entity_id = dst_entity_id")
+        rows = self.read(
+            "SELECT src_entity_id AS a, dst_entity_id AS b, relation, weight, trust_score "
+            "FROM entity_relations WHERE src_entity_id = ? OR dst_entity_id = ?", (source, source))
+        self._write("DELETE FROM entity_relations WHERE src_entity_id = ? OR dst_entity_id = ?", (source, source))
+        for row in rows:
+            a = target if int(row["a"]) == source else int(row["a"])
+            b = target if int(row["b"]) == source else int(row["b"])
+            if a == b:
+                continue
+            self._write(
+                "INSERT OR IGNORE INTO entity_relations (src_entity_id, dst_entity_id, relation, weight, trust_score) "
+                "VALUES (?, ?, ?, ?, ?)", (min(a, b), max(a, b), row["relation"], row["weight"], row["trust_score"]))
 
     def forget_relations(self, entity_id: int) -> None:
         """Drop every edge of a deleted entity (inside the caller's transaction)."""

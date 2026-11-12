@@ -316,9 +316,13 @@ class FactRetriever:
         if not connected:
             return set()
         rows = self.store.read("SELECT DISTINCT fact_id FROM fact_entities WHERE entity_id IN ("
-                               + ",".join("?" * len(connected)) + ")", list(connected))
+                               + ",".join("?" * len(connected)) + ") ORDER BY fact_id", list(connected))
         expanded: set[int] = set()
-        for row in rows[:_GRAPH_FACT_CAP]:
+        # The cap counts candidates that survive _rows (category, min_trust), not raw links: slicing the rows first let
+        # forty ineligible facts spend the whole budget and starve the discoveries that do qualify.
+        for row in rows:
+            if len(expanded) >= _GRAPH_FACT_CAP:
+                break
             fact_id = int(row["fact_id"])
             if fact_id in candidates:
                 continue

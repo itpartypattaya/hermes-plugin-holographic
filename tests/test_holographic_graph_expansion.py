@@ -40,18 +40,20 @@ def test_a_fact_linking_two_entities_creates_their_edge(tmp_path):
     assert store.entity_degrees([*left, *right]) == {left[0]: 1, right[0]: 1}
 
 
-def test_edges_survive_an_entity_merge(tmp_path):
-    """Merging two entities repoints their edges instead of orphaning them."""
+def test_edges_follow_an_entity_merge(tmp_path):
+    """Merging two entities repoints their edges onto the survivor instead of orphaning them."""
     store = _store(tmp_path)
-    store.add_fact_status("mergeship links firstnode", category="general",
-                          entities=["mergeship", "firstnode"])
-    store.add_fact_status("Mergeship and secondnode", category="general", entities=["secondnode"])
-    store.add_alias("mergeship", "mergeship2")  # no edge of its own: resolving the alias must still reach the node
-    hubs = store.entity_ids("mergeship")
-    assert hubs
-    assert store.entity_ids("mergeship2") == hubs
-    neighbours = store.entity_neighbors(hubs)
-    assert len(neighbours) >= 1
+    store.add_fact_status("mergeship links firstnode", category="general", entities=["mergeship", "firstnode"])
+    store.add_fact_status("secondnode stands alone", category="general", entities=["secondnode"])
+    source = store.entity_ids("mergeship")[0]
+    target = store.entity_ids("secondnode")[0]
+    firstnode = store.entity_ids("firstnode")[0]
+    assert firstnode in store.entity_neighbors([source])
+    with store._tx():
+        store._merge_into(source, target)
+    assert store.read("SELECT COUNT(*) c FROM entity_relations WHERE src_entity_id = ? OR dst_entity_id = ?",
+                      (source, source))[0]["c"] == 0, "an edge still points at the merged-away entity"
+    assert firstnode in store.entity_neighbors([target]), "the merged entity's edges did not move to the survivor"
 
 
 def test_deleted_entity_leaves_no_edges(tmp_path):
@@ -177,3 +179,70 @@ def test_wiki_structural_slugs_are_not_entities(tmp_path):
     fact, _ = store.add_fact_status(
         "[WIKI HINT - consult when relevant] Wiki page: operations/SCHEMA.md | type: schema", category="wiki")
     assert _names(store, fact) == {"operations"}
+
+
+def test_edges_are_backfilled_for_a_store_written_before_the_table_existed(tmp_path):
+    """A store with fact_entities but no entity_relations gets the graph on its first writer open."""
+    path = str(tmp_path / "legacy.db")
+    store = MemoryStore(path, hrr_dim=DIM)
+    store.add_fact_status("alphaword links betaword", category="general", entities=["alphaword", "betaword"])
+    assert store.read("SELECT COUNT(*) c FROM entity_relations")[0]["c"] == 1
+    with store._tx():  # what a pre-graph release left behind: links, no table, no trigger
+        store._write("DROP TRIGGER IF EXISTS trg_fact_entities_edge")
+        store._write("DROP TABLE entity_relations")
+    store.close()
+
+    reopened = MemoryStore(path, hrr_dim=DIM)
+    try:
+        assert reopened.read("SELECT COUNT(*) c FROM entity_relations")[0]["c"] == 1
+        assert reopened.entity_neighbors(reopened.entity_ids("alphaword")) == set(reopened.entity_ids("betaword"))
+    finally:
+        reopened.close()
+
+
+def test_graph_calls_are_no_ops_without_the_table(tmp_path):
+    """Every graph write and read degrades to a no-op rather than failing a caller's transaction."""
+    store = _store(tmp_path)
+    with store._tx():
+        store._write("DROP TRIGGER IF EXISTS trg_fact_entities_edge")
+        store._write("DROP TABLE entity_relations")
+    assert store.entity_neighbors([]) == set()
+    assert store.entity_degrees([]) == {}
+    assert store.rebuild_graph() == 0
+    assert store.prune_graph() == 0
+    store.forget_relations(1)  # no table: must not raise
+
+
+def test_the_fact_cap_counts_eligible_facts_not_raw_links(tmp_path):
+    """Forty links in another category must not spend the budget before an eligible discovery is reached."""
+    store = _store(tmp_path)
+    store.add_fact_status("hubnode bridges satellite", category="general", entities=["hubnode", "satellite"])
+    for i in range(45):
+        store.add_fact_status(f"other-category note {i:02d}", category="othercat", entities=["satellite"])
+    eligible, _ = store.add_fact_status("satellite keeps a general note", category="general",
+                                        entities=["satellite"])
+    expanded = FactRetriever(store, hrr_dim=DIM)._expand_by_graph("hubnode", {}, category="general", min_trust=0.3)
+    assert eligible in expanded, "the cap was spent on facts the category filter then dropped"
+    already_found = FactRetriever(store, hrr_dim=DIM)._expand_by_graph(
+        "hubnode", {eligible: {"content": "satellite keeps a general note"}}, category="general", min_trust=0.3)
+    assert eligible not in already_found, "a fact the text search already returned was offered again as a discovery"
+
+
+def test_graph_expansion_stops_at_the_fact_cap(tmp_path):
+    """The discovery budget is an upper bound: more eligible neighbours do not flood the tail."""
+    store = _store(tmp_path)
+    seed, _ = store.add_fact_status("caphub bridges cappage", category="general", entities=["caphub", "cappage"])
+    made = {store.add_fact_status(f"eligible note {i:02d}", category="general", entities=["cappage"])[0]
+            for i in range(45)}
+    expanded = FactRetriever(store, hrr_dim=DIM)._expand_by_graph("caphub", {}, category="general", min_trust=0.3)
+    assert len(expanded) == 40, "the cap did not bound the discoveries"
+    assert expanded <= made | {seed}, "a discovery came from outside the neighbour's facts"
+
+
+def test_wiki_pointer_paths_need_a_namespace_and_a_page():
+    """A bare file name is not a namespace/topic pair: <wiki>/page.md is the shortest accepted form."""
+    wiki_entities = MemoryStore._wiki_page_entities
+    assert wiki_entities("Wiki page: README.md | type: summary") == ()
+    assert wiki_entities("Wiki page: index") == ()
+    assert wiki_entities("no pointer here") == ()
+    assert wiki_entities("Wiki page: ai-agents/llama-cpp.md") == ("ai agents", "llama cpp")

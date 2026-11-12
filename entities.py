@@ -104,10 +104,12 @@ class EntityMixin:
         if src is None or tgt is None or source == target:
             return
         affected = [r[0] for r in self._conn.execute("SELECT fact_id FROM fact_entities WHERE entity_id IN (?, ?)", (source, target))]
-        self._repoint_relations(source, target)  # the graph follows the merge: edges of *source* become *target*'s
         self._conn.execute("INSERT OR IGNORE INTO fact_entities (fact_id, entity_id) SELECT fact_id, ? FROM fact_entities "
                            "WHERE entity_id = ?", (target, source))
         self._conn.execute("DELETE FROM fact_entities WHERE entity_id = ?", (source,))
+        # After the links move: the AFTER INSERT trigger pairs the survivor with the fact's other entities while the
+        # merged-away row is still there, so repointing first left those transient edges behind.
+        self._repoint_relations(source, target)
         self._conn.execute("UPDATE OR IGNORE entity_aliases SET entity_id = ? WHERE entity_id = ?", (target, source))
         self._conn.execute("DELETE FROM entity_aliases WHERE entity_id = ?", (source,))
         target_key = tgt["name_key"] or entity_key(tgt["name"])

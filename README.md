@@ -52,6 +52,12 @@ character n-grams or a word scan, reordered by meaning if that is on; a relevanc
 decide; up to five facts by their words, one by meaning alone and two of named entities go into the turn as
 data](diagram/recall.svg)
 
+The graph (0.27.0) is one bounded hop: a fact that names two entities makes those entities neighbours, and a search
+walks a single hop out of the entities its words resolve to, so a fact about a neighbouring entity is reachable without
+sharing a word with the query. Hub entities — a namespace, a project every fact mentions — are never traversed, and a
+discovery only fills the tail of the result list, never displacing a text hit. Bounds, measurements and repair:
+[docs/memory-graph.md](docs/memory-graph.md).
+
 ## Install
 
 While your Hermes still bundles `holographic`, the bundled copy is used and this plugin stays dormant. After core

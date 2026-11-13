@@ -3,6 +3,13 @@
 ## Unreleased
 
 ### Added
+- **Wiki pointer facts carry entities.** Bulk wiki ingest writes a page as a fact whose pointer line
+  (`Wiki page: ai-agents/entities/llama-cpp.md`) has no capitalised phrase, so the extractor found nothing and a
+  re-ingested page was never a topic of its own: it was reachable only by the words of its body. Such a line now
+  links its namespace (`ai agents`) and page slug (`llama cpp`); a section directory and structural slugs (`index`,
+  `schema`, `log`, `readme`, `overview`, `changelog`, `notes`, `todo`) are dropped, and a path with no namespace is
+  ignored. A name `delete_entity` removed is not recreated from a path — text never lifts a tombstone. Existing
+  stores get the links on the first writer open: `_ENTITY_RULES` is 5, so the index is rebuilt under the new rules.
 - **French auto-extraction** (`auto_extract`, off by default), after
   [#86](https://github.com/itpartypattaya/hermes-plugin-holographic/pull/86) by @maxandrieux — thank you. A sentence
   that opens with a preference (`Je préfère…`, `J'aime…`, `J'adore…`, `J'utilise…`, `Je n'aime pas / plus…`, `Je

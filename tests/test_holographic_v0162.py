@@ -317,7 +317,7 @@ def test_a_store_indexed_under_the_0161_rules_is_rebuilt(tmp_path):
     s._write("UPDATE meta SET value = '3' WHERE key = 'entity_rules'")
     s.close()
     s = MemoryStore(str(path), hrr_dim=DIM)
-    assert s.entity_rules() == store_module._ENTITY_RULES == 4
+    assert s.entity_rules() == store_module._ENTITY_RULES == 5
     assert [r["name"] for r in s.list_entities()] == ["360安全卫士"]
     s.close()
 

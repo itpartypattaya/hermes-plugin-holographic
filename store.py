@@ -747,8 +747,7 @@ class MemoryStore(EntityMixin, HistoryMixin, ExperienceMixin):
                             self.add_alias(left, right, source="aka")
                         except ValueError:  # Y is another entity's alias already
                             pass
-                ids = self._text_entity_ids(f["content"]) | {
-                    self._resolve_entity(name) for name in self._wiki_page_entities(f["content"])}
+                ids = self._implied_entity_ids(f["content"], mentioned=False)
                 named |= ids
                 first |= {(f["fact_id"], e) for e in ids}
             current = {(r[0], r[1]) for r in self._conn.execute("SELECT fact_id, entity_id FROM fact_entities")}

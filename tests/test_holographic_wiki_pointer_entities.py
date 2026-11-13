@@ -83,3 +83,40 @@ def test_rebuild_under_new_entity_rules_links_existing_pointer_facts(tmp_path):
     assert reopened.entity_rules() == store_module._ENTITY_RULES == 5
     assert _names(reopened, fact) == {"ai agents", "llama cpp"}
     reopened.close()
+
+
+def test_split_alias_keeps_wiki_links(tmp_path):
+    """A pointer fact's links come from its text like any other: splitting an alias off recomputes them, and the wiki
+    links must survive the recomputation (review: _detach_alias read the text alone and erased them)."""
+    store = _store(tmp_path)
+    fact, _ = store.add_fact_status(POINTER.format(path="ai-agents/entities/llama-cpp.md"), category="general")
+    store.add_alias("llama cpp", "llamacpp")
+    store.split_alias("llamacpp")
+    assert _names(store, fact) >= {"ai agents", "llama cpp"}
+
+
+def test_a_url_after_wiki_page_is_not_a_page(tmp_path):
+    """Only the pointer line is a pointer: an ordinary note saying "Wiki page: <url>" made entities of "https:" and
+    "Foo"."""
+    store = _store(tmp_path)
+    fact, _ = store.add_fact_status("Wiki page: https://en.wikipedia.org/wiki/Foo is a good intro", category="general")
+    assert _names(store, fact) == set()
+
+
+def test_a_pointer_mentioned_mid_line_is_not_a_page(tmp_path):
+    """The line is anchored to the hint marker: prose that mentions the format mid-sentence names no page."""
+    store = _store(tmp_path)
+    fact, _ = store.add_fact_status("see Wiki page: gaming/openmw.md for the details", category="general")
+    assert "gaming" not in _names(store, fact)
+
+
+def test_pointer_format_in_code_is_not_a_pointer(tmp_path):
+    """A fact that shows the format in backticks or a fenced block is documentation, not a pointer: code is blanked
+    out before the line is read, as _extract_entities reads it."""
+    store = _store(tmp_path)
+    inline, _ = store.add_fact_status(
+        "the line `[WIKI HINT] Wiki page: ai-agents/entities/llama-cpp.md` marks a page", category="general")
+    fenced, _ = store.add_fact_status(
+        "```\n[WIKI HINT] Wiki page: ai-agents/entities/llama-cpp.md\n```", category="general")
+    for fact in (inline, fenced):
+        assert not _names(store, fact) & {"ai agents", "llama cpp"}

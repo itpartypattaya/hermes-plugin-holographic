@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from .store import MemoryStore
 
 from . import holographic as hrr
+from .entities import _MAX_COUNTED_IDS
 from .graph import GRAPH_MAX_ENTITY_DEGREE, GRAPH_NEIGHBOUR_CAP
 from . import text as _text
 from .embeddings import Meaning, VectorIndex
@@ -140,11 +141,14 @@ def _scan_language(query: str) -> bool:
     return analysis.determined and not _SCAN_LANGUAGES.isdisjoint(analysis.langs)
 
 
-# Graph recall (Phase 4) is bounded, and a graph discovery never displaces a text hit: it fills the result list
-# only where the text side left room. Measured on a keyword-rich live store (807 facts), a discovery scores ~0.05
-# against text hits of 0.17-0.42, so interleaving one into slot 4 would push a genuine hit out for filler.
+# Graph recall (Phase 4) is bounded, and inside search() a graph discovery never displaces a text hit: it fills the
+# result list only where the text side left room. Measured on a keyword-rich live store (807 facts), a discovery
+# scores ~0.05 against text hits of 0.17-0.42, so interleaving one into slot 4 would push a genuine hit out for
+# filler. A caller that rescores the whole pool afterwards (the memory_search tool, prefetch with the reranker on)
+# judges order again and may put a discovery above a text hit; that is the rescorer's call, not this rule's.
 _GRAPH_FACT_CAP = 40        # extra facts admitted from the neighbours of the query's entities
 _GRAPH_MIN_REL_RATIO = 0.5  # a discovery must carry >= half the WEAKEST shown text hit to be shown at all
+_GRAPH_SEED_CAP = 25        # entity ids resolved from one query that seed the walk
 
 
 class _Corpus:
@@ -307,11 +311,18 @@ class FactRetriever:
         project every fact mentions), and expanding from it — or into it — offers arbitrary neighbours, not related
         ones. Facts are added through _rows so category and min_trust still filter them.
         """
+        # A store opened without migrating has no entity_relations (the graph schema is a writer's business):
+        # discoveries are simply absent there, and search must not raise.
+        if not self.store._graph_ready():
+            return set()
         # Seed from the names the query MENTIONS only: "Realm Forge" and "llama.cpp" are one entity each, while a
         # whitespace split never seeds a multi-word name and turns a generic word ("the", "please") into a seed.
         entity_ids: set[int] = set(self.store.mentioned_entity_ids(query or ""))
         if not entity_ids:
             return set()
+        # entity_degrees and entity_neighbors bind each id twice. A message naming hundreds of known names is not
+        # realistic, but the cap costs nothing and keeps every bound below the parameter limit by construction.
+        entity_ids = set(sorted(entity_ids)[:_GRAPH_SEED_CAP])
         degree = self.store.entity_degrees(list(entity_ids))
         specific = [eid for eid in entity_ids if degree.get(eid, 0) <= GRAPH_MAX_ENTITY_DEGREE]
         if not specific:
@@ -323,9 +334,16 @@ class FactRetriever:
         rows = self.store.read("SELECT DISTINCT fact_id FROM fact_entities WHERE entity_id IN ("
                                + ",".join("?" * len(connected)) + ") ORDER BY fact_id", list(connected))
         wanted = [int(r["fact_id"]) for r in rows if int(r["fact_id"]) not in candidates]
-        # One read for every neighbour fact, not one per fact: prefetch runs this on every turn, and the old loop
-        # cost a query per link.
-        found = {f["fact_id"]: f for f in self._rows(wanted, category, min_trust)} if wanted else {}
+        # Neighbour degree is bounded, the facts behind those neighbours are not: twenty neighbours can carry
+        # thousands of facts, and one IN list of them fails on stores built before SQLite 3.32 (999 bound
+        # parameters). Read in the plugin's usual batches, and stop as soon as the discovery budget is full, so a
+        # run stays bounded even when a few hundred links are ineligible.
+        found: dict[int, dict] = {}
+        for start in range(0, len(wanted), _MAX_COUNTED_IDS):
+            if len(found) >= _GRAPH_FACT_CAP:
+                break
+            for fact in self._rows(wanted[start:start + _MAX_COUNTED_IDS], category, min_trust):
+                found[int(fact["fact_id"])] = fact
         expanded: set[int] = set()
         # The cap counts candidates that survive _rows (category, min_trust), not raw links: counting the links first
         # let forty ineligible facts spend the whole budget and starve the discoveries that do qualify.

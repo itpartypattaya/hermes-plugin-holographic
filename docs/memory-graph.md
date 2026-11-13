@@ -7,7 +7,7 @@ word with the query.
 
 The table is not written by the retrieval path and is not a source of truth. `fact_entities` is: the edge is created
 by `trg_fact_entities_edge` and removed by `trg_fact_entities_unedge` (both in `GRAPH_SCHEMA`, created by a writer's
-`_migrate()` — a read-only open creates nothing), a merge repoints the edges of the entity it merges away
+`_migrate()` — a read-only open creates no graph schema), a merge repoints the edges of the entity it merges away
 (`_repoint_relations`), a delete drops them (`forget_relations`), and `rebuild_graph()` recreates every edge from
 `fact_entities` at any time. Forgetting a fact, or changing the entities a fact links, therefore removes the edge it
 implied unless another current fact still links the pair. A store written before the table existed gets a backfill on
@@ -24,17 +24,25 @@ The hop is the part that goes wrong, so both ends of it are bounded:
 - `GRAPH_MAX_ENTITY_DEGREE` (40): an entity touching more others than this is a hub — a namespace ("ai agents", a
   project name), a wiki root, a word every fact mentions. Expanding from a hub, or into one, offers arbitrary
   neighbours rather than related ones. Hubs are neither expanded from nor walked into.
-- `GRAPH_NEIGHBOUR_CAP` (25): neighbour entities traversed per query.
-- 40 facts admitted per query from those neighbours.
+- `GRAPH_NEIGHBOUR_CAP` (25): neighbour entities traversed per query, and at most `_GRAPH_SEED_CAP` (25) entity ids
+  from the query seed the walk.
+- 40 facts admitted per query from those neighbours. The facts behind 25 neighbours have no ceiling, so they are read
+  in batches of `_MAX_COUNTED_IDS` (500) and the read stops once the budget is full.
 
 Measured on an 806-fact store: one generic query token resolved to an entity of degree 57, and an unbounded expansion
 admitted 110 weakly related facts into the candidate pool.
 
-## Discoveries fill the tail, they never displace
+## Discoveries fill the tail in `search()`
 
-A graph-expanded fact is a *discovery*, not a better text match. It is shown only where the text side left room: the
-result list is the text hits first, then discoveries up to `limit`, each at least `_GRAPH_MIN_REL_RATIO` (0.5) of the
-**weakest shown text hit**. When the text hits already fill the list, the graph is inert for that query.
+A graph-expanded fact is a *discovery*, not a better text match. Inside `search()` it is shown only where the text
+side left room: the result list is the text hits first, then discoveries up to `limit`, each at least
+`_GRAPH_MIN_REL_RATIO` (0.5) of the **weakest shown text hit**. When the text hits already fill the list, the graph is
+inert for that query.
+
+That rule is about `search()`, which is where the gate is applied. With `rerank: on`, the `memory_search` tool and
+prefetch rescore the whole pool afterwards — discoveries included — so a discovery can be ordered above a text hit
+and, in prefetch, take one of the injected slots. It still has to pass `relevant()` and the rescorer; that is the
+rescorer judging relevance, not the graph displacing a hit. The tail order holds when no rescorer runs.
 
 That is a measurement, not a preference. On a live 807-fact store, discoveries score ~0.05 (`fts_rank` is 0 by
 construction, so they carry only the jaccard and HRR terms, times trust) while text hits score 0.17–0.42. A ratio
@@ -55,8 +63,8 @@ conflict checks leave the graph alone.
 - It does not filter edges by trust. `entity_relations.trust_score` is kept for maintenance and inspection
   (`memory_graph_maintain`), but expansion never compares it with `min_trust`: that silently switched the graph off
   for a search with `min_trust > 0.5`, because edges default to 0.5. Facts are filtered by `min_trust` on admission.
-- It does not override text relevance: a discovery below half the **weakest shown text hit** is never shown (the
-  tail-fill rule above, not half the top score).
+- It does not override text relevance inside `search()`: a discovery below half the **weakest shown text hit** is
+  never shown (the tail-fill rule above, not half the top score). A rescorer run afterwards may still reorder it.
 - It does not survive an entity reindex by itself: the first open of a store indexed under older entity rules
   rebuilds the entity index (upstream behaviour, `meta.entity_rules`), and the graph follows the new links — fewer,
   more accurate edges, not the old ones.

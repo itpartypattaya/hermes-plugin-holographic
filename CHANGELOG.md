@@ -22,17 +22,23 @@
   query admits at most `GRAPH_NEIGHBOUR_CAP` (25) neighbours and 40 facts. Measured on a 806-fact store: one generic
   token resolved to an entity of degree 57 and an unbounded expansion admitted 110 weakly related facts into the
   candidate pool.
-  A discovery never displaces a text hit: it fills the tail of the result list where the text side left room, and
-  only at half the weakest shown text hit. Measured on a live 807-fact store, discoveries score ~0.05 against text
-  hits of 0.17-0.42, so a ratio against the top hit never fired (0 of 15 realistic queries) and interleaving at slot
-  4 with the ratio removed pushed genuine hits down for filler. The feature is live where recall is sparse — the case
-  it exists for — and silent where the words already answer.
+  A discovery never displaces a text hit inside `search()`: it fills the tail of the result list where the text side
+  left room, and only at half the weakest shown text hit. With `rerank: on` the `memory_search` tool and prefetch
+  rescore the whole pool afterwards, so a discovery that passes `relevant()` can be ordered above a text hit and take
+  an injected slot; that is the rescorer's ordering, and docs/memory-graph.md says so. Measured on a live 807-fact
+  store, discoveries score ~0.05 against text hits of 0.17-0.42, so a ratio against the top hit never fired (0 of 15
+  realistic queries) and interleaving at slot 4 with the ratio removed pushed genuine hits down for filler. The
+  feature is live where recall is sparse — the case it exists for — and silent where the words already answer.
+  The reads are bounded too: at most 25 entity ids seed the walk, and the facts behind the neighbours — whose number
+  neighbour degree does not bound — are read in batches of 500, stopping at the 40-fact budget, so a store built
+  before SQLite 3.32 (999 bound parameters) does not fail a search. A reader that never migrated (a subagent, a cron
+  with `cron_writes: false`) has no entity_relations and simply gets no discoveries instead of an error.
   Edges follow the entity index: a merge repoints them (`_repoint_relations`), a delete drops them, and forgetting a
   fact removes the edge it implied unless another current fact still links the pair (`trg_fact_entities_unedge`). A
   store written before the table existed gets a backfill from `fact_entities` on its first writer open, keyed on
   `meta.graph_backfilled` rather than on an empty table. `prune_graph()` repairs edges no current fact implies;
   `rebuild_graph()` recreates all of them. The graph schema is created by a writer's `_migrate()` only: a read-only
-  open (`migrate=False`) creates nothing.
+  open (`migrate=False`) creates no graph schema (it still writes the WAL setup and the base schema, as before).
   Off by default (`graph_expansion: false`), like the other experiments, until discoveries are measured reaching the
   injected context on a real store. The first open of a store indexed under older entity rules rebuilds the entity
   index (upstream behaviour, `meta.entity_rules`), and the graph follows it.

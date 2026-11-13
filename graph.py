@@ -39,9 +39,8 @@ CREATE INDEX IF NOT EXISTS idx_er_src ON entity_relations(src_entity_id);
 CREATE INDEX IF NOT EXISTS idx_er_dst ON entity_relations(dst_entity_id);
 CREATE INDEX IF NOT EXISTS idx_er_relation ON entity_relations(relation);
 
--- The write path, in the schema init and not only in a migration: a fresh store
--- without this trigger has an empty graph, and two entities linked by the same fact
--- then never become neighbours.
+-- The write path, created by _migrate() (this schema) and not by _init_db: a
+-- reader that never migrates has no graph, and search treats it as empty.
 CREATE TRIGGER IF NOT EXISTS trg_fact_entities_edge
 AFTER INSERT ON fact_entities
 BEGIN

@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS memory_banks (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 """
-# 0.8.0 history tables (history.py) are created by a writer in _migrate(): a read-only context creates nothing.
+# 0.8.0 history tables (history.py) are created by a writer in _migrate(): a read-only context creates none of them.
 
 # 0.14.0 search by meaning (embeddings.py): at most one vector per current fact, made by *model* from the text whose
 # hash is *text_hash*. Created by every writer, whether or not the feature is on, so that deleting a fact always deletes
@@ -225,8 +225,8 @@ class MemoryStore(EntityMixin, GraphMixin, HistoryMixin, ExperienceMixin):
         to pre-HRR DBs, and narrow the FTS update trigger of DBs created by older versions."""
         from hermes_state_wal import apply_wal_with_fallback
         apply_wal_with_fallback(self._conn, db_label="memory_store.db (holographic)")
-        self._conn.executescript(_SCHEMA)  # the graph schema is a writer's business: _migrate() creates it, so a
-                                           # read-only open (migrate=False) creates nothing
+        self._conn.executescript(_SCHEMA)  # _init_db creates the base schema and the WAL setup, never the graph: a
+                                           # writer's _migrate() alone creates entity_relations and its triggers
         if "hrr_vector" not in {row[1] for row in self._conn.execute("PRAGMA table_info(facts)").fetchall()}:
             from hermes_cli.sqlite_util import add_column_if_missing
             add_column_if_missing(self._conn, "facts", "hrr_vector", "hrr_vector BLOB")

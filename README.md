@@ -55,8 +55,8 @@ data](diagram/recall.svg)
 The graph (`graph_expansion`, off by default) is one bounded hop: a fact that names two entities makes those entities
 neighbours, and a search walks a single hop out of the entities its words resolve to, so a fact about a neighbouring
 entity is reachable without sharing a word with the query. Hub entities — a namespace, a project every fact mentions —
-are never traversed, and a discovery only fills the tail of the result list, never displacing a text hit. Bounds,
-measurements and repair: [docs/memory-graph.md](docs/memory-graph.md).
+are never traversed, and inside `search()` a discovery only fills the tail of the result list, never displacing a text
+hit (a reranker run afterwards may reorder the pool). Bounds, measurements and repair: [docs/memory-graph.md](docs/memory-graph.md).
 
 ## Install
 

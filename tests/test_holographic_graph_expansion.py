@@ -7,6 +7,8 @@ genuine text hits.
 
 from __future__ import annotations
 
+import sqlite3
+
 import pytest
 
 pytest.importorskip("numpy")
@@ -328,3 +330,40 @@ def test_edge_trust_does_not_disable_the_graph(tmp_path):
                                           entities=["highpage"], trust=0.9)
     expanded = FactRetriever(store, hrr_dim=DIM)._expand_by_graph("highhub", {}, None, min_trust=0.8)
     assert discovered in expanded, "an edge's default trust filtered a fact the fact-level min_trust admits"
+
+
+def test_neighbour_facts_beyond_the_sqlite_parameter_limit(tmp_path):
+    """The facts behind 25 neighbours have no ceiling: reading them in one IN list fails on a 999-parameter SQLite."""
+    store = MemoryStore(str(tmp_path / "big.db"), hrr_dim=DIM)
+    for i in range(20):
+        store.add_fact_status(f"Seed Person works with Partner Number{i}", category="general")
+        for k in range(60):
+            store.add_fact_status(f"Partner Number{i} shipped release {k}", category="general")
+    store._conn.setlimit(sqlite3.SQLITE_LIMIT_VARIABLE_NUMBER, 999)
+    retriever = FactRetriever(store, hrr_dim=DIM)
+    retriever.graph_expansion = True
+    hits = retriever.search("Seed Person", limit=15)
+    assert hits, "the text hit must still come back"
+    assert len(hits) <= 15
+
+
+def test_graph_on_reader_of_a_pre_graph_store_does_not_raise(tmp_path):
+    """graph_expansion on a store opened without migrating returns the text hits, not an OperationalError."""
+    path = tmp_path / "pre.db"
+    writer = MemoryStore(str(path), hrr_dim=DIM)
+    writer.add_fact_status("Alice Cooper met Bob Dylan", category="general")
+    with writer._tx():  # what a store written by a pre-graph release looks like
+        writer._write("DROP TRIGGER IF EXISTS trg_fact_entities_edge")
+        writer._write("DROP TRIGGER IF EXISTS trg_fact_entities_unedge")
+        writer._write("DROP TABLE IF EXISTS entity_relations")
+        writer._write("DELETE FROM meta WHERE key = 'graph_backfilled'")
+    writer.close()
+
+    reader = MemoryStore(str(path), hrr_dim=DIM, migrate=False)
+    try:
+        retriever = FactRetriever(reader, hrr_dim=DIM)
+        retriever.graph_expansion = True
+        hits = retriever.search("Alice Cooper", limit=5)
+        assert hits, "a read-only open lost the text hit"
+    finally:
+        reader.close()

@@ -13,6 +13,8 @@ if TYPE_CHECKING:
     from .store import MemoryStore
 
 from . import holographic as hrr
+from .entities import _MAX_COUNTED_IDS
+from .graph import GRAPH_MAX_ENTITY_DEGREE, GRAPH_NEIGHBOUR_CAP
 from . import text as _text
 from .embeddings import Meaning, VectorIndex
 from .history import CLOSED, error_kind, version_state
@@ -139,6 +141,16 @@ def _scan_language(query: str) -> bool:
     return analysis.determined and not _SCAN_LANGUAGES.isdisjoint(analysis.langs)
 
 
+# Graph recall (Phase 4) is bounded, and inside search() a graph discovery never displaces a text hit: it fills the
+# result list only where the text side left room. Measured on a keyword-rich live store (807 facts), a discovery
+# scores ~0.05 against text hits of 0.17-0.42, so interleaving one into slot 4 would push a genuine hit out for
+# filler. A caller that rescores the whole pool afterwards (the memory_search tool, prefetch with the reranker on)
+# judges order again and may put a discovery above a text hit; that is the rescorer's call, not this rule's.
+_GRAPH_FACT_CAP = 40        # extra facts admitted from the neighbours of the query's entities
+_GRAPH_MIN_REL_RATIO = 0.5  # a discovery must carry >= half the WEAKEST shown text hit to be shown at all
+_GRAPH_SEED_CAP = 25        # entity ids resolved from one query that seed the walk
+
+
 class _Corpus:
     """What a search runs over: the current facts, or (``as_of``) the versions that may have held on a date. *source*
     is a table or a subquery with the columns of ``facts``, *key* its row id, *fts* the FTS5 index over it."""
@@ -199,6 +211,9 @@ class FactRetriever:
         # prefetch_clause_coverage (an experiment, off by default): relevant() gives a fact it left out a second look
         # against each of a message's two questions (_clause_rescue)
         self.clause_coverage = False
+        # Graph recall (Phase 4), off by default until it is measured on a real store: a discovery is a fact the
+        # words never matched, reached through a co-occurrence edge.
+        self.graph_expansion = False
 
     def _settled(self) -> tuple[float, float, float]:
         """(fts, jaccard, hrr) weights, settled on first use: without numpy the HRR share goes to the words. Asking
@@ -273,12 +288,75 @@ class FactRetriever:
         # "ночная подработка Марины", and "The walker" matches the prefix "walk"* as fully as a fact with "walk". When
         # any candidate meets any term only through a root (its own or the fact's), all of them are ranked by the
         # weighted share of the query they hold, which counts the root at _DERIV_WEIGHT (as as_of always is).
+        # Ranking runs on the TEXT candidates, before any discovery is added: a discovery carries fts_rank 0 by
+        # construction, but one that holds part of a query word would otherwise flip the coverage test for the whole
+        # set and rewrite every text hit's rank — text order must not depend on the graph.
         if corpus is not self._current:
             self._corpus_rank(query, terms, list(candidates.values()), category, min_trust, corpus)
         elif roots and any(0.0 < t.match(analyze(_fact_text(f))) < 1.0
                            for f in candidates.values() for t in terms):
             self._coverage_rank(query, terms, list(candidates.values()))
-        return self._rerank(query, list(candidates.values()), limit, meaning if corpus is self._current else None)
+        # Graph recall: one hop out of the entities the query resolves to. Only over the current facts, only in
+        # the roots=True mode a user's query takes (write_check's exact mode asks a different question), and only
+        # when the graph is enabled.
+        expanded = self._expand_by_graph(query, candidates, category, min_trust) \
+            if self.graph_expansion and corpus is self._current and roots else set()
+        return self._rerank(query, list(candidates.values()), limit,
+                            meaning if corpus is self._current else None, expanded=expanded)
+
+    def _expand_by_graph(self, query: str, candidates: dict, category, min_trust: float) -> set[int]:
+        """Add the facts of entities one hop from the query's entities; returns their fact_ids.
+
+        Bounded on both ends: an entity touching more than GRAPH_MAX_ENTITY_DEGREE others is a hub (a namespace, a
+        project every fact mentions), and expanding from it — or into it — offers arbitrary neighbours, not related
+        ones. Facts are added through _rows so category and min_trust still filter them.
+        """
+        # A store opened without migrating has no entity_relations (the graph schema is a writer's business):
+        # discoveries are simply absent there, and search must not raise.
+        if not self.store._graph_ready():
+            return set()
+        # Seed from the names the query MENTIONS only: "Realm Forge" and "llama.cpp" are one entity each, while a
+        # whitespace split never seeds a multi-word name and turns a generic word ("the", "please") into a seed.
+        entity_ids: set[int] = set(self.store.mentioned_entity_ids(query or ""))
+        if not entity_ids:
+            return set()
+        # entity_degrees and entity_neighbors bind each id twice. A message naming hundreds of known names is not
+        # realistic, but the cap costs nothing and keeps every bound below the parameter limit by construction.
+        entity_ids = set(sorted(entity_ids)[:_GRAPH_SEED_CAP])
+        degree = self.store.entity_degrees(list(entity_ids))
+        specific = [eid for eid in entity_ids if degree.get(eid, 0) <= GRAPH_MAX_ENTITY_DEGREE]
+        if not specific:
+            return set()
+        connected = self.store.entity_neighbors(specific, limit=GRAPH_NEIGHBOUR_CAP,
+                                                max_degree=GRAPH_MAX_ENTITY_DEGREE)
+        if not connected:
+            return set()
+        rows = self.store.read("SELECT DISTINCT fact_id FROM fact_entities WHERE entity_id IN ("
+                               + ",".join("?" * len(connected)) + ") ORDER BY fact_id", list(connected))
+        wanted = [int(r["fact_id"]) for r in rows if int(r["fact_id"]) not in candidates]
+        # Neighbour degree is bounded, the facts behind those neighbours are not: twenty neighbours can carry
+        # thousands of facts, and one IN list of them fails on stores built before SQLite 3.32 (999 bound
+        # parameters). Read in the plugin's usual batches, and stop as soon as the discovery budget is full, so a
+        # run stays bounded even when a few hundred links are ineligible.
+        found: dict[int, dict] = {}
+        for start in range(0, len(wanted), _MAX_COUNTED_IDS):
+            if len(found) >= _GRAPH_FACT_CAP:
+                break
+            for fact in self._rows(wanted[start:start + _MAX_COUNTED_IDS], category, min_trust):
+                found[int(fact["fact_id"])] = fact
+        expanded: set[int] = set()
+        # The cap counts candidates that survive _rows (category, min_trust), not raw links: counting the links first
+        # let forty ineligible facts spend the whole budget and starve the discoveries that do qualify.
+        for fact_id in wanted:
+            if len(expanded) >= _GRAPH_FACT_CAP:
+                break
+            fact = found.get(fact_id)
+            if fact is None:
+                continue
+            fact["fts_rank"] = 0.0  # a discovery matches no query word: it is reached through the graph
+            candidates[fact_id] = fact
+            expanded.add(fact_id)
+        return expanded
 
     def _corpus_rank(self, query: str, terms, candidates: list[dict], category, min_trust, corpus: _Corpus) -> None:
         """FTS5's BM25 counts every row of its index; the versions index holds corrected versions and every other
@@ -534,7 +612,8 @@ class FactRetriever:
             fact["fts_rank"] = rank[fact[corpus.key]]
         return sorted(rows, key=lambda f: f["fts_rank"], reverse=True)
 
-    def _rerank(self, query: str, candidates: list[dict], limit: int, meaning: Meaning | None = None) -> list[dict]:
+    def _rerank(self, query: str, candidates: list[dict], limit: int, meaning: Meaning | None = None,
+                expanded: set[int] | None = None) -> list[dict]:
         query_tokens = content_stems(query)
         # Query vector is loop-invariant; encode lazily on the first candidate that carries an HRR vector
         # so stores whose hrr_vector was never backfilled don't pay for it.
@@ -555,7 +634,22 @@ class FactRetriever:
             fact["score"] = relevance * fact["trust_score"]
             if decays is not None:
                 fact["score"] *= decays[i]
-        results = sorted(candidates, key=lambda x: x["score"], reverse=True)[:limit]
+        ranked = sorted(candidates, key=lambda x: x["score"], reverse=True)
+        if expanded:
+            # A graph discovery is not a better text match, and it never takes a text hit's place. It fills the tail
+            # of the list where the text side left room; when the text hits already fill `limit`, the graph is inert
+            # for that query. Measured on a keyword-rich live store: discoveries ~0.05 against text hits of
+            # 0.17-0.42, so any interleaving rule (slot 4, or a ratio against the top hit) either displaced real
+            # hits or never fired at all.
+            text_hits = [f for f in ranked if f["fact_id"] not in expanded]
+            room = limit - len(text_hits)
+            if room > 0:
+                floor = _GRAPH_MIN_REL_RATIO * (text_hits[-1]["score"] if text_hits else 0.0)
+                discoveries = [f for f in ranked if f["fact_id"] in expanded and f["score"] >= floor]
+                ranked = text_hits + discoveries[:room]
+            else:
+                ranked = text_hits
+        results = ranked[:limit]
         for fact in results:
             fact.pop("hrr_vector", None)  # callers expect JSON-serializable dicts
         return results

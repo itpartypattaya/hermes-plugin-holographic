@@ -99,6 +99,10 @@ class EntityMixin:
         if src is None or tgt is None or source == target:
             return
         affected = [r[0] for r in self._conn.execute("SELECT fact_id FROM fact_entities WHERE entity_id IN (?, ?)", (source, target))]
+        # Before the links move: repointing reads *source*'s edges, and the AFTER DELETE trigger prunes them the
+        # moment its last link goes. The transient edges the INSERT trigger derives against the still-linked source
+        # are removed by that same trigger.
+        self._repoint_relations(source, target)
         self._conn.execute("INSERT OR IGNORE INTO fact_entities (fact_id, entity_id) SELECT fact_id, ? FROM fact_entities "
                            "WHERE entity_id = ?", (target, source))
         self._conn.execute("DELETE FROM fact_entities WHERE entity_id = ?", (source,))
@@ -708,6 +712,7 @@ class EntityMixin:
         """The entity's row and its aliases; the caller unlinks its facts first and bumps the index generation."""
         if self._entry.get("migrated"):  # a store no writer has migrated yet may lack entity_aliases
             self._write("DELETE FROM entity_aliases WHERE entity_id = ?", (entity_id,))
+        self.forget_relations(entity_id)  # a deleted entity leaves no edges behind (a merge already repointed them)
         self._write("DELETE FROM entities WHERE entity_id = ?", (entity_id,))
 
     def _drop_orphan_entities(self, keep_declared: bool = False) -> None:
@@ -726,6 +731,9 @@ class EntityMixin:
             self._bump()
         if self._entry.get("migrated"):
             self._write("DELETE FROM entity_aliases WHERE entity_id NOT IN (SELECT entity_id FROM entities)")
+        if self._graph_ready():  # a store written before the graph table existed has none to prune
+            self._write("DELETE FROM entity_relations WHERE src_entity_id NOT IN (SELECT entity_id FROM entities) "
+                        "OR dst_entity_id NOT IN (SELECT entity_id FROM entities)")
 
     def _aka_backing(self, entity_ids) -> set[tuple[int, str]]:
         """(entity_id, alias key) of every "X aka Y" that a current fact linked to one of *entity_ids* says."""

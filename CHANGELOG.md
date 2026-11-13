@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.27.0 — 2026-11-14
+
 ### Added
 - **French auto-extraction** (`auto_extract`, off by default), after
   [#86](https://github.com/itpartypattaya/hermes-plugin-holographic/pull/86) by @maxandrieux — thank you. A sentence
@@ -13,8 +15,10 @@
   logiciel depuis dix ans`, `Je préfère celui de Paul`). `J'ai décidé…` is a one-off, as "I decided" is in English;
   questions, `si…`, `que…` (an instruction) and lead-ins (`Moi, je préfère…`) are left out. A reply followed by a
   French preference in the same sentence keeps the sentence (`J'aime ça, je préfère le thé vert`), as English does.
-- Memory graph (retrieval Phase 4): two entities a fact links get a `co_occurs` edge in `entity_relations` (the
-  `trg_fact_entities_edge` trigger, in the schema init so a fresh store has it), and search walks ONE hop out of the
+- **Memory graph** (retrieval Phase 4, `graph_expansion`, off by default),
+  [#91](https://github.com/itpartypattaya/hermes-plugin-holographic/pull/91) by @magicbluesmoke — thank you. Two
+  entities a fact links get a `co_occurs` edge in `entity_relations` (the `trg_fact_entities_edge` trigger, created by
+  a writer's `_migrate()`), and search walks ONE hop out of the
   entities the query resolves to. A fact about an entity next to the query's is then reachable without sharing a word
   with it (docs/memory-graph.md).
   Bounded, because the hop is the part that goes wrong: an entity touching more than `GRAPH_MAX_ENTITY_DEGREE` (40)

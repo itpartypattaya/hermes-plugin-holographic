@@ -114,8 +114,9 @@ SCHEMA_VERSION = 2  # 1 = 0.1.x-0.3.x layout, 2 = + meta, entities.name_key, ent
 # The rules entities are guessed from a fact's text by (meta.entity_rules; none recorded = 1, before 0.16.0). A store
 # indexed under older rules is rebuilt on a writer's first open (rebuild_entity_index), up to the fact count below; a
 # larger one on request. Raise it with every change of _extract_entities / _name_shaped that drops what they took.
-_ENTITY_RULES = 4  # 2: 0.16.0; 3: 0.16.1 (script seams, line breaks, leading symbols, counts in quotes);
+_ENTITY_RULES = 5  # 2: 0.16.0; 3: 0.16.1 (script seams, line breaks, leading symbols, counts in quotes);
 # 4: 0.16.2 (Chinese names that begin with a number, Chinese counts)
+# 5: wiki pointer lines contribute their namespace and page slug (entities._wiki_page_entities)
 _AUTO_REBUILD_MAX_FACTS = 2000
 _AUTO_REBUILD_MAX_CHARS = 500_000  # and in all; the work grows with the text, not the count (review 0.16.0)
 # 0.16.0: names delete_entity removed, as keyed hashes (see _name_digest). Created by a writer in _migrate().
@@ -750,7 +751,7 @@ class MemoryStore(EntityMixin, GraphMixin, HistoryMixin, ExperienceMixin):
                             self.add_alias(left, right, source="aka")
                         except ValueError:  # Y is another entity's alias already
                             pass
-                ids = self._text_entity_ids(f["content"])
+                ids = self._implied_entity_ids(f["content"], mentioned=False)
                 named |= ids
                 first |= {(f["fact_id"], e) for e in ids}
             current = {(r[0], r[1]) for r in self._conn.execute("SELECT fact_id, entity_id FROM fact_entities")}

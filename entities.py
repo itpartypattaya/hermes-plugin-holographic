@@ -19,6 +19,16 @@ from .text import fold as text_fold
 
 logger = logging.getLogger(__name__)
 
+# A wiki pointer line ("[WIKI HINT] Wiki page: ai-agents/entities/llama-cpp.md | type: entity"): bulk wiki ingest
+# writes it through add_fact, and it carries no capitalised phrase the extractor could take, so the path is the only
+# proper noun on it. Its namespace and page slug are linked as entities instead. The line is anchored to the hint
+# marker at the start of a line, and a scheme is refused: an ordinary note saying "Wiki page: <url>" is not a page
+# of this wiki and made entities of "https:" and "Foo" (review).
+_RE_WIKI_PAGE = re.compile(r"(?m)^[ \t]*\[WIKI HINT\b[^\]\n]*\][ \t]*Wiki page:[ \t]*([^\s|]+)")
+_WIKI_STRUCTURAL_SLUGS = frozenset({
+    "index", "schema", "log", "readme", "wiki index", "wiki log", "overview", "changelog", "notes", "todo",
+})
+
 # Where an alias came from (entity_aliases.source, 0.16.0): 'user' (alias, rename, a merge someone asked for), 'aka'
 # ("X aka Y" in a fact's text: it goes with the last fact that says it) or 'legacy' (written before 0.16.0 or by an
 # older release since: kept like a given one, and dropped only when a forgotten fact said it as "X aka Y").
@@ -340,7 +350,7 @@ class EntityMixin:
             current = {r[0]: r[1] for r in self._conn.execute(
                 "SELECT fe.entity_id, e.entity_type FROM fact_entities fe JOIN entities e ON e.entity_id = fe.entity_id "
                 "WHERE fe.fact_id = ?", (fact_id,)).fetchall()}
-            named = self._text_entity_ids(content) | self.mentioned_entity_ids(content)
+            named = self._implied_entity_ids(content)
             links = set(named) | {e for e, kind in current.items() if kind == "declared" and e not in lost}
             for entity_id in lost:
                 if entity_id not in current or entity_id in named or kinds.get(entity_id) != "declared":
@@ -573,11 +583,59 @@ class EntityMixin:
                 ids.add(self.add_alias(left, right, source="aka")["entity_id"])
         return ids
 
+    def _implied_entity_ids(self, content: str, *, declared_keys=frozenset(), mentioned: bool = True) -> set[int]:
+        """Every entity a fact's text implies: the names it extracts (and "X aka Y", see _text_entity_ids), the known
+        entities it mentions in any word form, and the namespace and page slug of a wiki pointer line (see
+        _wiki_page_entities).
+
+        One helper for the places that relink a fact from its text (_link_entities, _detach_alias,
+        rebuild_entity_index), so the three cannot drift apart again: _detach_alias recomputed the links of the facts
+        it touched from the text alone and dropped a pointer fact's wiki links (review: split_alias erased them).
+        *mentioned* is off for the first pass of rebuild_entity_index, which matches mentions against the whole index
+        its second pass leaves, not against a half-built one."""
+        ids = self._text_entity_ids(content, declared_keys)
+        if mentioned:
+            ids |= self.mentioned_entity_ids(content)
+        return ids | {self._resolve_entity(name) for name in self._wiki_page_entities(content)}
+
+    def _wiki_page_entities(self, text: str) -> tuple[str, ...]:
+        """Entities for a wiki pointer fact: "<wiki>/[section/]page-slug.md" yields the wiki namespace and the page slug.
+
+        Bulk wiki ingest writes facts through the same add_fact path but with no names the extractor can see: a line
+        like "Wiki page: ai-agents/entities/llama-cpp.md" carries no capitalised phrase, so without this the page is
+        only reachable by the words of its body, never as a topic of its own. The namespace and the slug are the only
+        proper nouns such a line has. Structural slugs (index, schema, log, readme, the wiki root) are dropped: they
+        are the wiki's shape, not topics, and a single-segment path names no page. A name delete_entity removed stays
+        removed: a path is text, and text never recreates a tombstoned name (see _tombstoned). The text is read with
+        code blanked out, as _extract_entities reads it: a fact that shows the format in backticks is documentation,
+        not a pointer (review)."""
+        m = _RE_WIKI_PAGE.search(_without_code(unicodedata.normalize("NFC", text or "")))
+        if m is None:
+            return ()
+        path = m.group(1).strip().strip("<>[]()`'\"")
+        if "://" in path:
+            return ()  # a URL is no page of this wiki, whatever follows "Wiki page:"
+        if path.lower().endswith(".md"):
+            path = path[:-3]
+        parts = [p for p in re.split(r"[/\\]+", path) if p and p not in {".", ".."}]
+        if len(parts) < 2:
+            return ()
+        named = [parts[0].replace("-", " ").replace("_", " "), parts[-1].replace("-", " ").replace("_", " ")]
+        out: list[str] = []
+        for name in (n.strip() for n in named):
+            key = entity_key(name)
+            if not key or key in _WIKI_STRUCTURAL_SLUGS or not _valid_entity(name) or self._tombstoned(name):
+                continue
+            if key not in {entity_key(x) for x in out}:
+                out.append(name)
+        return tuple(out)
+
     def _link_entities(self, fact_id: int, content: str, declared=()) -> None:
         """Link the fact to its entities: names extracted from the text, names the caller declared (a one-word name
-        such as "Masha" is accepted here), and entities already known that the text mentions in any word form."""
+        such as "Masha" is accepted here), entities already known that the text mentions in any word form, and the
+        namespace and page slug of a wiki pointer line (see _wiki_page_entities)."""
         declared_keys = frozenset(entity_key(_clean_given(n)) for n in declared or ())
-        ids = self._text_entity_ids(content, declared_keys) | self.mentioned_entity_ids(content)
+        ids = self._implied_entity_ids(content, declared_keys=declared_keys)
         for entity_id in sorted(ids):
             self._write("INSERT OR IGNORE INTO fact_entities (fact_id, entity_id) VALUES (?, ?)", (fact_id, entity_id))
         self._link_declared(fact_id, declared)

@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Fixed
+- **A fact the 0.6.1 line retired in place no longer comes back as a current fact.** That line kept a superseded
+  fact as the same row with `facts.retired_at` set and filtered it out of every search; this line treats `facts` as
+  the current set and never reads the column, so on a store carried over from it the retired text ranked next to
+  the fact that replaced it (seen on a live store: retired at rank 1, its successor at rank 2). `_migrate_retired`
+  drops those rows and their entity links on the first writer open; a store this line wrote has no `retired_at`
+  column and is untouched. `fact_versions` keeps the history, so `as_of` still answers for the dates the old text
+  held.
+
 ## 0.28.0 — 2026-11-15
 
 ### Added

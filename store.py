@@ -251,7 +251,9 @@ class MemoryStore(EntityMixin, GraphMixin, HistoryMixin, ExperienceMixin):
         0.16.0 where an alias came from (entity_aliases.source: older rows and an older version's writes count as given
         by the user) and the tombstones of deleted names. The entity index is rebuilt after the migration, by
         _maybe_rebuild_entities. An older version reads such a store as before; one that writes to it as well may
-        create a deleted name again from a new fact's text (its next open by this version does not notice that)."""
+        create a deleted name again from a new fact's text (its next open by this version does not notice that).
+        The 0.6.1 line kept a superseded fact as the same row with ``retired_at`` set, which this line never reads;
+        _migrate_retired drops those rows, so the old text no longer comes back next to the fact that replaced it."""
         self._conn.executescript(HISTORY_SCHEMA + _EMBEDDINGS_SCHEMA + _ENTITY_SCHEMA + GRAPH_SCHEMA
                                  + VERSION_NAMES_TRIGGERS)
         with self._tx():
@@ -281,9 +283,28 @@ class MemoryStore(EntityMixin, GraphMixin, HistoryMixin, ExperienceMixin):
             self._conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_entities_key ON entities(name_key) WHERE name_key IS NOT NULL")
             self._sync_hrr_dim()
             self._migrate_history()
+            self._migrate_retired()  # retired rows: the 0.6.1 line kept a superseded fact in place
             self._migrate_graph()  # 0.27.0: edges for a store written before entity_relations existed
             self._bump()
             self._set_meta("schema_version", str(SCHEMA_VERSION))
+
+    def _migrate_retired(self) -> None:
+        """Drop the rows the 0.6.1 line retired in place, which this line never reads.
+
+        That line kept a superseded fact as the same row with ``facts.retired_at`` set and filtered it out of every
+        search. This line treats ``facts`` as the current set, so without this the old text comes back as a result
+        next to the fact that superseded it (seen on a live store: a retired fact at rank 1, its successor at rank
+        2). The successor already says it, and ``fact_versions`` keeps the history, so ``as_of`` still answers for
+        the dates the old text held. A store this line wrote has no ``retired_at`` column and never gets here.
+        """
+        if "retired_at" not in {row[1] for row in self._conn.execute("PRAGMA table_info(facts)")}:
+            return
+        dropped = [r[0] for r in self._conn.execute("SELECT fact_id FROM facts WHERE retired_at IS NOT NULL")]
+        if not dropped:
+            return
+        self._conn.execute("DELETE FROM facts WHERE retired_at IS NOT NULL")
+        self._conn.execute("DELETE FROM fact_entities WHERE fact_id NOT IN (SELECT fact_id FROM facts)")
+        logger.info("holographic: dropped %d fact(s) a pre-0.27 line retired in place", len(dropped))
 
     def _meta(self, key: str) -> str | None:
         row = self._one("SELECT value FROM meta WHERE key = ?", (key,))

@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+### Added
+- **Wiki pointer facts carry entities.** Bulk wiki ingest writes a page as a fact whose pointer line
+  (`Wiki page: ai-agents/entities/llama-cpp.md`) has no capitalised phrase, so the extractor found nothing and a
+  re-ingested page was never a topic of its own: it was reachable only by the words of its body. Such a line now
+  links its namespace (`ai agents`) and page slug (`llama cpp`); a section directory and structural slugs (`index`,
+  `schema`, `log`, `readme`, `overview`, `changelog`, `notes`, `todo`) are dropped, and a path with no namespace is
+  ignored. A name `delete_entity` removed is not recreated from a path — text never lifts a tombstone. Existing
+  stores get the links on the first writer open: `_ENTITY_RULES` is 5, so the index is rebuilt under the new rules.
+  Only the pointer shape is read — a line that starts with the `[WIKI HINT …]` marker before `Wiki page:` — so an
+  ordinary note saying `Wiki page: https://en.wikipedia.org/wiki/Foo` names nothing, a protocol-relative URL
+  (`//example.com/…`) names nothing either, a leading byte-order mark does not hide the line, and Markdown code is
+  blanked out first, so a fact that shows the format in backticks or a fenced block stays documentation — while a
+  pointer on the line right after a closing fence is still read. Any writer may
+  produce a pointer line: it is a plain fact body (see `docs/wiki-pointer-entities.md`).
+
 ### Fixed
 - **Recall before a turn reads what the person wrote, not what Hermes wraps around it.** The core hands `prefetch`
   the turn as the gateway built it: a Telegram reply carries the whole quoted message first, an attachment a note with

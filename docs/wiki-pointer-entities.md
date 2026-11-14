@@ -34,9 +34,10 @@ Dropped on purpose:
 from then on ordinary facts that say the phrase are linked to it as well — at add time, and in the second pass of
 `rebuild_entity_index` ("Our team builds AI agents for clients" is linked to `ai agents`). A prefetch for a message
 that mentions the phrase can therefore pull the wiki's pages into its entity stream. That is the cost of grouping
-the pages of one wiki under one name; linking only the page slug would avoid it and lose the grouping. Single-word
-namespace slugs (`memory`, `python`) spread the same way but are noisier, as any fact using the word joins in. Two
-wikis with a page called `setup` share one `setup` entity for the same reason.
+the pages of one wiki under one name; linking only the page slug would avoid it and lose the grouping. A one-word
+name from a path (`memory`, `python`) does not spread this way: a one-word entity is matched in other facts only
+when someone declared it, and names from a path are not declared. Two wikis with a page called `setup` still share
+one `setup` entity.
 
 ## Limits
 
@@ -74,7 +75,9 @@ stored.
 ## Existing stores
 
 Linkage from a pointer line is part of the entity rules (`_ENTITY_RULES`, currently 5), so a store indexed by an
-older release gets the links on its first writer open, without waiting for a re-ingest. Re-adding the same text does
+older release gets the links on its first writer open, without waiting for a re-ingest — up to 2,000 facts and
+500,000 characters of text (`_AUTO_REBUILD_MAX_FACTS`, `_AUTO_REBUILD_MAX_CHARS`). In a larger store the facts
+already there get them on `fact_store rebuild_entities`; new ones are linked as they are added. Re-adding the same text does
 not restore links that another operation dropped: the relinking paths (`_link_entities`, `_detach_alias`,
 `rebuild_entity_index`) all read a fact's text through one helper, `MemoryStore._implied_entity_ids`, so a pointer
 fact keeps its namespace and page slug through an alias split as well.

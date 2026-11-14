@@ -9,7 +9,8 @@
   links its namespace (`ai agents`) and page slug (`llama cpp`); a section directory and structural slugs (`index`,
   `schema`, `log`, `readme`, `overview`, `changelog`, `notes`, `todo`) are dropped, and a path with no namespace is
   ignored. A name `delete_entity` removed is not recreated from a path — text never lifts a tombstone. Existing
-  stores get the links on the first writer open: `_ENTITY_RULES` is 5, so the index is rebuilt under the new rules.
+  stores get the links on the first writer open: `_ENTITY_RULES` is 5, so the index is rebuilt under the new rules
+  (up to 2,000 facts and 500,000 characters; a larger store on `fact_store rebuild_entities`).
   Only the pointer shape is read — a line that starts with the `[WIKI HINT …]` marker before `Wiki page:` — so an
   ordinary note saying `Wiki page: https://en.wikipedia.org/wiki/Foo` names nothing, a protocol-relative URL
   (`//example.com/…`) names nothing either, a leading byte-order mark does not hide the line, and Markdown code is

@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### Fixed
+- **Recall before a turn reads what the person wrote, not what Hermes wraps around it.** The core hands `prefetch`
+  the turn as the gateway built it: a Telegram reply carries the whole quoted message first, an attachment a note with
+  its saved path and instructions to the model, a group message the author's `[Name] `, a cron run the fixed
+  `[IMPORTANT: You are running as a scheduled cron job…]` hint and the run time, and a finished delegation or
+  background process arrives as a turn of its own. Measured on a live deployment (18 days, 103 recalls): replies were
+  5 % of messages but 43 of 70 Telegram recalls, and in 32 of them a fact came only from the quote; the author's name
+  brought the same fact in 14 of 20 group turns; the cron hint pushed facts the job needed out. Now the leading quote,
+  attachment notes (document, audio, video; an image's description stays, it is what was sent), the author's own name
+  prefix and the cron hint are left out of the search, a notice turn recalls nothing, and the 4000-character window
+  starts at the person's words. The presence gate still ties the turn by the whole message. A bare "ok" under a quote
+  now recalls nothing; the quote is in the model's view anyway. `tests/test_holographic_service_prompts.py`.
+
 ## 0.27.0 — 2026-11-14
 
 ### Added

@@ -573,6 +573,33 @@ def _iter_fact_pairs(payload):
 
 _PREFETCH_QUERY_CHARS = 4000  # recall reads this much of a message: what it is about is said by then
 
+# Text Hermes wraps around what the person wrote (hermes-agent: gateway/run_inbound.py, gateway/run.py,
+# cron/scheduler_prompt.py, tools/process_registry_notifications.py, gateway/run_notifications.py). The core hands
+# prefetch the turn as the gateway built it; on a measured deployment a Telegram reply's quote was 86 % of the text of
+# the turns it came with, and in 32 of 43 such recalls a fact came only from the quote (0.27.1). A turn that is only a
+# notice of finished work has no words of the person; a cron run keeps its job prompt, without the fixed hint and run
+# time. An image note stays: its description is what the person sent, like an inlined document after its note.
+_RE_NOTICE_TURN = re.compile(r"\[(?:ASYNC DELEGATION |IMPORTANT: (?:\d+ )?[Bb]ackground (?:process|subagent))")
+_RE_LEADING_NOTE = re.compile(
+    r'\[Replying to[^:\n]*: ".*?"\]\n\n'  # the quoted message, whole: a quote may span lines
+    r"|\[The user sent (?:a document|a text document|an audio file attachment|a video attachment)[^\n]*\]\n\n"
+    r"|\[IMPORTANT: You are running as a scheduled cron job\..*?\]\n\n"  # [SILENT] inside ends with "] ", not "]\n\n"
+    r"|\[CURRENT RUN TIME: [^\]\n]*\]\n\n", re.S)
+
+
+def _own_words(message: str, author: str = "") -> str:
+    """What the person wrote in a turn: the leading quote, attachment notes and cron hint off, "" for a notice. In a
+    shared chat the gateway names the author under the quote (``[Name] text``); that name is the turn's author, not
+    what they asked, and named the same person's facts on each of their messages (14 of 20 group turns measured)."""
+    if _RE_NOTICE_TURN.match(message):
+        return ""
+    start = 0
+    while note := _RE_LEADING_NOTE.match(message, start):
+        start = note.end()
+    if author and message.startswith(f"[{author}] ", start):
+        start += len(author) + 3
+    return message[start:]
+
 
 _RE_DISPLAY_NAME = re.compile(r"[^\W\d_][\w .'’-]{0,39}")
 
@@ -1198,7 +1225,9 @@ class HolographicMemoryProvider(MemoryProvider):
         # the digest reads the whole message, as sync_turn's does: cut first, a long message's runs of spaces made
         # the two differ (review of 0.26.4); the digest caps itself
         digest = _query_digest(query) if self._presence_gate else ""
-        query = query[:_PREFETCH_QUERY_CHARS]  # a pasted log of 60 KB took seconds under the provider lock
+        # the person's words, then the cut: a long quote no longer takes the window the ask comes after; a pasted log
+        # of 60 KB took seconds under the provider lock
+        query = _own_words(query, self._author.get("name", ""))[:_PREFETCH_QUERY_CHARS]
         self._recall_error = ""
         try:
             key = f"{session_id or self._session_id or ''}|{self._scope_key or ''}"
@@ -1208,6 +1237,8 @@ class HolographicMemoryProvider(MemoryProvider):
                 self._turn_queries.move_to_end(key)
                 while len(self._turn_queries) > _MAX_TRACKED_SESSIONS:
                     self._turn_queries.popitem(last=False)
+            if not query.strip():  # a notice, or a quote with nothing written under it: the turn counts, nothing is asked
+                return ""
             meaning = self._meaning_of(query, before_turn=True)
             # Rescoring widens the first stage's pool so the cross-encoder sees several times the final need (a fact
             # BM25 buried at 20-50 can be lifted to the top, RFC #9). The pool must reach at least rerank_top_k.

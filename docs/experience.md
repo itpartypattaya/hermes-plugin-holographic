@@ -30,6 +30,12 @@ that the model used that fact. A record contains exact fact/version references; 
 emitted fact makes recording fail safely rather than attach the wrong version. With `experience_trace`, a
 non-emitted candidate that another writer changed or forgot during retrieval (for example while the reranker
 answers) is left out of its stage, and the stage carries `changed: <count>`; the receipt is still recorded.
+With `rerank: on` and `experience_trace`, a recall's receipt also has one `rerank` stage (0.28.1): no facts, and
+`status` — what the call did for this recall, one word with no error text: `answered`, `skipped_single` (one
+sendable candidate, nothing to reorder), `skipped_long` (the message is over 500 characters), `skipped_secret`,
+`skipped_busy` (another request was in flight), `not_called` (nothing could be sent), `paused` (an earlier error's
+pause: no request), `unavailable` (a refused address) or `failed` (this call). Every status but `answered` and
+`skipped_single` means the recall kept the rerank-off order.
 Failed collection does not suppress search results;
 warnings and `recent.error_kind` expose it. Historical `as_of` search is currently not recorded.
 When another process holds SQLite's write lock, recording an attempt uses a 50 ms SQLite busy timeout per lock

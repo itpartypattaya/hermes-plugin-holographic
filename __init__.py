@@ -1428,8 +1428,12 @@ class HolographicMemoryProvider(MemoryProvider):
             sent = [union[i]["fact_id"] for i in send_idx[:rescorer.fitting(query, docs)]]
             logger.debug("holographic: rescore prefetch: pool %d, candidates %d: %s", len(union), len(sent),
                          _trace_ids(sent))
+        # The journal's rerank stage (0.28.1): why the call did or did not order this recall. With nothing sendable
+        # scores() is not called and last_status still names the previous turn's call.
+        outcome = "failed"
         try:
             ranked = rescorer.scores(query, docs) if docs else None
+            outcome = rescorer.outcome() if docs else "not_called"
             if ranked is not None:
                 ranked = self._rescored(ranked, send_idx)
                 if logger.isEnabledFor(logging.DEBUG):
@@ -1468,6 +1472,7 @@ class HolographicMemoryProvider(MemoryProvider):
                     # (maintainer 24:10, point 1: three proxy facts — off returns 3 lines, on returned 2).
                     fresh = ([union[i] for i in keep] if keep else []) + union[len(ranked):]
                 self._observe("rerank_window_admitted", fresh)
+                self._observe("rerank", [], outcome)
                 return _free_places(fresh, rescued)[:_PREFETCH_FACTS], by_meaning
         except Exception as exc:  # noqa: BLE001 - ANY exception in the stage acts like a failed call (point 3)
             # Any exception raised by the stage (call, mapping, window — Codex caught a Thread.start()
@@ -1476,10 +1481,12 @@ class HolographicMemoryProvider(MemoryProvider):
             # a failed call: pause + counter + last_status, and the block returns the off layout
             # (maintainer 24:10, point 3; "on failure — only the old order", as the README promises).
             rescorer.note_failure(f"rerank stage: {error_kind(exc)}")  # never the text: it may quote a fact
+            outcome = "failed"
         # A failed call, an empty pool OR an exception in the stage: exactly the off layout (point 4(1) of the
         # 10:34 review), but WITHOUT candidates (point 3 of the 19:39 review): the fallback searches anew with the
         # off limit of 15 — otherwise the widened pool (max(15×4, top_k)) and the missing "recent" filter give a
         # different composition than off (candidates 1–15 shown, the target on the 17th: off empty, the old fallback returned five).
+        self._observe("rerank", [], outcome)
         return self._off_layout(query, meaning, key, turn)
 
     def _off_layout(self, query, meaning, key, turn, candidates: list[dict] | None = None) -> tuple[list[dict], set[int]]:
@@ -2561,14 +2568,15 @@ class HolographicMemoryProvider(MemoryProvider):
     def _experience_session(self):
         return hashlib.sha256(self._session_id.encode("utf-8")).hexdigest()
 
-    def _observe(self, name, facts):
+    def _observe(self, name, facts, status=None):
+        """One stage of the trace: its facts, and for the ``rerank`` stage the call's outcome (no facts)."""
         if self._experience and self._experience_trace:
-            for old_name, old_facts in self._experience_stages:
+            for old_name, old_facts, *_ in self._experience_stages:
                 if old_name == name:
                     old_facts.extend(facts[:max(0, 101 - len(old_facts))])
                     return
             if len(self._experience_stages) < 16:
-                self._experience_stages.append((name, list(facts[:101])))
+                self._experience_stages.append((name, list(facts[:101])) + ((status,) if status else ()))
 
     def _record_experience(self, kind, facts):
         if not self._experience or not self._tool_writable:

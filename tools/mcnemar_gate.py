@@ -149,7 +149,7 @@ def _confused(r: dict) -> bool:
     and hides a rise (the reviewer's reproduction of PR #31: top-five confusion 0 -> 1, reported 1 -> 1,
     gate passes)."""
     row_set = r.get("set")
-    if row_set == "household":
+    if row_set in ("household", "synthetic_zh"):
         field = "confused"
     elif row_set == "multi":
         field = "wrong5"

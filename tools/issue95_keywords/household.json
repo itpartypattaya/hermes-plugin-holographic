@@ -1,0 +1,4939 @@
+{
+ "en": {
+  "ac_bought": [
+   "air conditioning",
+   "climate control",
+   "cooling",
+   "кондиционер",
+   "установка",
+   "май 2024",
+   "installed"
+  ],
+  "andrey_bd": [
+   "birth date",
+   "born",
+   "anniversary",
+   "день рождения Андрея",
+   "dad's birthday",
+   "when was Andrey born"
+  ],
+  "andrey_boss": [
+   "manager",
+   "boss",
+   "new superintendent",
+   "начальник",
+   "руководитель",
+   "март",
+   "work change"
+  ],
+  "andrey_chore": [
+   "lamps",
+   "household repair",
+   "fixing",
+   "лампочки",
+   "замена",
+   "сам меняет",
+   "handyman"
+  ],
+  "andrey_coffee": [
+   "coffee preference",
+   "sugar",
+   "drink",
+   "кофе без сахара",
+   "how Andrey takes coffee",
+   "unsweetened"
+  ],
+  "andrey_course": [
+   "training",
+   "workplace safety",
+   "certification",
+   "курсы",
+   "техника безопасности",
+   "апрель",
+   "instruction"
+  ],
+  "andrey_deadline": [
+   "report",
+   "due date",
+   "submission",
+   "срок сдачи",
+   "отчёт",
+   "электропроводка",
+   "15th",
+   "work task"
+  ],
+  "andrey_film": [
+   "movie",
+   "cinema",
+   "favourite movie",
+   "любимый фильм",
+   "rewatch",
+   "revisit"
+  ],
+  "andrey_gym": [
+   "workout",
+   "fitness",
+   "training slot",
+   "спортзал",
+   "среда",
+   "7 pm",
+   "exercise schedule"
+  ],
+  "andrey_job": [
+   "occupation",
+   "profession",
+   "employer",
+   "работа",
+   "инженер",
+   "электросети",
+   "career",
+   "workplace"
+  ],
+  "andrey_license": [
+   "driver's license",
+   "driving permit",
+   "car",
+   "водительские права",
+   "получил права",
+   "2010",
+   "driving"
+  ],
+  "andrey_lunch": [
+   "canteen",
+   "meal at work",
+   "midday meal",
+   "обед",
+   "столовая",
+   "завод",
+   "workplace food"
+  ],
+  "andrey_music": [
+   "music taste",
+   "kitchen",
+   "rock music",
+   "музыка при готовке",
+   "playlist",
+   "cooking soundtrack"
+  ],
+  "andrey_no_sweet": [
+   "sugar",
+   "soda",
+   "evening drinks",
+   "сладкие напитки",
+   "после шести",
+   "diet",
+   "6 pm"
+  ],
+  "andrey_patent": [
+   "invention",
+   "intellectual property",
+   "engineering design",
+   "изобретение",
+   "патент",
+   "распределительная коробка",
+   "electrical"
+  ],
+  "andrey_project": [
+   "work assignment",
+   "deadline",
+   "completion",
+   "подстанция",
+   "проект",
+   "декабрь",
+   "finish date",
+   "engineering"
+  ],
+  "andrey_remote": [
+   "work from home",
+   "telework",
+   "home office",
+   "удалёнка",
+   "первая пятница",
+   "дома",
+   "monthly"
+  ],
+  "andrey_run": [
+   "jogging",
+   "exercise",
+   "workout",
+   "бег",
+   "набережная",
+   "fitness routine",
+   "running"
+  ],
+  "andrey_salary_day": [
+   "payday",
+   "wages",
+   "income",
+   "зарплата",
+   "день выплаты",
+   "25th",
+   "pay date"
+  ],
+  "andrey_shift": [
+   "night work",
+   "monthly",
+   "schedule",
+   "ночная смена",
+   "работа ночью",
+   "overnight"
+  ],
+  "andrey_trip": [
+   "business trip",
+   "travel",
+   "work travel",
+   "командировка",
+   "Пермь",
+   "дважды в месяц",
+   "absence"
+  ],
+  "andrey_weekend_work": [
+   "overtime",
+   "called in",
+   "day off lost",
+   "работа в субботу",
+   "выходной",
+   "октябрь",
+   "emergency"
+  ],
+  "andrey_workdays": [
+   "job schedule",
+   "working week",
+   "weekdays",
+   "рабочие дни",
+   "график работы",
+   "office hours",
+   "days off weekend"
+  ],
+  "anton_ytube": [
+   "YouTube",
+   "video channel",
+   "online",
+   "канал",
+   "dima_builds",
+   "видео Димы",
+   "username"
+  ],
+  "backup_day": [
+   "data copy",
+   "automatic",
+   "schedule",
+   "резервное копирование",
+   "бэкап",
+   "понедельник ночью",
+   "archive"
+  ],
+  "bakery": [
+   "bread shop",
+   "opening time",
+   "street",
+   "пекарня",
+   "хлебный",
+   "Кирова",
+   "7 am"
+  ],
+  "balcony_glazed": [
+   "loggia",
+   "insulation",
+   "windows",
+   "балкон",
+   "застеклён",
+   "не утеплён",
+   "cold"
+  ],
+  "bank_switch": [
+   "banking",
+   "new bank",
+   "finances",
+   "банк",
+   "сменили банк",
+   "август 2023",
+   "account change"
+  ],
+  "bike_bought": [
+   "bicycle",
+   "purchase",
+   "Dima",
+   "велосипед",
+   "купили",
+   "прошлой весной",
+   "transport"
+  ],
+  "birthday_budget": [
+   "gifts",
+   "shopping ahead",
+   "planning",
+   "подарки",
+   "за месяц",
+   "день рождения",
+   "presents"
+  ],
+  "boiler_check": [
+   "water heater",
+   "maintenance",
+   "inspection",
+   "котёл",
+   "проверка",
+   "сентябрь",
+   "heating"
+  ],
+  "boss_name": [
+   "manager",
+   "supervisor",
+   "chief",
+   "начальник отдела",
+   "руководитель",
+   "Виктор Николаевич",
+   "head of department"
+  ],
+  "bus_home": [
+   "public transport",
+   "stop",
+   "route",
+   "автобус",
+   "номер 9",
+   "остановка",
+   "near house"
+  ],
+  "camera_door": [
+   "security",
+   "doorbell",
+   "surveillance",
+   "камера",
+   "уведомления",
+   "телефон Андрея",
+   "alerts"
+  ],
+  "car_park": [
+   "parking spot",
+   "vehicle",
+   "where parked",
+   "парковка",
+   "машина",
+   "мусорная площадка",
+   "car location"
+  ],
+  "car_sold": [
+   "vehicle",
+   "automobile",
+   "sale",
+   "машина",
+   "продали",
+   "июль 2024",
+   "no longer have"
+  ],
+  "cat_adoption": [
+   "pet",
+   "decision to keep",
+   "adopt",
+   "кот",
+   "оставили",
+   "июнь 2019",
+   "Barsik",
+   "rescue"
+  ],
+  "cat_bd": [
+   "pet",
+   "adoption date",
+   "кот Барсик",
+   "день появления кота",
+   "kitten arrived",
+   "Barsik's birthday",
+   "cat's birthday"
+  ],
+  "cat_bowl": [
+   "pet dish",
+   "feeding spot",
+   "where",
+   "миска",
+   "батарея",
+   "кошачья",
+   "Barsik"
+  ],
+  "cat_food": [
+   "pet feeding",
+   "kibble",
+   "meals",
+   "корм",
+   "сухой корм",
+   "два раза в день",
+   "Barsik"
+  ],
+  "cat_vet": [
+   "vaccination",
+   "vaccines",
+   "pet health",
+   "прививки",
+   "ветеринар",
+   "февраль",
+   "Barsik",
+   "annual"
+  ],
+  "cinema": [
+   "movie theatre",
+   "film",
+   "downtown",
+   "кинотеатр",
+   "центр",
+   "Советская",
+   "location"
+  ],
+  "cleaning_day": [
+   "housework",
+   "tidying",
+   "chores",
+   "уборка",
+   "воскресенье",
+   "after midday meal",
+   "household"
+  ],
+  "clinic_addr": [
+   "hospital",
+   "doctor",
+   "medical centre",
+   "поликлиника",
+   "адрес",
+   "Победы 7",
+   "location"
+  ],
+  "corner_shop": [
+   "convenience store",
+   "grocery",
+   "opening hours",
+   "магазин",
+   "до десяти",
+   "closes",
+   "local store"
+  ],
+  "dacha": [
+   "summer house",
+   "country cottage",
+   "train",
+   "дача",
+   "электричка",
+   "час езды",
+   "getaway"
+  ],
+  "dentist": [
+   "dental",
+   "teeth",
+   "floor",
+   "стоматолог",
+   "кабинет",
+   "третий этаж",
+   "office location"
+  ],
+  "dima_acct": [
+   "user profile",
+   "computer login",
+   "Windows",
+   "ноутбук",
+   "отдельный пользователь",
+   "separate user",
+   "laptop"
+  ],
+  "dima_bd": [
+   "birthday",
+   "birth date",
+   "age",
+   "день рождения Димы",
+   "how old is Dima",
+   "son's birthday",
+   "born in 2012"
+  ],
+  "dima_bed": [
+   "bedtime",
+   "sleep",
+   "lights out",
+   "отбой",
+   "ложится спать",
+   "10 pm",
+   "curfew"
+  ],
+  "dima_bike": [
+   "bicycle",
+   "commute",
+   "transport",
+   "велосипед",
+   "в школу",
+   "cycling",
+   "weather"
+  ],
+  "dima_camp": [
+   "holiday",
+   "vacation",
+   "children's camp",
+   "лагерь",
+   "поездка",
+   "2023",
+   "trip"
+  ],
+  "dima_cap": [
+   "hat",
+   "headwear",
+   "cold weather",
+   "шапка",
+   "зимой",
+   "clothing habit"
+  ],
+  "dima_chore": [
+   "garbage",
+   "rubbish",
+   "household duty",
+   "мусор",
+   "обязанность",
+   "летом",
+   "responsibility"
+  ],
+  "dima_club": [
+   "robot club",
+   "after-school activity",
+   "STEM",
+   "кружок",
+   "робототехника",
+   "среда",
+   "5 pm",
+   "lessons"
+  ],
+  "dima_console": [
+   "gaming",
+   "present",
+   "gift",
+   "приставка",
+   "подарок на Новый год",
+   "2023",
+   "video games"
+  ],
+  "dima_dinner": [
+   "supper",
+   "meal time",
+   "evening meal",
+   "ужин",
+   "19:30",
+   "7:30 pm",
+   "when he eats"
+  ],
+  "dima_football": [
+   "soccer",
+   "practice",
+   "sports schedule",
+   "тренировка",
+   "вторник и четверг",
+   "after school",
+   "weekly"
+  ],
+  "dima_games": [
+   "video games",
+   "gaming",
+   "computer",
+   "стратегии",
+   "компьютерные игры",
+   "PC"
+  ],
+  "dima_hates": [
+   "food dislike",
+   "vegetables",
+   "picky eater",
+   "морковь",
+   "не ест",
+   "refuses food"
+  ],
+  "dima_hw_time": [
+   "schoolwork",
+   "study routine",
+   "evening",
+   "домашка",
+   "уроки после ужина",
+   "assignments",
+   "supper"
+  ],
+  "dima_pets": [
+   "dog",
+   "puppy",
+   "pet request",
+   "собака",
+   "хочет собаку",
+   "disagreement",
+   "refusal"
+  ],
+  "dima_phone": [
+   "mobile",
+   "smartphone",
+   "first device",
+   "телефон",
+   "первый телефон",
+   "2022",
+   "son"
+  ],
+  "dima_school": [
+   "grade",
+   "class",
+   "education",
+   "девятый класс",
+   "9th grade",
+   "учится",
+   "age group"
+  ],
+  "dima_school_year": [
+   "first grade",
+   "enrollment",
+   "education",
+   "пошёл в школу",
+   "2018",
+   "начало учёбы",
+   "school start"
+  ],
+  "dima_sport_fav": [
+   "sports team",
+   "football club",
+   "fan",
+   "любимая команда",
+   "красная форма",
+   "soccer",
+   "supporter"
+  ],
+  "dog_park": [
+   "off-leash",
+   "walking area",
+   "pond",
+   "собаки",
+   "выгул",
+   "за прудом",
+   "pets"
+  ],
+  "dog_refusal": [
+   "puppy",
+   "pet rule",
+   "agreement",
+   "собака",
+   "договорённость",
+   "пока Диме не 15",
+   "no pets"
+  ],
+  "email_family": [
+   "mailbox",
+   "address",
+   "contact",
+   "почта",
+   "семейный ящик",
+   "orlov.home",
+   "e-mail"
+  ],
+  "flat_anniv": [
+   "housewarming",
+   "move-in date",
+   "apartment",
+   "новоселье",
+   "переезд в квартиру",
+   "relocation",
+   "home anniversary"
+  ],
+  "fridge_bought": [
+   "refrigerator",
+   "appliance",
+   "purchase",
+   "холодильник",
+   "покупка",
+   "апрель 2021",
+   "when bought"
+  ],
+  "garage_code": [
+   "keypad",
+   "PIN",
+   "access code",
+   "код гаража",
+   "год постройки",
+   "door opener",
+   "entry"
+  ],
+  "garage_row": [
+   "car storage",
+   "location",
+   "parking",
+   "гараж",
+   "ряд шесть",
+   "6th row",
+   "where"
+  ],
+  "garage_saturday": [
+   "car repair",
+   "workshop",
+   "every other week",
+   "гараж",
+   "суббота",
+   "через неделю",
+   "weekend"
+  ],
+  "gps_lost": [
+   "tracker",
+   "missing device",
+   "stadium",
+   "потерян",
+   "трекер",
+   "стадион",
+   "май",
+   "lost item"
+  ],
+  "granny_house": [
+   "village",
+   "relatives",
+   "grandmother's home",
+   "бабушкин дом",
+   "Омутчинск",
+   "countryside",
+   "where"
+  ],
+  "grocery_day": [
+   "shopping",
+   "supermarket",
+   "weekend errand",
+   "закупка продуктов",
+   "суббота утром",
+   "food shopping",
+   "stock up"
+  ],
+  "guest_sleep": [
+   "visitors",
+   "overnight",
+   "bedroom",
+   "гости",
+   "ночуют",
+   "комната Сони",
+   "accommodation"
+  ],
+  "gym_addr": [
+   "fitness centre",
+   "mall",
+   "floor",
+   "спортзал",
+   "второй этаж",
+   "торговый центр",
+   "location"
+  ],
+  "hall_lamp": [
+   "light fixture",
+   "switch",
+   "warning",
+   "лампа",
+   "прихожая",
+   "мигает",
+   "второе положение",
+   "corridor"
+  ],
+  "heating_app": [
+   "thermostat",
+   "temperature control",
+   "smartphone",
+   "отопление",
+   "приложение",
+   "телефон Лены",
+   "radiator"
+  ],
+  "insurance_renew": [
+   "policy",
+   "coverage",
+   "apartment",
+   "страховка",
+   "продление",
+   "сентябрь 2025",
+   "home insurance"
+  ],
+  "internet_switch": [
+   "ISP",
+   "broadband",
+   "wifi provider",
+   "интернет",
+   "новый провайдер",
+   "2024",
+   "connection"
+  ],
+  "irina_bd": [
+   "birth date",
+   "born",
+   "день рождения бабушки",
+   "grandmother's birthday",
+   "when was Irina born"
+  ],
+  "irina_bread": [
+   "baking",
+   "weekend",
+   "homemade loaf",
+   "выпечка",
+   "хлеб по воскресеньям",
+   "bakes"
+  ],
+  "irina_calls": [
+   "phone call",
+   "daughter",
+   "family contact",
+   "звонок",
+   "четверг",
+   "бабушка звонит",
+   "weekly"
+  ],
+  "irina_market": [
+   "shopping",
+   "grocery",
+   "weekly errand",
+   "рынок",
+   "среда",
+   "bazaar",
+   "midweek"
+  ],
+  "irina_serials": [
+   "TV",
+   "television series",
+   "soap opera",
+   "сериалы",
+   "вечером",
+   "watching"
+  ],
+  "irina_tea": [
+   "tea preference",
+   "drink",
+   "sugar",
+   "чёрный чай",
+   "чай с сахаром",
+   "beverage"
+  ],
+  "irina_walk": [
+   "stroll",
+   "exercise",
+   "afternoon",
+   "прогулка",
+   "парк",
+   "after the meal",
+   "fresh air"
+  ],
+  "iron_rule": [
+   "safety",
+   "appliance",
+   "unplug",
+   "утюг",
+   "правило Лены",
+   "выключать из розетки",
+   "fire safety"
+  ],
+  "keys_hook": [
+   "extra keys",
+   "where",
+   "entrance",
+   "запасные ключи",
+   "чёрный крючок",
+   "ключница",
+   "hallway"
+  ],
+  "laundry_day": [
+   "washing",
+   "clothes",
+   "chores",
+   "стирка",
+   "бельё",
+   "среда вечером",
+   "sorting"
+  ],
+  "lena_bd": [
+   "birth date",
+   "born",
+   "день рождения Лены",
+   "mom's birthday",
+   "when was Lena born"
+  ],
+  "lena_bread": [
+   "baking",
+   "weekend",
+   "homemade loaf",
+   "выпечка",
+   "печёт хлеб",
+   "new habit"
+  ],
+  "lena_committee": [
+   "parent committee",
+   "school board",
+   "volunteering",
+   "родительский комитет",
+   "сентябрь",
+   "joined",
+   "membership"
+  ],
+  "lena_cook": [
+   "soup",
+   "dinner",
+   "recipe",
+   "борщ",
+   "готовка",
+   "Friday meal",
+   "menu"
+  ],
+  "lena_exam": [
+   "test",
+   "students",
+   "school exam",
+   "экзамен",
+   "геометрия",
+   "май",
+   "class assessment"
+  ],
+  "lena_job": [
+   "occupation",
+   "profession",
+   "teacher",
+   "учитель математики",
+   "школа 14",
+   "mathematics",
+   "employer"
+  ],
+  "lena_ledger": [
+   "finances",
+   "accounting",
+   "money notes",
+   "бюджет",
+   "тетрадь",
+   "ящик",
+   "expenses"
+  ],
+  "lena_license": [
+   "driver's license",
+   "driving permit",
+   "car",
+   "водительские права",
+   "получила права",
+   "2012",
+   "driving"
+  ],
+  "lena_lunch": [
+   "meal at work",
+   "staff room",
+   "midday meal",
+   "обед",
+   "учителя",
+   "школа",
+   "noon"
+  ],
+  "lena_meet": [
+   "parent-teacher meeting",
+   "school event",
+   "monthly",
+   "родительское собрание",
+   "первый вторник",
+   "PTA"
+  ],
+  "lena_music": [
+   "music dislike",
+   "rock",
+   "hates",
+   "не любит рок",
+   "turns off music",
+   "noise"
+  ],
+  "lena_olympiad": [
+   "competition",
+   "tutoring",
+   "students",
+   "олимпиада",
+   "математика",
+   "подготовка детей",
+   "coaching"
+  ],
+  "lena_reads": [
+   "books",
+   "reading",
+   "bedtime",
+   "детективы",
+   "чтение",
+   "novels",
+   "mystery"
+  ],
+  "lena_salary_day": [
+   "payday",
+   "wages",
+   "income",
+   "зарплата",
+   "день выплаты",
+   "1st",
+   "pay date"
+  ],
+  "lena_shop": [
+   "utilities",
+   "payments",
+   "finances",
+   "оплата счетов",
+   "коммунальные",
+   "понедельник",
+   "monthly routine"
+  ],
+  "lena_sport": [
+   "fitness",
+   "exercise",
+   "workout",
+   "спортзал",
+   "quit",
+   "перестала ходить"
+  ],
+  "lena_tea": [
+   "tea preference",
+   "evening drink",
+   "beverage",
+   "зелёный чай",
+   "чай с лимоном",
+   "citrus"
+  ],
+  "lena_workdays": [
+   "teaching schedule",
+   "lessons",
+   "school hours",
+   "уроки",
+   "рабочий день",
+   "до трёх",
+   "when free"
+  ],
+  "library": [
+   "books",
+   "kids",
+   "location",
+   "детская библиотека",
+   "напротив поликлиники",
+   "reading room",
+   "opposite"
+  ],
+  "loan_closed": [
+   "credit",
+   "debt",
+   "paid off",
+   "кредит",
+   "автокредит",
+   "погашен",
+   "январь 2025",
+   "mortgage-free car"
+  ],
+  "marina_flat": [
+   "neighbour",
+   "apartment number",
+   "residence",
+   "соседка Марина",
+   "квартира 32",
+   "address",
+   "lives"
+  ],
+  "marina_pool": [
+   "coach",
+   "swimming trainer",
+   "workplace",
+   "тренер",
+   "бассейн",
+   "Спортивная",
+   "neighbour Marina"
+  ],
+  "market_day": [
+   "bazaar",
+   "busy",
+   "crowds",
+   "рынок",
+   "среда утром",
+   "час пик",
+   "peak"
+  ],
+  "metro_side": [
+   "subway",
+   "station entrance",
+   "square",
+   "метро",
+   "вход",
+   "слева на площади",
+   "underground"
+  ],
+  "microwave_bug": [
+   "clock",
+   "kitchen appliance",
+   "time drift",
+   "микроволновка",
+   "часы отстают",
+   "минута в неделю",
+   "oven"
+  ],
+  "moved_flat": [
+   "relocation",
+   "apartment",
+   "old home",
+   "переезд",
+   "старая квартира",
+   "2015",
+   "house move"
+  ],
+  "movie_night": [
+   "family film",
+   "cinema evening",
+   "Friday",
+   "кино",
+   "пятничный вечер",
+   "8 pm",
+   "watching together"
+  ],
+  "nfc_card": [
+   "travel pass",
+   "metro card",
+   "top-up",
+   "проездной",
+   "транспортная карта",
+   "банковское приложение Андрея",
+   "recharge"
+  ],
+  "no_screens_table": [
+   "phones",
+   "devices",
+   "meal rule",
+   "телефоны",
+   "за столом",
+   "правило",
+   "dinner etiquette"
+  ],
+  "old_laptop": [
+   "computer",
+   "ownership",
+   "hand-me-down",
+   "ноутбук",
+   "старый ноутбук",
+   "у Димы",
+   "device"
+  ],
+  "old_phones": [
+   "spare mobiles",
+   "drawer",
+   "kitchen",
+   "старые телефоны",
+   "ящик",
+   "две штуки",
+   "unused devices"
+  ],
+  "olga_delivery": [
+   "medication",
+   "drugs",
+   "monthly visit",
+   "лекарства",
+   "привозит",
+   "20th",
+   "pharmacy delivery"
+  ],
+  "olga_diploma": [
+   "graduation",
+   "education",
+   "qualification",
+   "колледж",
+   "окончила",
+   "фармацевтический",
+   "2014",
+   "diploma"
+  ],
+  "olga_job": [
+   "occupation",
+   "profession",
+   "chemist",
+   "фармацевт",
+   "аптека",
+   "Gagarin",
+   "workplace"
+  ],
+  "olga_night": [
+   "night shift",
+   "overtime",
+   "work hours",
+   "ночная смена",
+   "ночное окно",
+   "дежурство",
+   "pharmacy"
+  ],
+  "olga_pharmacy": [
+   "work hours",
+   "start time",
+   "job schedule",
+   "аптека",
+   "смена",
+   "8 am",
+   "chemist"
+  ],
+  "olga_transfer": [
+   "new job location",
+   "relocation at work",
+   "workplace change",
+   "перевод",
+   "новая аптека",
+   "февраль",
+   "moved"
+  ],
+  "olga_weekend": [
+   "days off",
+   "work schedule",
+   "free days",
+   "выходные",
+   "воскресенье и понедельник",
+   "not working",
+   "rest days"
+  ],
+  "olya_bd": [
+   "birth date",
+   "born",
+   "день рождения Оли",
+   "when was Olya born",
+   "aunt's birthday"
+  ],
+  "olya_coffee": [
+   "coffee preference",
+   "drink",
+   "beverage",
+   "растворимый кофе",
+   "кофе",
+   "no brewed"
+  ],
+  "park_name": [
+   "green space",
+   "recreation",
+   "walk",
+   "парк Победы",
+   "название парка",
+   "big park",
+   "Pobedy"
+  ],
+  "park_sunday": [
+   "weekend outing",
+   "walk",
+   "family activity",
+   "парк",
+   "воскресенье",
+   "прогулка",
+   "weather permitting"
+  ],
+  "passport_renew": [
+   "travel document",
+   "ID",
+   "renewal",
+   "паспорт",
+   "замена паспорта",
+   "июнь",
+   "Lena"
+  ],
+  "pavel_bd": [
+   "birth date",
+   "born",
+   "день рождения дедушки",
+   "grandfather's birthday",
+   "when was Pavel born"
+  ],
+  "pavel_cards": [
+   "card game",
+   "brother",
+   "weekend hobby",
+   "карты",
+   "суббота",
+   "Sergey Ivanovich",
+   "visit"
+  ],
+  "pavel_doctor": [
+   "medical appointment",
+   "physician",
+   "checkup",
+   "врач",
+   "приём",
+   "10th",
+   "monthly visit"
+  ],
+  "pavel_fish": [
+   "fishing",
+   "hobby",
+   "season",
+   "рыбалка",
+   "дед рыбак",
+   "angling",
+   "summer pastime"
+  ],
+  "pavel_market": [
+   "shopping",
+   "grocery",
+   "weekly errand",
+   "рынок",
+   "среда",
+   "bazaar",
+   "midweek"
+  ],
+  "pavel_pension": [
+   "retirement payment",
+   "payday",
+   "income",
+   "пенсия",
+   "день выплаты",
+   "3rd",
+   "grandfather"
+  ],
+  "pavel_radio": [
+   "morning routine",
+   "listening",
+   "audio",
+   "радио",
+   "утром",
+   "background sound"
+  ],
+  "pavel_tv": [
+   "news",
+   "television",
+   "evening routine",
+   "новости",
+   "по телевизору",
+   "девять часов",
+   "9 pm"
+  ],
+  "pharmacy_addr": [
+   "chemist",
+   "drugstore",
+   "nearest",
+   "аптека",
+   "адрес",
+   "Гагарина",
+   "location"
+  ],
+  "phone_charger": [
+   "charging",
+   "cable",
+   "living room",
+   "зарядка",
+   "общая зарядка",
+   "диван",
+   "where is"
+  ],
+  "photo_wall": [
+   "pictures",
+   "decoration",
+   "gallery",
+   "фотостена",
+   "повесили",
+   "декабрь 2021",
+   "family photos"
+  ],
+  "photos_cloud": [
+   "backup",
+   "pictures",
+   "storage",
+   "фото",
+   "внешний диск",
+   "воскресенье",
+   "copy"
+  ],
+  "piano_decision": [
+   "musical instrument",
+   "donated",
+   "gave away",
+   "пианино",
+   "отдали",
+   "2020",
+   "keyboard"
+  ],
+  "picnic_july": [
+   "outdoor party",
+   "summer event",
+   "gathering",
+   "пикник",
+   "июль",
+   "начало лета",
+   "annual tradition"
+  ],
+  "pizza_friday": [
+   "takeaway",
+   "food order",
+   "end of month",
+   "пицца",
+   "заказ еды",
+   "последняя пятница",
+   "delivery"
+  ],
+  "plant_address": [
+   "factory",
+   "workplace location",
+   "street",
+   "завод",
+   "адрес",
+   "Заводская",
+   "where Andrey works"
+  ],
+  "printer_toner": [
+   "ink",
+   "cartridge",
+   "office supplies",
+   "принтер",
+   "тонер",
+   "картридж",
+   "replace"
+  ],
+  "quiet_hours": [
+   "noise",
+   "silence",
+   "neighbours",
+   "тишина",
+   "после десяти",
+   "режим тишины",
+   "building rules"
+  ],
+  "roof_repair": [
+   "renovation",
+   "fixing",
+   "house maintenance",
+   "крыша",
+   "ремонт",
+   "лето 2023",
+   "leak"
+  ],
+  "router_reboot": [
+   "restart",
+   "modem",
+   "network fix",
+   "перезагрузка роутера",
+   "кнопка",
+   "10 seconds",
+   "internet troubleshooting"
+  ],
+  "school_address": [
+   "school location",
+   "street",
+   "where",
+   "школа",
+   "адрес",
+   "Ленина",
+   "Lena's workplace"
+  ],
+  "school_gate": [
+   "entrance",
+   "entry",
+   "yard",
+   "калитка",
+   "вход в школу",
+   "со двора",
+   "drop-off"
+  ],
+  "security_door": [
+   "front door",
+   "lock",
+   "safety",
+   "входная дверь",
+   "железная дверь",
+   "октябрь 2022",
+   "installation"
+  ],
+  "sergey_calls": [
+   "phone call",
+   "brother",
+   "family contact",
+   "звонок брату",
+   "воскресенье",
+   "monthly",
+   "дядя Сергей"
+  ],
+  "sergey_colleague": [
+   "coworker",
+   "desk neighbour",
+   "office",
+   "коллега",
+   "сосед по столу",
+   "Сергей Петрович",
+   "workmate"
+  ],
+  "sergey_g_brother": [
+   "relative",
+   "uncle",
+   "family tree",
+   "брат деда",
+   "Сергей Иванович",
+   "great-uncle",
+   "sibling"
+  ],
+  "sergey_g_retired": [
+   "pension",
+   "retirement",
+   "railway",
+   "ушёл на пенсию",
+   "депо",
+   "2016",
+   "former job"
+  ],
+  "shoes_rule": [
+   "footwear",
+   "entrance",
+   "etiquette",
+   "обувь",
+   "правило дома",
+   "разуваться",
+   "hallway"
+  ],
+  "sled_winter": [
+   "snow toys",
+   "storage",
+   "winter gear",
+   "санки",
+   "под лестницей",
+   "хранение",
+   "where"
+  ],
+  "sonia_acct": [
+   "parental controls",
+   "kids profile",
+   "device",
+   "планшет",
+   "детский аккаунт",
+   "tablet",
+   "restrictions"
+  ],
+  "sonia_art": [
+   "drawing class",
+   "painting lesson",
+   "weekend activity",
+   "художка",
+   "рисование",
+   "суббота",
+   "11 am"
+  ],
+  "sonia_bd": [
+   "birth date",
+   "born",
+   "день рождения Сони",
+   "daughter's birthday",
+   "when was Sonya born"
+  ],
+  "sonia_bed": [
+   "bedtime",
+   "sleep",
+   "lights out",
+   "отбой",
+   "ложится спать",
+   "9 pm",
+   "school day"
+  ],
+  "sonia_cat": [
+   "pet care",
+   "feeding",
+   "morning chore",
+   "кормит кота",
+   "Barsik",
+   "утром",
+   "responsibility"
+  ],
+  "sonia_chore": [
+   "plants",
+   "household duty",
+   "watering",
+   "цветы",
+   "полив",
+   "балкон",
+   "responsibility"
+  ],
+  "sonia_draw": [
+   "art supplies",
+   "drawing",
+   "hobby",
+   "рисование",
+   "фломастеры",
+   "felt-tip pens"
+  ],
+  "sonia_dress": [
+   "favorite color",
+   "preferred colour",
+   "violet",
+   "любимый цвет",
+   "фиолетовый",
+   "clothing"
+  ],
+  "sonia_glasses": [
+   "eyeglasses",
+   "vision",
+   "eyesight",
+   "очки",
+   "зрение",
+   "2024",
+   "optics"
+  ],
+  "sonia_homework": [
+   "schoolwork",
+   "study routine",
+   "after class",
+   "домашка",
+   "уроки",
+   "сразу после школы",
+   "assignments"
+  ],
+  "sonia_music": [
+   "music taste",
+   "songs",
+   "kids' music",
+   "мультфильмы",
+   "любимые песни",
+   "animation"
+  ],
+  "sonia_school": [
+   "grade",
+   "class",
+   "education",
+   "четвёртый класс",
+   "4th grade",
+   "учится",
+   "primary school"
+  ],
+  "sonia_school_year": [
+   "first grade",
+   "enrollment",
+   "education",
+   "пошла в школу",
+   "2021",
+   "начало учёбы",
+   "school start"
+  ],
+  "sonia_sweets": [
+   "candy",
+   "dessert",
+   "treats",
+   "сладкое",
+   "конфеты",
+   "diet rule",
+   "weekend only"
+  ],
+  "sonia_swim": [
+   "pool",
+   "swimming lessons",
+   "sports schedule",
+   "плавание",
+   "бассейн",
+   "понедельник и пятница",
+   "weekly"
+  ],
+  "sonia_tablet": [
+   "gift",
+   "device",
+   "present",
+   "планшет",
+   "подарок на день рождения",
+   "2023",
+   "daughter"
+  ],
+  "speaker_kitchen": [
+   "smart speaker",
+   "voice assistant",
+   "language",
+   "колонка",
+   "Алиса",
+   "только по-русски",
+   "Alexa"
+  ],
+  "summer_camp": [
+   "holiday",
+   "vacation",
+   "children's camp",
+   "лагерь",
+   "лето 2024",
+   "Соня",
+   "trip"
+  ],
+  "sunday_dinner": [
+   "family meal",
+   "tradition",
+   "gathering",
+   "воскресный ужин",
+   "всей семьёй",
+   "вместе",
+   "weekend"
+  ],
+  "swim_pool": [
+   "swimming",
+   "opening hours",
+   "closing time",
+   "бассейн",
+   "Спортивная",
+   "до десяти вечера",
+   "late hours"
+  ],
+  "terrace_decision": [
+   "balcony",
+   "choice",
+   "outdoor space",
+   "терраса",
+   "решение",
+   "2021",
+   "veranda"
+  ],
+  "trash_days": [
+   "garbage",
+   "rubbish",
+   "waste collection",
+   "мусор",
+   "вынос мусора",
+   "вторник и пятница",
+   "bin day"
+  ],
+  "tv_bought": [
+   "television",
+   "appliance",
+   "purchase",
+   "телевизор",
+   "новый",
+   "ноябрь 2022",
+   "screen"
+  ],
+  "tv_remote": [
+   "controller",
+   "where is",
+   "living room",
+   "пульт",
+   "синяя корзина",
+   "телевизор",
+   "lost item"
+  ],
+  "tv_subscription": [
+   "streaming",
+   "movie service",
+   "billing",
+   "подписка",
+   "кино",
+   "12-го числа",
+   "renewal date"
+  ],
+  "vacuum_schedule": [
+   "robot cleaner",
+   "cleaning",
+   "automatic",
+   "робот-пылесос",
+   "вторник и суббота",
+   "уборка",
+   "schedule"
+  ],
+  "vet_clinic": [
+   "veterinarian",
+   "animal doctor",
+   "pet health",
+   "ветеринар",
+   "ветклиника",
+   "стадион",
+   "Barsik"
+  ],
+  "walk_dog_neighbour": [
+   "dog walking",
+   "neighbor",
+   "morning routine",
+   "соседка",
+   "собака",
+   "прогулка",
+   "7 am"
+  ],
+  "wallpaper_flat": [
+   "painting",
+   "renovation",
+   "decor",
+   "прихожая",
+   "покраска",
+   "февраль 2024",
+   "corridor"
+  ],
+  "washer_bought": [
+   "washing machine",
+   "appliance",
+   "purchase",
+   "стиральная машина",
+   "покупка",
+   "март 2023",
+   "laundry"
+  ],
+  "wedding_day": [
+   "wedding anniversary",
+   "marriage date",
+   "свадьба",
+   "годовщина свадьбы",
+   "spouses",
+   "got married",
+   "wed"
+  ],
+  "wifi_name": [
+   "network name",
+   "SSID",
+   "wireless",
+   "вайфай",
+   "название сети",
+   "Wi-Fi",
+   "internet"
+  ],
+  "wifi_password_note": [
+   "network key",
+   "credentials",
+   "wireless access",
+   "пароль от вайфая",
+   "записка на холодильнике",
+   "Wi-Fi password",
+   "internet login"
+  ],
+  "window_summer": [
+   "ventilation",
+   "fresh air",
+   "airing",
+   "проветривание",
+   "окна",
+   "два раза в день",
+   "even in winter"
+  ]
+ },
+ "ru": {
+  "ac_bought": [
+   "климат",
+   "техника",
+   "кондер",
+   "когда установили",
+   "air conditioner",
+   "installed"
+  ],
+  "andrey_bd": [
+   "дата рождения",
+   "именины",
+   "родился",
+   "birthday",
+   "cumpleaños"
+  ],
+  "andrey_boss": [
+   "руководитель",
+   "смена начальника",
+   "новый шеф",
+   "работа",
+   "new manager"
+  ],
+  "andrey_chore": [
+   "обязанности",
+   "домашние дела",
+   "ремонт",
+   "свет",
+   "электрика",
+   "chores",
+   "light bulbs"
+  ],
+  "andrey_coffee": [
+   "напитки",
+   "предпочтения",
+   "сахар",
+   "как пьёт кофе",
+   "coffee",
+   "café"
+  ],
+  "andrey_course": [
+   "обучение",
+   "курсы",
+   "техника безопасности",
+   "сертификат",
+   "training",
+   "safety course"
+  ],
+  "andrey_deadline": [
+   "срок сдачи",
+   "дедлайн",
+   "отчёт",
+   "электропроводка",
+   "report due",
+   "работа"
+  ],
+  "andrey_film": [
+   "кино",
+   "любимый фильм",
+   "пересматривает",
+   "movie",
+   "favorite film"
+  ],
+  "andrey_gym": [
+   "спортзал",
+   "тренировка",
+   "фитнес",
+   "расписание",
+   "gym",
+   "workout"
+  ],
+  "andrey_job": [
+   "профессия",
+   "работа",
+   "должность",
+   "инженер",
+   "occupation",
+   "electric grid"
+  ],
+  "andrey_license": [
+   "водительское удостоверение",
+   "права",
+   "вождение",
+   "получил права",
+   "driver's license"
+  ],
+  "andrey_lunch": [
+   "обед",
+   "столовая",
+   "работа",
+   "где ест",
+   "завод",
+   "lunch",
+   "canteen"
+  ],
+  "andrey_music": [
+   "рок-музыка",
+   "кухня",
+   "готовка",
+   "музыкальные вкусы",
+   "rock",
+   "cooking"
+  ],
+  "andrey_no_sweet": [
+   "сладкое",
+   "ограничение",
+   "вечер",
+   "диета",
+   "десерт",
+   "sweets",
+   "after 6pm"
+  ],
+  "andrey_patent": [
+   "изобретение",
+   "изобретатель",
+   "интеллектуальная собственность",
+   "конструкция",
+   "invention",
+   "electrical box"
+  ],
+  "andrey_project": [
+   "проект",
+   "дедлайн",
+   "работа",
+   "срок",
+   "подстанция",
+   "end of year",
+   "project deadline"
+  ],
+  "andrey_remote": [
+   "удалёнка",
+   "работа дома",
+   "дистанционно",
+   "график",
+   "home office",
+   "remote work"
+  ],
+  "andrey_run": [
+   "бег",
+   "пробежка",
+   "тренировка",
+   "спорт",
+   "running",
+   "jogging"
+  ],
+  "andrey_salary_day": [
+   "день зарплаты",
+   "доход",
+   "выплата",
+   "аванс",
+   "payday",
+   "income"
+  ],
+  "andrey_shift": [
+   "ночная работа",
+   "график работы",
+   "смена",
+   "ночью",
+   "night shift"
+  ],
+  "andrey_trip": [
+   "командировка",
+   "поездки",
+   "работа",
+   "город",
+   "business trip",
+   "travel"
+  ],
+  "andrey_weekend_work": [
+   "выход на работу",
+   "срочный вызов",
+   "выходной",
+   "октябрь",
+   "called to work"
+  ],
+  "andrey_workdays": [
+   "рабочие дни",
+   "график работы",
+   "расписание",
+   "выходные",
+   "work schedule"
+  ],
+  "anton_ytube": [
+   "ютуб",
+   "блог",
+   "видео",
+   "ссылка",
+   "youtube channel",
+   "дима"
+  ],
+  "backup_day": [
+   "бэкап",
+   "резервное копирование",
+   "ночью",
+   "данные",
+   "backup",
+   "schedule"
+  ],
+  "bakery": [
+   "булочная",
+   "хлеб",
+   "часы работы",
+   "утро",
+   "bakery hours",
+   "opens"
+  ],
+  "balcony_glazed": [
+   "лоджия",
+   "окна",
+   "утепление",
+   "холодный",
+   "glazing",
+   "insulation"
+  ],
+  "bank_switch": [
+   "смена банка",
+   "финансы",
+   "перешли в другой банк",
+   "счета",
+   "bank change"
+  ],
+  "bike_bought": [
+   "велик",
+   "транспорт",
+   "покупка",
+   "подарок сыну",
+   "bicycle",
+   "bought"
+  ],
+  "birthday_budget": [
+   "подарки",
+   "планирование",
+   "праздники",
+   "заранее",
+   "gifts",
+   "present shopping"
+  ],
+  "boiler_check": [
+   "отопление",
+   "техобслуживание",
+   "осмотр",
+   "осень",
+   "котёл",
+   "heating maintenance",
+   "inspection"
+  ],
+  "boss_name": [
+   "руководитель",
+   "шеф",
+   "начальство",
+   "отдел",
+   "manager",
+   "supervisor"
+  ],
+  "bus_home": [
+   "общественный транспорт",
+   "остановка",
+   "маршрут",
+   "как доехать",
+   "bus stop",
+   "route 9"
+  ],
+  "camera_door": [
+   "видеонаблюдение",
+   "домофон",
+   "уведомления",
+   "безопасность",
+   "doorbell camera",
+   "alerts"
+  ],
+  "car_park": [
+   "парковка",
+   "где машина",
+   "стоянка",
+   "двор",
+   "parking spot",
+   "car location"
+  ],
+  "car_sold": [
+   "авто",
+   "продажа",
+   "автомобиль",
+   "когда продали",
+   "vehicle",
+   "sold car"
+  ],
+  "cat_adoption": [
+   "кот",
+   "питомец",
+   "усыновление",
+   "когда взяли",
+   "pet adoption",
+   "kitten"
+  ],
+  "cat_bd": [
+   "питомец",
+   "домашнее животное",
+   "когда взяли кота",
+   "усыновили",
+   "pet",
+   "adopted"
+  ],
+  "cat_bowl": [
+   "где миска",
+   "кормушка",
+   "питомец",
+   "батарея",
+   "water bowl",
+   "feeding place"
+  ],
+  "cat_food": [
+   "корм",
+   "питание кота",
+   "кормление",
+   "питомец",
+   "cat feeding",
+   "dry food"
+  ],
+  "cat_vet": [
+   "прививка",
+   "ветеринар",
+   "вакцинация",
+   "кот",
+   "здоровье питомца",
+   "vaccination",
+   "annual shots"
+  ],
+  "cinema": [
+   "кино",
+   "где находится",
+   "развлечения",
+   "центр",
+   "movie theater",
+   "address"
+  ],
+  "cleaning_day": [
+   "домашние дела",
+   "порядок",
+   "расписание",
+   "воскресенье",
+   "house cleaning"
+  ],
+  "clinic_addr": [
+   "больница",
+   "врач",
+   "адрес",
+   "медицинский центр",
+   "clinic address",
+   "where"
+  ],
+  "corner_shop": [
+   "магазин",
+   "часы работы",
+   "продукты",
+   "до скольки",
+   "grocery",
+   "opening hours"
+  ],
+  "dacha": [
+   "загородный дом",
+   "участок",
+   "поездка",
+   "как добраться",
+   "country house",
+   "by train"
+  ],
+  "dentist": [
+   "зубной",
+   "врач",
+   "этаж",
+   "клиника",
+   "dental clinic",
+   "floor"
+  ],
+  "dima_acct": [
+   "учётная запись",
+   "пользователь",
+   "компьютер",
+   "логин",
+   "user account",
+   "login"
+  ],
+  "dima_bd": [
+   "день рождения",
+   "возраст",
+   "год рождения",
+   "сын",
+   "birthday",
+   "birth date"
+  ],
+  "dima_bed": [
+   "сон",
+   "отбой",
+   "режим дня",
+   "время сна",
+   "bedtime"
+  ],
+  "dima_bike": [
+   "велосипед",
+   "дорога в школу",
+   "транспорт",
+   "погода",
+   "bicycle",
+   "commute"
+  ],
+  "dima_camp": [
+   "каникулы",
+   "лето",
+   "сын",
+   "отдых",
+   "лагерь",
+   "camp"
+  ],
+  "dima_cap": [
+   "головной убор",
+   "шапка",
+   "одежда",
+   "зима",
+   "cap",
+   "winter hat"
+  ],
+  "dima_chore": [
+   "обязанности",
+   "домашние дела",
+   "мусор",
+   "лето",
+   "chores",
+   "garbage"
+  ],
+  "dima_club": [
+   "кружок",
+   "робототехника",
+   "расписание",
+   "секция",
+   "robotics",
+   "after-school"
+  ],
+  "dima_console": [
+   "игровая консоль",
+   "подарок",
+   "видеоигры",
+   "новогодний подарок",
+   "game console",
+   "gift"
+  ],
+  "dima_dinner": [
+   "ужин",
+   "время еды",
+   "режим дня",
+   "распорядок",
+   "dinner time"
+  ],
+  "dima_football": [
+   "тренировка",
+   "расписание",
+   "секция",
+   "спорт",
+   "soccer",
+   "practice"
+  ],
+  "dima_games": [
+   "видеоигры",
+   "компьютер",
+   "хобби",
+   "гейминг",
+   "games",
+   "laptop"
+  ],
+  "dima_hates": [
+   "не любит",
+   "еда",
+   "овощи",
+   "аллергия на еду",
+   "disliked food",
+   "zanahoria"
+  ],
+  "dima_hw_time": [
+   "домашнее задание",
+   "школа",
+   "режим дня",
+   "учёба",
+   "homework",
+   "evening"
+  ],
+  "dima_pets": [
+   "собака",
+   "питомец",
+   "спор",
+   "пёс",
+   "dog",
+   "perro"
+  ],
+  "dima_phone": [
+   "смартфон",
+   "мобильный",
+   "первый телефон",
+   "подарок",
+   "mobile",
+   "first phone"
+  ],
+  "dima_school": [
+   "класс",
+   "учёба",
+   "школьник",
+   "ступень",
+   "grade",
+   "9th grade"
+  ],
+  "dima_school_year": [
+   "первый класс",
+   "начало учёбы",
+   "поступил в школу",
+   "когда пошёл",
+   "school start"
+  ],
+  "dima_sport_fav": [
+   "болеет за",
+   "футбол",
+   "цвет формы",
+   "любимая команда",
+   "favorite team",
+   "jersey"
+  ],
+  "dog_park": [
+   "выгул собак",
+   "площадка",
+   "пруд",
+   "где гулять с собакой",
+   "off-leash",
+   "dog area"
+  ],
+  "dog_refusal": [
+   "собака",
+   "питомец",
+   "договорённость",
+   "запрет",
+   "щенок",
+   "no dog",
+   "pet rule"
+  ],
+  "email_family": [
+   "электронная почта",
+   "адрес почты",
+   "e-mail",
+   "семейный ящик",
+   "email address"
+  ],
+  "flat_anniv": [
+   "новоселье",
+   "переезд",
+   "дата переезда",
+   "жильё",
+   "новая квартира",
+   "moved in",
+   "housewarming"
+  ],
+  "fridge_bought": [
+   "техника",
+   "покупка",
+   "когда купили",
+   "бытовая техника",
+   "refrigerator",
+   "appliance"
+  ],
+  "garage_code": [
+   "пароль",
+   "код доступа",
+   "кодовый замок",
+   "гараж",
+   "access code"
+  ],
+  "garage_row": [
+   "где гараж",
+   "расположение",
+   "ряд",
+   "номер",
+   "garage location"
+  ],
+  "garage_saturday": [
+   "гараж",
+   "машина",
+   "график",
+   "через неделю",
+   "every other saturday"
+  ],
+  "gps_lost": [
+   "потеря",
+   "GPS-трекер",
+   "стадион",
+   "пропал",
+   "lost tracker",
+   "май"
+  ],
+  "granny_house": [
+   "деревня",
+   "родня",
+   "бабушка",
+   "где живёт",
+   "grandma's house",
+   "village"
+  ],
+  "grocery_day": [
+   "продукты",
+   "покупки",
+   "магазин",
+   "супермаркет",
+   "шопинг",
+   "shopping day"
+  ],
+  "guest_sleep": [
+   "гостевая",
+   "ночёвка",
+   "спальное место",
+   "приезжают гости",
+   "overnight guests",
+   "where to sleep"
+  ],
+  "gym_addr": [
+   "фитнес-клуб",
+   "тренажёрный зал",
+   "торговый центр",
+   "где находится",
+   "gym location",
+   "floor"
+  ],
+  "hall_lamp": [
+   "лампа",
+   "проводка",
+   "осторожно",
+   "мигает",
+   "коридор",
+   "flickering light",
+   "electrical"
+  ],
+  "heating_app": [
+   "тепло",
+   "термостат",
+   "батареи",
+   "приложение",
+   "thermostat",
+   "smart home"
+  ],
+  "insurance_renew": [
+   "страхование",
+   "полис",
+   "квартира",
+   "продление",
+   "home insurance",
+   "renewal"
+  ],
+  "internet_switch": [
+   "интернет-провайдер",
+   "связь",
+   "смена оператора",
+   "wifi",
+   "ISP",
+   "provider"
+  ],
+  "irina_bd": [
+   "дата рождения",
+   "родилась",
+   "бабушка",
+   "birthday",
+   "cumpleaños"
+  ],
+  "irina_bread": [
+   "выпечка",
+   "хлеб",
+   "воскресенье",
+   "готовит",
+   "baking",
+   "hobby"
+  ],
+  "irina_calls": [
+   "созвон",
+   "дочь",
+   "звонок",
+   "четверг",
+   "phone call",
+   "weekly call"
+  ],
+  "irina_market": [
+   "базар",
+   "покупки",
+   "продукты",
+   "расписание",
+   "farmers market",
+   "wednesday"
+  ],
+  "irina_serials": [
+   "телевизор",
+   "телесериалы",
+   "вечер",
+   "ТВ",
+   "TV shows"
+  ],
+  "irina_tea": [
+   "напитки",
+   "предпочтения",
+   "чай",
+   "сахар",
+   "how she drinks tea"
+  ],
+  "irina_walk": [
+   "прогулка",
+   "парк",
+   "режим дня",
+   "после обеда",
+   "walk",
+   "daily routine"
+  ],
+  "iron_rule": [
+   "правила дома",
+   "безопасность",
+   "электроприборы",
+   "розетка",
+   "fire safety",
+   "house rules"
+  ],
+  "keys_hook": [
+   "где ключи",
+   "запасной комплект",
+   "вешалка",
+   "прихожая",
+   "spare keys",
+   "hallway"
+  ],
+  "laundry_day": [
+   "стирка",
+   "бельё",
+   "домашние дела",
+   "расписание",
+   "wash day",
+   "wednesday"
+  ],
+  "lena_bd": [
+   "дата рождения",
+   "родилась",
+   "именины",
+   "birthday",
+   "cumpleaños"
+  ],
+  "lena_bread": [
+   "выпечка",
+   "хлеб",
+   "воскресенье",
+   "новое увлечение",
+   "baking"
+  ],
+  "lena_committee": [
+   "родительский комитет",
+   "школа",
+   "общественная работа",
+   "осень",
+   "school board"
+  ],
+  "lena_cook": [
+   "суп",
+   "кухня",
+   "готовит",
+   "меню",
+   "пятница",
+   "borscht",
+   "cooking"
+  ],
+  "lena_exam": [
+   "экзамен",
+   "школа",
+   "ученики",
+   "сроки",
+   "geometry exam",
+   "май"
+  ],
+  "lena_job": [
+   "профессия",
+   "учитель",
+   "школа",
+   "математика",
+   "работа",
+   "teacher",
+   "occupation"
+  ],
+  "lena_ledger": [
+   "семейные финансы",
+   "учёт расходов",
+   "где лежит",
+   "бюджет",
+   "household budget",
+   "notebook"
+  ],
+  "lena_license": [
+   "водительское удостоверение",
+   "права",
+   "вождение",
+   "получила права",
+   "driver's license"
+  ],
+  "lena_lunch": [
+   "обед",
+   "школа",
+   "коллеги",
+   "где ест",
+   "учителя",
+   "lunch",
+   "noon"
+  ],
+  "lena_meet": [
+   "родительское собрание",
+   "школа",
+   "расписание",
+   "вторник",
+   "parent meeting"
+  ],
+  "lena_music": [
+   "музыкальные вкусы",
+   "не любит",
+   "рок-музыка",
+   "шум",
+   "dislikes rock"
+  ],
+  "lena_olympiad": [
+   "подготовка",
+   "школьники",
+   "соревнование",
+   "математика",
+   "olympiad",
+   "students"
+  ],
+  "lena_reads": [
+   "книги",
+   "чтение",
+   "вечер",
+   "литература",
+   "reading",
+   "detective novels"
+  ],
+  "lena_salary_day": [
+   "день зарплаты",
+   "доход",
+   "выплата",
+   "payday",
+   "income"
+  ],
+  "lena_shop": [
+   "оплата счетов",
+   "коммуналка",
+   "платежи",
+   "расчёты",
+   "bills",
+   "payments"
+  ],
+  "lena_sport": [
+   "спортзал",
+   "фитнес",
+   "тренировки",
+   "бросила",
+   "gym",
+   "fitness"
+  ],
+  "lena_tea": [
+   "напитки",
+   "предпочтения",
+   "чай",
+   "вечерний напиток",
+   "evening tea",
+   "té verde"
+  ],
+  "lena_workdays": [
+   "график работы",
+   "расписание",
+   "школа",
+   "когда дома",
+   "рабочий день",
+   "уроки",
+   "work hours"
+  ],
+  "library": [
+   "книги",
+   "детям",
+   "напротив",
+   "где находится",
+   "children's library",
+   "location"
+  ],
+  "loan_closed": [
+   "кредит",
+   "погашение",
+   "долг",
+   "банк",
+   "машина",
+   "car loan",
+   "paid off"
+  ],
+  "marina_flat": [
+   "соседка",
+   "номер квартиры",
+   "где живёт",
+   "адрес",
+   "neighbor apartment"
+  ],
+  "marina_pool": [
+   "тренер",
+   "плавание",
+   "работа",
+   "бассейн",
+   "swim coach",
+   "workplace"
+  ],
+  "market_day": [
+   "базар",
+   "когда ехать",
+   "лучшее время",
+   "утро",
+   "farmers market",
+   "wednesday"
+  ],
+  "metro_side": [
+   "подземка",
+   "станция",
+   "вход",
+   "площадь",
+   "subway entrance",
+   "where"
+  ],
+  "microwave_bug": [
+   "СВЧ",
+   "время",
+   "неточные часы",
+   "поломка",
+   "clock drift",
+   "kitchen"
+  ],
+  "moved_flat": [
+   "переезд",
+   "жильё",
+   "старый дом",
+   "прежний адрес",
+   "relocation",
+   "moved house"
+  ],
+  "movie_night": [
+   "фильм",
+   "семейный вечер",
+   "кино дома",
+   "время начала",
+   "family movie",
+   "friday night"
+  ],
+  "nfc_card": [
+   "проездной",
+   "метро",
+   "оплата проезда",
+   "пополнение",
+   "транспорт",
+   "transit card",
+   "top up"
+  ],
+  "no_screens_table": [
+   "правила дома",
+   "еда",
+   "гаджеты",
+   "ужин",
+   "no phones",
+   "house rules"
+  ],
+  "old_laptop": [
+   "компьютер",
+   "старый компьютер",
+   "кому достался",
+   "техника",
+   "laptop",
+   "owner"
+  ],
+  "old_phones": [
+   "телефоны",
+   "старая техника",
+   "где лежат",
+   "ящик",
+   "spare phones",
+   "drawer"
+  ],
+  "olga_delivery": [
+   "доставка",
+   "лекарства",
+   "дата",
+   "ежемесячно",
+   "medicine delivery"
+  ],
+  "olga_diploma": [
+   "образование",
+   "выпуск",
+   "колледж",
+   "диплом",
+   "education",
+   "graduated"
+  ],
+  "olga_job": [
+   "профессия",
+   "аптека",
+   "работа",
+   "провизор",
+   "pharmacist",
+   "occupation"
+  ],
+  "olga_night": [
+   "ночное дежурство",
+   "смена",
+   "аптека",
+   "работа ночью",
+   "night duty"
+  ],
+  "olga_pharmacy": [
+   "рабочий график",
+   "начало работы",
+   "время смены",
+   "работа",
+   "work start",
+   "shift"
+  ],
+  "olga_transfer": [
+   "смена места работы",
+   "новая работа",
+   "аптека",
+   "перевод",
+   "job change"
+  ],
+  "olga_weekend": [
+   "выходные дни",
+   "график",
+   "не работает",
+   "аптека",
+   "days off"
+  ],
+  "olya_bd": [
+   "дата рождения",
+   "родилась",
+   "именины",
+   "birthday",
+   "cumpleaños"
+  ],
+  "olya_coffee": [
+   "напитки",
+   "предпочтения",
+   "кофе",
+   "как пьёт кофе",
+   "instant coffee"
+  ],
+  "park_name": [
+   "название парка",
+   "где гуляем",
+   "прогулка",
+   "место",
+   "park name",
+   "победа"
+  ],
+  "park_sunday": [
+   "прогулка",
+   "воскресная традиция",
+   "отдых",
+   "парк",
+   "outing",
+   "weather"
+  ],
+  "passport_renew": [
+   "документы",
+   "паспорт",
+   "замена",
+   "загранпаспорт",
+   "ID",
+   "renewal"
+  ],
+  "pavel_bd": [
+   "дата рождения",
+   "дедушка",
+   "родился",
+   "birthday",
+   "cumpleaños"
+  ],
+  "pavel_cards": [
+   "карточные игры",
+   "хобби",
+   "суббота",
+   "встреча",
+   "card game",
+   "brother"
+  ],
+  "pavel_doctor": [
+   "врач",
+   "поликлиника",
+   "приём",
+   "медицина",
+   "doctor appointment",
+   "дата визита"
+  ],
+  "pavel_fish": [
+   "рыбалка",
+   "хобби",
+   "сезон",
+   "увлечение",
+   "fishing",
+   "pesca"
+  ],
+  "pavel_market": [
+   "базар",
+   "покупки",
+   "продукты",
+   "расписание",
+   "farmers market",
+   "wednesday"
+  ],
+  "pavel_pension": [
+   "выплата пенсии",
+   "доход",
+   "день пенсии",
+   "дедушка",
+   "pension day"
+  ],
+  "pavel_radio": [
+   "утро",
+   "привычки",
+   "приёмник",
+   "радиостанция",
+   "morning routine"
+  ],
+  "pavel_tv": [
+   "телевизор",
+   "новости",
+   "вечер",
+   "расписание",
+   "TV news"
+  ],
+  "pharmacy_addr": [
+   "адрес аптеки",
+   "ближайшая",
+   "лекарства",
+   "где находится",
+   "pharmacy address",
+   "nearby"
+  ],
+  "phone_charger": [
+   "зарядка",
+   "шнур",
+   "кабель",
+   "где лежит",
+   "usb",
+   "charging cable"
+  ],
+  "photo_wall": [
+   "фотографии",
+   "украшение",
+   "интерьер",
+   "стена",
+   "family photos",
+   "decor"
+  ],
+  "photos_cloud": [
+   "фотоархив",
+   "бэкап фото",
+   "внешний диск",
+   "хранение",
+   "photo backup",
+   "sunday"
+  ],
+  "piano_decision": [
+   "музыкальный инструмент",
+   "избавились",
+   "пианино",
+   "отдали",
+   "got rid of",
+   "piano"
+  ],
+  "picnic_july": [
+   "летняя традиция",
+   "отдых на природе",
+   "лето",
+   "пикник",
+   "outdoor",
+   "july"
+  ],
+  "pizza_friday": [
+   "заказ еды",
+   "доставка",
+   "пицца",
+   "конец месяца",
+   "takeout",
+   "ritual"
+  ],
+  "plant_address": [
+   "место работы",
+   "где находится",
+   "адрес",
+   "фабрика",
+   "factory",
+   "location"
+  ],
+  "printer_toner": [
+   "принтер",
+   "тонер",
+   "расходники",
+   "заправка",
+   "printer cartridge",
+   "ink"
+  ],
+  "quiet_hours": [
+   "правила дома",
+   "шум",
+   "не шуметь",
+   "ночь",
+   "режим тишины",
+   "house rules",
+   "noise"
+  ],
+  "roof_repair": [
+   "ремонт",
+   "кровля",
+   "дом",
+   "строительные работы",
+   "roofing",
+   "repair"
+  ],
+  "router_reboot": [
+   "перезагрузка",
+   "интернет не работает",
+   "маршрутизатор",
+   "сброс",
+   "reset router",
+   "wifi"
+  ],
+  "school_address": [
+   "где находится",
+   "адрес",
+   "учебное заведение",
+   "улица",
+   "address",
+   "school location"
+  ],
+  "school_gate": [
+   "вход в школу",
+   "как войти",
+   "двор",
+   "калитка",
+   "school entrance"
+  ],
+  "security_door": [
+   "входная дверь",
+   "замок",
+   "безопасность",
+   "установка",
+   "front door",
+   "lock"
+  ],
+  "sergey_calls": [
+   "родственники",
+   "звонок",
+   "брат",
+   "связь",
+   "phone call",
+   "sunday"
+  ],
+  "sergey_colleague": [
+   "коллега",
+   "офис",
+   "рабочее место",
+   "сосед по столу",
+   "coworker",
+   "desk"
+  ],
+  "sergey_g_brother": [
+   "родственники",
+   "дядя",
+   "семья",
+   "брат",
+   "great-uncle",
+   "relatives"
+  ],
+  "sergey_g_retired": [
+   "пенсия",
+   "уволился",
+   "железная дорога",
+   "бывший работник",
+   "retirement",
+   "railway depot"
+  ],
+  "shoes_rule": [
+   "правила дома",
+   "прихожая",
+   "разуваться",
+   "чистота",
+   "house rules",
+   "take off shoes"
+  ],
+  "sled_winter": [
+   "зимние вещи",
+   "где лежит",
+   "салазки",
+   "лестница",
+   "sleigh",
+   "storage"
+  ],
+  "sonia_acct": [
+   "родительский контроль",
+   "учётная запись",
+   "детский профиль",
+   "планшет",
+   "child account",
+   "parental controls"
+  ],
+  "sonia_art": [
+   "кружок",
+   "рисование",
+   "расписание",
+   "занятия",
+   "художка",
+   "art class"
+  ],
+  "sonia_bd": [
+   "дата рождения",
+   "родилась",
+   "именины",
+   "дочь",
+   "birthday",
+   "cumpleaños"
+  ],
+  "sonia_bed": [
+   "сон",
+   "отбой",
+   "режим дня",
+   "время сна",
+   "bedtime"
+  ],
+  "sonia_cat": [
+   "обязанность",
+   "питомец",
+   "кормление",
+   "утро",
+   "feeding cat",
+   "chore"
+  ],
+  "sonia_chore": [
+   "обязанности",
+   "домашние дела",
+   "цветы",
+   "полив",
+   "балкон",
+   "chores",
+   "plants"
+  ],
+  "sonia_draw": [
+   "рисование",
+   "хобби",
+   "творчество",
+   "краски",
+   "drawing",
+   "markers"
+  ],
+  "sonia_dress": [
+   "любимый цвет",
+   "фиолетовая",
+   "одежда",
+   "предпочтения",
+   "favorite color",
+   "purple"
+  ],
+  "sonia_glasses": [
+   "зрение",
+   "очки",
+   "оптика",
+   "здоровье",
+   "eyeglasses",
+   "vision"
+  ],
+  "sonia_homework": [
+   "домашнее задание",
+   "школа",
+   "режим дня",
+   "учёба",
+   "homework"
+  ],
+  "sonia_music": [
+   "музыкальные вкусы",
+   "песни",
+   "мультики",
+   "детская музыка",
+   "cartoon songs"
+  ],
+  "sonia_school": [
+   "класс",
+   "учёба",
+   "школьница",
+   "начальная школа",
+   "grade",
+   "4th grade"
+  ],
+  "sonia_school_year": [
+   "первый класс",
+   "начало учёбы",
+   "поступила в школу",
+   "когда пошла",
+   "school start"
+  ],
+  "sonia_sweets": [
+   "конфеты",
+   "десерты",
+   "сладкое",
+   "правило",
+   "диета ребёнка",
+   "candy",
+   "dulces"
+  ],
+  "sonia_swim": [
+   "бассейн",
+   "тренировка",
+   "расписание",
+   "секция",
+   "плавание",
+   "swimming"
+  ],
+  "sonia_tablet": [
+   "гаджет",
+   "подарок",
+   "планшет",
+   "день рождения",
+   "present",
+   "tablet"
+  ],
+  "speaker_kitchen": [
+   "умная колонка",
+   "голосовой помощник",
+   "язык",
+   "алиса",
+   "smart speaker",
+   "russian only"
+  ],
+  "summer_camp": [
+   "каникулы",
+   "лето",
+   "дети",
+   "отдых",
+   "лагерь",
+   "дочь",
+   "camp"
+  ],
+  "sunday_dinner": [
+   "семейная традиция",
+   "обед",
+   "вместе",
+   "воскресенье",
+   "family meal",
+   "ritual"
+  ],
+  "swim_pool": [
+   "часы работы",
+   "плавание",
+   "до скольки",
+   "спорт",
+   "pool hours",
+   "closing time"
+  ],
+  "terrace_decision": [
+   "решение",
+   "веранда",
+   "балкон",
+   "планировка",
+   "patio",
+   "chose"
+  ],
+  "trash_days": [
+   "мусор",
+   "вынос мусора",
+   "расписание",
+   "вторник пятница",
+   "garbage",
+   "bins"
+  ],
+  "tv_bought": [
+   "техника",
+   "покупка",
+   "телевизор",
+   "когда купили",
+   "television",
+   "appliance"
+  ],
+  "tv_remote": [
+   "телевизор",
+   "где лежит",
+   "ТВ пульт",
+   "потерялся пульт",
+   "remote control"
+  ],
+  "tv_subscription": [
+   "стриминг",
+   "онлайн-кинотеатр",
+   "оплата подписки",
+   "продление",
+   "streaming",
+   "billing date"
+  ],
+  "vacuum_schedule": [
+   "уборка",
+   "пылесос",
+   "расписание",
+   "робот",
+   "robot vacuum",
+   "cleaning schedule"
+  ],
+  "vet_clinic": [
+   "ветеринар",
+   "кот",
+   "животные",
+   "где находится",
+   "veterinarian",
+   "pet clinic"
+  ],
+  "walk_dog_neighbour": [
+   "соседи",
+   "выгул",
+   "собака",
+   "утро",
+   "dog walk",
+   "neighbor"
+  ],
+  "wallpaper_flat": [
+   "ремонт",
+   "покраска",
+   "коридор",
+   "стены",
+   "hallway",
+   "painting"
+  ],
+  "washer_bought": [
+   "техника",
+   "покупка",
+   "когда купили",
+   "стиралка",
+   "washing machine",
+   "appliance"
+  ],
+  "wedding_day": [
+   "свадьба",
+   "годовщина",
+   "брак",
+   "супруги",
+   "поженились когда",
+   "wedding anniversary",
+   "married"
+  ],
+  "wifi_name": [
+   "вайфай",
+   "название сети",
+   "SSID",
+   "интернет",
+   "wi-fi network",
+   "network name"
+  ],
+  "wifi_password_note": [
+   "вайфай",
+   "пароль",
+   "где пароль",
+   "интернет",
+   "wi-fi password"
+  ],
+  "window_summer": [
+   "вентиляция",
+   "свежий воздух",
+   "проветривание",
+   "окна",
+   "зима",
+   "ventilation",
+   "airing"
+  ]
+ },
+ "zh": {
+  "ac_bought": [
+   "空调",
+   "安装",
+   "家电",
+   "кондиционер",
+   "air conditioner",
+   "五月"
+  ],
+  "andrey_bd": [
+   "出生日期",
+   "生日",
+   "纪念日",
+   "день рождения",
+   "birthday",
+   "五月"
+  ],
+  "andrey_boss": [
+   "上司",
+   "新领导",
+   "三月",
+   "начальник",
+   "new manager",
+   "换领导"
+  ],
+  "andrey_chore": [
+   "家务",
+   "换灯泡",
+   "分工",
+   "обязанности",
+   "lightbulb",
+   "维修"
+  ],
+  "andrey_coffee": [
+   "饮品",
+   "咖啡偏好",
+   "口味",
+   "кофе без сахара",
+   "coffee preference",
+   "糖"
+  ],
+  "andrey_course": [
+   "培训",
+   "课程",
+   "安全",
+   "обучение",
+   "training",
+   "去年"
+  ],
+  "andrey_deadline": [
+   "截止日期",
+   "报告",
+   "工作",
+   "дедлайн",
+   "deadline",
+   "接线"
+  ],
+  "andrey_film": [
+   "电影",
+   "最爱影片",
+   "重看",
+   "фильм",
+   "favorite movie",
+   "观影"
+  ],
+  "andrey_gym": [
+   "健身",
+   "锻炼",
+   "运动日程",
+   "спортзал",
+   "gym",
+   "晚上"
+  ],
+  "andrey_job": [
+   "职业",
+   "工作",
+   "工程师",
+   "профессия",
+   "occupation",
+   "电力"
+  ],
+  "andrey_license": [
+   "驾照",
+   "驾驶证",
+   "考取",
+   "водительские права",
+   "driver's license",
+   "爸爸"
+  ],
+  "andrey_lunch": [
+   "午饭",
+   "食堂",
+   "工作",
+   "обед",
+   "canteen",
+   "工厂"
+  ],
+  "andrey_music": [
+   "音乐偏好",
+   "做饭",
+   "厨房",
+   "музыка",
+   "rock music",
+   "摇滚"
+  ],
+  "andrey_no_sweet": [
+   "饮料",
+   "糖",
+   "晚间",
+   "сладкие напитки",
+   "sugar",
+   "限制"
+  ],
+  "andrey_patent": [
+   "专利",
+   "发明",
+   "设计",
+   "патент",
+   "invention",
+   "接线盒"
+  ],
+  "andrey_project": [
+   "项目",
+   "截止",
+   "变电站",
+   "проект",
+   "project end",
+   "十二月"
+  ],
+  "andrey_remote": [
+   "远程办公",
+   "居家办公",
+   "星期五",
+   "удалёнка",
+   "work from home",
+   "在家"
+  ],
+  "andrey_run": [
+   "跑步",
+   "锻炼",
+   "运动",
+   "бег",
+   "jogging",
+   "河边"
+  ],
+  "andrey_salary_day": [
+   "工资",
+   "发薪日",
+   "收入",
+   "зарплата",
+   "payday",
+   "二十五号"
+  ],
+  "andrey_shift": [
+   "夜班",
+   "轮班",
+   "工作",
+   "ночная смена",
+   "night shift",
+   "每月"
+  ],
+  "andrey_trip": [
+   "出差",
+   "差旅",
+   "外地",
+   "командировка",
+   "business trip",
+   "每月"
+  ],
+  "andrey_weekend_work": [
+   "加班",
+   "周末上班",
+   "十月",
+   "переработка",
+   "overtime",
+   "被叫去"
+  ],
+  "andrey_workdays": [
+   "工作日",
+   "上班",
+   "日程",
+   "работа",
+   "work schedule",
+   "爸爸"
+  ],
+  "anton_ytube": [
+   "视频",
+   "频道",
+   "油管",
+   "ютуб",
+   "YouTube channel",
+   "儿子"
+  ],
+  "backup_day": [
+   "备份",
+   "自动",
+   "数据",
+   "резервная копия",
+   "backup",
+   "周一"
+  ],
+  "bakery": [
+   "面包店",
+   "营业时间",
+   "开门",
+   "пекарня",
+   "bakery hours",
+   "基洛夫街"
+  ],
+  "balcony_glazed": [
+   "阳台",
+   "玻璃",
+   "保温",
+   "балкон",
+   "glazed balcony",
+   "隔热"
+  ],
+  "bank_switch": [
+   "银行",
+   "换银行",
+   "转移",
+   "банк",
+   "changed bank",
+   "八月"
+  ],
+  "bike_bought": [
+   "自行车",
+   "购买",
+   "去年",
+   "велосипед",
+   "bicycle",
+   "儿子"
+  ],
+  "birthday_budget": [
+   "生日礼物",
+   "礼物",
+   "提前购买",
+   "подарки",
+   "gifts",
+   "一个月"
+  ],
+  "boiler_check": [
+   "锅炉",
+   "检查",
+   "供暖",
+   "котёл",
+   "boiler inspection",
+   "九月"
+  ],
+  "boss_name": [
+   "上司",
+   "领导",
+   "主管",
+   "начальник",
+   "manager",
+   "部门"
+  ],
+  "bus_home": [
+   "公交",
+   "车号",
+   "站点",
+   "автобус",
+   "bus number",
+   "九路"
+  ],
+  "camera_door": [
+   "摄像头",
+   "门口监控",
+   "提醒",
+   "камера",
+   "door camera",
+   "手机通知"
+  ],
+  "car_park": [
+   "停车",
+   "车位",
+   "汽车",
+   "парковка",
+   "parking spot",
+   "垃圾箱"
+  ],
+  "car_sold": [
+   "卖车",
+   "汽车",
+   "出售",
+   "продажа авто",
+   "sold car",
+   "七月"
+  ],
+  "cat_adoption": [
+   "收养",
+   "留下猫",
+   "宠物",
+   "усыновление",
+   "adopted cat",
+   "决定"
+  ],
+  "cat_bd": [
+   "宠物",
+   "领养日期",
+   "到家纪念日",
+   "猫咪",
+   "кот",
+   "adoption"
+  ],
+  "cat_bowl": [
+   "猫碗",
+   "位置",
+   "放哪里",
+   "миска",
+   "cat bowl",
+   "暖气"
+  ],
+  "cat_food": [
+   "猫粮",
+   "喂食",
+   "每天",
+   "корм",
+   "cat feeding",
+   "干粮"
+  ],
+  "cat_vet": [
+   "疫苗",
+   "兽医",
+   "年度",
+   "прививка",
+   "vaccination",
+   "二月"
+  ],
+  "cinema": [
+   "电影院",
+   "位置",
+   "市中心",
+   "кинотеатр",
+   "cinema location",
+   "苏维埃街"
+  ],
+  "cleaning_day": [
+   "打扫",
+   "家务",
+   "清洁",
+   "уборка",
+   "cleaning",
+   "周日"
+  ],
+  "clinic_addr": [
+   "诊所",
+   "医院",
+   "地址",
+   "поликлиника",
+   "clinic address",
+   "波别达街"
+  ],
+  "corner_shop": [
+   "商店",
+   "营业时间",
+   "小卖部",
+   "магазин",
+   "shop hours",
+   "十点"
+  ],
+  "dacha": [
+   "别墅",
+   "郊外",
+   "火车站",
+   "дача",
+   "country house",
+   "路程"
+  ],
+  "dentist": [
+   "牙医",
+   "牙科",
+   "楼层",
+   "стоматолог",
+   "dentist floor",
+   "三楼"
+  ],
+  "dima_acct": [
+   "账户",
+   "电脑",
+   "用户名",
+   "аккаунт",
+   "user account",
+   "儿子"
+  ],
+  "dima_bd": [
+   "出生日期",
+   "生日",
+   "出生年份",
+   "день рождения",
+   "birthday",
+   "儿子"
+  ],
+  "dima_bed": [
+   "睡觉时间",
+   "就寝",
+   "熄灯",
+   "отбой",
+   "bedtime",
+   "儿子"
+  ],
+  "dima_bike": [
+   "上学",
+   "交通",
+   "自行车",
+   "велосипед",
+   "commute",
+   "天气"
+  ],
+  "dima_camp": [
+   "夏令营",
+   "暑假",
+   "夏天",
+   "лагерь",
+   "summer camp",
+   "儿子"
+  ],
+  "dima_cap": [
+   "帽子",
+   "冬季穿着",
+   "衣服",
+   "шапка",
+   "hat",
+   "儿子"
+  ],
+  "dima_chore": [
+   "家务",
+   "倒垃圾",
+   "分工",
+   "обязанности",
+   "chore",
+   "夏天"
+  ],
+  "dima_club": [
+   "机器人",
+   "兴趣班",
+   "课外活动",
+   "кружок",
+   "robotics club",
+   "星期三"
+  ],
+  "dima_console": [
+   "游戏机",
+   "礼物",
+   "新年",
+   "приставка",
+   "game console",
+   "儿子"
+  ],
+  "dima_dinner": [
+   "晚饭时间",
+   "晚餐",
+   "饭点",
+   "ужин",
+   "dinner time",
+   "儿子"
+  ],
+  "dima_football": [
+   "足球",
+   "训练时间",
+   "运动",
+   "тренировка",
+   "football practice",
+   "周二"
+  ],
+  "dima_games": [
+   "电子游戏",
+   "电脑",
+   "爱好",
+   "игры",
+   "strategy games",
+   "儿子"
+  ],
+  "dima_hates": [
+   "饮食禁忌",
+   "讨厌的食物",
+   "蔬菜",
+   "не любит",
+   "food dislike",
+   "挑食"
+  ],
+  "dima_hw_time": [
+   "作业",
+   "学习时间",
+   "晚饭后",
+   "домашнее задание",
+   "homework",
+   "儿子"
+  ],
+  "dima_pets": [
+   "宠物",
+   "养狗",
+   "家庭争议",
+   "собака",
+   "dog",
+   "反对"
+  ],
+  "dima_phone": [
+   "手机",
+   "第一部",
+   "购买",
+   "телефон",
+   "first phone",
+   "儿子"
+  ],
+  "dima_school": [
+   "年级",
+   "学校",
+   "读书",
+   "класс",
+   "grade",
+   "儿子"
+  ],
+  "dima_school_year": [
+   "入学",
+   "小学",
+   "一年级",
+   "школа",
+   "started school",
+   "儿子"
+  ],
+  "dima_sport_fav": [
+   "球队",
+   "足球",
+   "球迷",
+   "футбол",
+   "favorite team",
+   "红色"
+  ],
+  "dog_park": [
+   "遛狗",
+   "狗公园",
+   "放狗",
+   "площадка для собак",
+   "off-leash",
+   "池塘"
+  ],
+  "dog_refusal": [
+   "养狗",
+   "约定",
+   "条件",
+   "собака",
+   "dog agreement",
+   "十五岁"
+  ],
+  "email_family": [
+   "邮箱",
+   "电子邮件",
+   "家庭邮件",
+   "почта",
+   "email address",
+   "账号"
+  ],
+  "flat_anniv": [
+   "乔迁",
+   "搬家日期",
+   "住房",
+   "новоселье",
+   "move-in date",
+   "квартира"
+  ],
+  "fridge_bought": [
+   "购买",
+   "家电",
+   "购置日期",
+   "покупка",
+   "bought",
+   "电冰箱"
+  ],
+  "garage_code": [
+   "车库密码",
+   "门禁",
+   "密码",
+   "код гаража",
+   "garage code",
+   "年份"
+  ],
+  "garage_row": [
+   "车库",
+   "位置",
+   "排",
+   "гараж",
+   "garage location",
+   "第六排"
+  ],
+  "garage_saturday": [
+   "车库",
+   "周六",
+   "隔周",
+   "гараж",
+   "garage",
+   "汽车"
+  ],
+  "gps_lost": [
+   "追踪器",
+   "丢失",
+   "体育场",
+   "потерял",
+   "lost tracker",
+   "五月"
+  ],
+  "granny_house": [
+   "奶奶家",
+   "老家",
+   "地点",
+   "бабушка",
+   "grandma's house",
+   "奥穆奇申斯克"
+  ],
+  "grocery_day": [
+   "购物",
+   "采购",
+   "超市",
+   "продукты",
+   "groceries",
+   "周六"
+  ],
+  "guest_sleep": [
+   "客人",
+   "住宿",
+   "睡哪里",
+   "гости",
+   "guest bed",
+   "房间"
+  ],
+  "gym_addr": [
+   "健身房",
+   "地址",
+   "位置",
+   "спортзал",
+   "gym location",
+   "购物中心"
+  ],
+  "hall_lamp": [
+   "走廊灯",
+   "灯",
+   "闪烁",
+   "лампа",
+   "hallway light",
+   "档位"
+  ],
+  "heating_app": [
+   "暖气",
+   "供暖",
+   "应用",
+   "отопление",
+   "heating control",
+   "手机"
+  ],
+  "insurance_renew": [
+   "保险",
+   "续保",
+   "房屋",
+   "страховка",
+   "insurance renewal",
+   "九月"
+  ],
+  "internet_switch": [
+   "网络",
+   "宽带",
+   "服务商",
+   "интернет",
+   "ISP",
+   "更换"
+  ],
+  "irina_bd": [
+   "出生日期",
+   "生日",
+   "外婆",
+   "день рождения",
+   "birthday",
+   "老人"
+  ],
+  "irina_bread": [
+   "烘焙",
+   "面包",
+   "周日习惯",
+   "выпечка",
+   "baking",
+   "外婆"
+  ],
+  "irina_calls": [
+   "打电话",
+   "通话",
+   "周四",
+   "звонок",
+   "phone call",
+   "外婆"
+  ],
+  "irina_market": [
+   "集市",
+   "购物",
+   "每周习惯",
+   "рынок",
+   "market visit",
+   "外婆"
+  ],
+  "irina_serials": [
+   "电视剧",
+   "晚间节目",
+   "сериалы",
+   "TV series",
+   "外婆",
+   "追剧"
+  ],
+  "irina_tea": [
+   "饮品",
+   "茶",
+   "加糖",
+   "чай",
+   "tea with sugar",
+   "外婆"
+  ],
+  "irina_walk": [
+   "散步",
+   "公园",
+   "午后习惯",
+   "прогулка",
+   "walk",
+   "外婆"
+  ],
+  "iron_rule": [
+   "熨斗",
+   "拔插头",
+   "安全",
+   "утюг",
+   "iron safety",
+   "规矩"
+  ],
+  "keys_hook": [
+   "备用钥匙",
+   "钥匙",
+   "挂钩",
+   "ключи",
+   "spare keys",
+   "放哪里"
+  ],
+  "laundry_day": [
+   "洗衣",
+   "衣物",
+   "周三",
+   "стирка",
+   "laundry",
+   "分拣"
+  ],
+  "lena_bd": [
+   "出生日期",
+   "生日",
+   "纪念日",
+   "день рождения",
+   "birthday",
+   "十一月"
+  ],
+  "lena_bread": [
+   "烘焙",
+   "面包",
+   "周日习惯",
+   "выпечка",
+   "baking",
+   "妈妈"
+  ],
+  "lena_committee": [
+   "委员会",
+   "学校",
+   "家长",
+   "комитет",
+   "school committee",
+   "九月"
+  ],
+  "lena_cook": [
+   "做饭",
+   "菜谱",
+   "星期五",
+   "борщ",
+   "borscht",
+   "晚餐"
+  ],
+  "lena_exam": [
+   "考试",
+   "几何",
+   "学校",
+   "экзамен",
+   "exam",
+   "五月"
+  ],
+  "lena_job": [
+   "职业",
+   "老师",
+   "教师",
+   "профессия",
+   "occupation",
+   "数学"
+  ],
+  "lena_ledger": [
+   "预算",
+   "账本",
+   "家庭财务",
+   "бюджет",
+   "budget book",
+   "抽屉"
+  ],
+  "lena_license": [
+   "驾照",
+   "驾驶证",
+   "考取",
+   "водительские права",
+   "driver's license",
+   "妈妈"
+  ],
+  "lena_lunch": [
+   "午饭",
+   "同事",
+   "学校",
+   "обед",
+   "lunch break",
+   "老师"
+  ],
+  "lena_meet": [
+   "家长会",
+   "学校",
+   "会议",
+   "родительское собрание",
+   "parent meeting",
+   "每月"
+  ],
+  "lena_music": [
+   "音乐偏好",
+   "讨厌",
+   "噪音",
+   "музыка",
+   "dislikes rock",
+   "关掉"
+  ],
+  "lena_olympiad": [
+   "奥赛",
+   "辅导",
+   "学生",
+   "олимпиада",
+   "tutoring",
+   "数学"
+  ],
+  "lena_reads": [
+   "阅读",
+   "小说",
+   "睡前习惯",
+   "книги",
+   "detective novels",
+   "书"
+  ],
+  "lena_salary_day": [
+   "工资",
+   "发薪日",
+   "收入",
+   "зарплата",
+   "payday",
+   "一号"
+  ],
+  "lena_shop": [
+   "账单",
+   "缴费",
+   "每月任务",
+   "оплата счетов",
+   "pay bills",
+   "星期一"
+  ],
+  "lena_sport": [
+   "运动",
+   "健身",
+   "停止锻炼",
+   "спортзал",
+   "gym",
+   "春季"
+  ],
+  "lena_tea": [
+   "饮品",
+   "茶",
+   "晚间饮料",
+   "чай",
+   "evening drink",
+   "柠檬"
+  ],
+  "lena_workdays": [
+   "课程",
+   "教课",
+   "日程",
+   "уроки",
+   "teaching hours",
+   "妈妈"
+  ],
+  "library": [
+   "图书馆",
+   "儿童",
+   "位置",
+   "библиотека",
+   "library location",
+   "诊所"
+  ],
+  "loan_closed": [
+   "贷款",
+   "还清",
+   "汽车",
+   "кредит",
+   "loan paid off",
+   "一月"
+  ],
+  "marina_flat": [
+   "邻居",
+   "房号",
+   "住址",
+   "сосед",
+   "apartment number",
+   "玛丽娜"
+  ],
+  "marina_pool": [
+   "教练",
+   "游泳馆",
+   "工作地点",
+   "тренер",
+   "swim coach",
+   "体育街"
+  ],
+  "market_day": [
+   "集市",
+   "赶集日",
+   "最热闹",
+   "рынок",
+   "market day",
+   "周三"
+  ],
+  "metro_side": [
+   "地铁",
+   "入口",
+   "位置",
+   "метро",
+   "subway entrance",
+   "广场"
+  ],
+  "microwave_bug": [
+   "微波炉",
+   "时钟",
+   "故障",
+   "микроволновка",
+   "clock drift",
+   "慢"
+  ],
+  "moved_flat": [
+   "搬家",
+   "旧房",
+   "迁居",
+   "переезд",
+   "moved out",
+   "旧楼"
+  ],
+  "movie_night": [
+   "电影",
+   "家庭活动",
+   "周五晚",
+   "кино",
+   "family movie",
+   "放映"
+  ],
+  "nfc_card": [
+   "交通卡",
+   "充值",
+   "银行应用",
+   "транспортная карта",
+   "top up",
+   "公交"
+  ],
+  "no_screens_table": [
+   "吃饭规矩",
+   "手机",
+   "餐桌",
+   "правило",
+   "phone rule",
+   "禁止"
+  ],
+  "old_laptop": [
+   "笔记本电脑",
+   "旧电脑",
+   "谁用",
+   "ноутбук",
+   "old laptop",
+   "儿子"
+  ],
+  "old_phones": [
+   "旧手机",
+   "抽屉",
+   "放哪里",
+   "старые телефоны",
+   "spare phones",
+   "厨房"
+  ],
+  "olga_delivery": [
+   "送货",
+   "药品",
+   "到货",
+   "доставка",
+   "delivery",
+   "日期"
+  ],
+  "olga_diploma": [
+   "毕业",
+   "学历",
+   "药学院",
+   "диплом",
+   "graduation",
+   "教育"
+  ],
+  "olga_job": [
+   "职业",
+   "药房",
+   "药师",
+   "профессия",
+   "occupation",
+   "工作地点"
+  ],
+  "olga_night": [
+   "夜班",
+   "值班",
+   "药房",
+   "ночная смена",
+   "night duty",
+   "轮班"
+  ],
+  "olga_pharmacy": [
+   "上班时间",
+   "轮班",
+   "药店",
+   "аптека",
+   "shift start",
+   "早班"
+  ],
+  "olga_transfer": [
+   "调动",
+   "新工作地点",
+   "药房",
+   "перевод",
+   "transfer",
+   "二月"
+  ],
+  "olga_weekend": [
+   "休息日",
+   "假期",
+   "排班",
+   "выходные",
+   "days off",
+   "药剂师"
+  ],
+  "olya_bd": [
+   "出生日期",
+   "生日",
+   "纪念日",
+   "день рождения",
+   "birthday",
+   "九月"
+  ],
+  "olya_coffee": [
+   "饮品",
+   "咖啡",
+   "口味",
+   "кофе",
+   "instant coffee",
+   "速溶"
+  ],
+  "park_name": [
+   "公园",
+   "名称",
+   "大公园",
+   "парк",
+   "park name",
+   "胜利"
+  ],
+  "park_sunday": [
+   "公园",
+   "周日出游",
+   "散步",
+   "парк",
+   "outing",
+   "天气好"
+  ],
+  "passport_renew": [
+   "护照",
+   "换证",
+   "证件",
+   "паспорт",
+   "passport renewal",
+   "妈妈"
+  ],
+  "pavel_bd": [
+   "出生日期",
+   "生日",
+   "外公",
+   "день рождения",
+   "birthday",
+   "老人"
+  ],
+  "pavel_cards": [
+   "打牌",
+   "周末",
+   "兄弟",
+   "карты",
+   "card game",
+   "外公"
+  ],
+  "pavel_doctor": [
+   "就医",
+   "医生",
+   "预约",
+   "врач",
+   "doctor visit",
+   "外公"
+  ],
+  "pavel_fish": [
+   "爱好",
+   "钓鱼",
+   "夏季",
+   "рыбалка",
+   "fishing",
+   "外公"
+  ],
+  "pavel_market": [
+   "集市",
+   "购物",
+   "每周习惯",
+   "рынок",
+   "market visit",
+   "外公"
+  ],
+  "pavel_pension": [
+   "退休金",
+   "养老金",
+   "收入",
+   "пенсия",
+   "pension",
+   "三号"
+  ],
+  "pavel_radio": [
+   "广播",
+   "早晨习惯",
+   "радио",
+   "radio",
+   "外公",
+   "上午"
+  ],
+  "pavel_tv": [
+   "新闻",
+   "电视",
+   "晚间习惯",
+   "новости",
+   "TV news",
+   "外公"
+  ],
+  "pharmacy_addr": [
+   "药店",
+   "地址",
+   "位置",
+   "аптека",
+   "pharmacy address",
+   "最近"
+  ],
+  "phone_charger": [
+   "充电器",
+   "数据线",
+   "放哪里",
+   "зарядка",
+   "charger",
+   "沙发"
+  ],
+  "photo_wall": [
+   "照片墙",
+   "挂照片",
+   "装饰",
+   "фотостена",
+   "photo wall",
+   "十二月"
+  ],
+  "photos_cloud": [
+   "照片",
+   "备份",
+   "移动硬盘",
+   "фото",
+   "photo backup",
+   "周日"
+  ],
+  "piano_decision": [
+   "钢琴",
+   "送人",
+   "处理",
+   "пианино",
+   "gave away",
+   "决定"
+  ],
+  "picnic_july": [
+   "野餐",
+   "七月",
+   "户外",
+   "пикник",
+   "picnic",
+   "夏季活动"
+  ],
+  "pizza_friday": [
+   "披萨",
+   "外卖",
+   "订餐",
+   "пицца",
+   "takeout",
+   "月末"
+  ],
+  "plant_address": [
+   "地址",
+   "工厂",
+   "工作地点",
+   "адрес",
+   "address",
+   "街"
+  ],
+  "printer_toner": [
+   "打印机",
+   "墨粉",
+   "耗材",
+   "принтер",
+   "toner",
+   "硒鼓"
+  ],
+  "quiet_hours": [
+   "安静时间",
+   "夜间",
+   "噪音",
+   "тихий час",
+   "quiet time",
+   "十点"
+  ],
+  "roof_repair": [
+   "屋顶",
+   "维修",
+   "夏天",
+   "ремонт крыши",
+   "roof repair",
+   "房屋"
+  ],
+  "router_reboot": [
+   "路由器",
+   "重启",
+   "网络故障",
+   "роутер",
+   "reset router",
+   "按钮"
+  ],
+  "school_address": [
+   "地址",
+   "学校",
+   "位置",
+   "адрес",
+   "school location",
+   "列宁街"
+  ],
+  "school_gate": [
+   "学校",
+   "大门",
+   "入口",
+   "школа",
+   "school entrance",
+   "院子"
+  ],
+  "security_door": [
+   "防盗门",
+   "安装",
+   "门",
+   "дверь",
+   "security door",
+   "十月"
+  ],
+  "sergey_calls": [
+   "打电话",
+   "联系",
+   "兄弟",
+   "звонок",
+   "phone call",
+   "外公"
+  ],
+  "sergey_colleague": [
+   "同事",
+   "办公室",
+   "座位",
+   "коллега",
+   "coworker",
+   "邻座"
+  ],
+  "sergey_g_brother": [
+   "兄弟",
+   "亲属",
+   "家人",
+   "родственник",
+   "brother",
+   "叔公"
+  ],
+  "sergey_g_retired": [
+   "退休",
+   "铁路",
+   "年份",
+   "пенсия",
+   "retirement",
+   "车辆段"
+  ],
+  "shoes_rule": [
+   "家规",
+   "脱鞋",
+   "规矩",
+   "правило",
+   "house rule",
+   "进门"
+  ],
+  "sled_winter": [
+   "雪橇",
+   "存放",
+   "冬季",
+   "санки",
+   "sled",
+   "楼梯"
+  ],
+  "sonia_acct": [
+   "儿童账户",
+   "平板",
+   "家长控制",
+   "детский аккаунт",
+   "child account",
+   "女儿"
+  ],
+  "sonia_art": [
+   "美术课",
+   "绘画班",
+   "课外活动",
+   "рисование",
+   "art class",
+   "周六"
+  ],
+  "sonia_bd": [
+   "出生日期",
+   "生日",
+   "纪念日",
+   "день рождения",
+   "birthday",
+   "八月"
+  ],
+  "sonia_bed": [
+   "睡觉时间",
+   "就寝",
+   "上学日",
+   "отбой",
+   "bedtime",
+   "女儿"
+  ],
+  "sonia_cat": [
+   "宠物",
+   "喂猫",
+   "日常任务",
+   "кот",
+   "feeding",
+   "早晨"
+  ],
+  "sonia_chore": [
+   "家务",
+   "浇花",
+   "分工",
+   "обязанности",
+   "watering plants",
+   "阳台"
+  ],
+  "sonia_draw": [
+   "绘画",
+   "画画",
+   "爱好",
+   "рисование",
+   "markers",
+   "文具"
+  ],
+  "sonia_dress": [
+   "颜色",
+   "喜好",
+   "最爱颜色",
+   "цвет",
+   "favorite color",
+   "女儿"
+  ],
+  "sonia_glasses": [
+   "眼镜",
+   "视力",
+   "戴眼镜",
+   "очки",
+   "eyeglasses",
+   "女儿"
+  ],
+  "sonia_homework": [
+   "作业",
+   "学习",
+   "放学后",
+   "домашнее задание",
+   "homework",
+   "女儿"
+  ],
+  "sonia_music": [
+   "音乐偏好",
+   "歌曲",
+   "动画",
+   "мультфильмы",
+   "cartoon songs",
+   "女儿"
+  ],
+  "sonia_school": [
+   "年级",
+   "学校",
+   "读书",
+   "класс",
+   "grade",
+   "女儿"
+  ],
+  "sonia_school_year": [
+   "入学",
+   "小学",
+   "一年级",
+   "школа",
+   "started school",
+   "女儿"
+  ],
+  "sonia_sweets": [
+   "零食",
+   "糖果",
+   "甜点",
+   "сладости",
+   "sweets rule",
+   "周末"
+  ],
+  "sonia_swim": [
+   "游泳",
+   "训练时间",
+   "运动",
+   "бассейн",
+   "swimming",
+   "周一"
+  ],
+  "sonia_tablet": [
+   "平板电脑",
+   "生日礼物",
+   "收到",
+   "планшет",
+   "gift",
+   "女儿"
+  ],
+  "speaker_kitchen": [
+   "音箱",
+   "语音助手",
+   "语言",
+   "колонка",
+   "smart speaker",
+   "俄语"
+  ],
+  "summer_camp": [
+   "夏令营",
+   "暑假",
+   "夏天",
+   "лагерь",
+   "summer camp",
+   "女儿"
+  ],
+  "sunday_dinner": [
+   "周日午饭",
+   "家庭聚餐",
+   "全家",
+   "обед",
+   "family lunch",
+   "传统"
+  ],
+  "swim_pool": [
+   "游泳馆",
+   "营业时间",
+   "关门时间",
+   "бассейн",
+   "pool hours",
+   "体育街"
+  ],
+  "terrace_decision": [
+   "露台",
+   "阳台",
+   "选择",
+   "терраса",
+   "terrace",
+   "装修决定"
+  ],
+  "trash_days": [
+   "垃圾",
+   "倒垃圾",
+   "家务",
+   "мусор",
+   "garbage",
+   "垃圾桶"
+  ],
+  "tv_bought": [
+   "购买",
+   "电视机",
+   "家电",
+   "покупка",
+   "bought",
+   "搬进家"
+  ],
+  "tv_remote": [
+   "遥控器",
+   "电视",
+   "放哪里",
+   "пульт",
+   "remote control",
+   "篮子"
+  ],
+  "tv_subscription": [
+   "订阅",
+   "影视",
+   "续费",
+   "подписка",
+   "subscription",
+   "十二号"
+  ],
+  "vacuum_schedule": [
+   "扫地机器人",
+   "吸尘器",
+   "清洁",
+   "робот-пылесос",
+   "robot vacuum",
+   "时间表"
+  ],
+  "vet_clinic": [
+   "兽医",
+   "宠物医院",
+   "位置",
+   "ветеринар",
+   "vet",
+   "体育场"
+  ],
+  "walk_dog_neighbour": [
+   "邻居",
+   "遛狗",
+   "时间",
+   "сосед",
+   "dog walking",
+   "晨间"
+  ],
+  "wallpaper_flat": [
+   "走廊",
+   "刷漆",
+   "装修",
+   "ремонт",
+   "repainting",
+   "二月"
+  ],
+  "washer_bought": [
+   "购买",
+   "家电",
+   "购置日期",
+   "покупка",
+   "bought",
+   "洗衣机"
+  ],
+  "wedding_day": [
+   "结婚纪念日",
+   "婚礼",
+   "夫妻",
+   "свадьба",
+   "wedding anniversary",
+   "годовщина"
+  ],
+  "wifi_name": [
+   "无线网",
+   "网络名称",
+   "SSID",
+   "вайфай",
+   "wifi name",
+   "路由器"
+  ],
+  "wifi_password_note": [
+   "无线网密码",
+   "密码",
+   "便条",
+   "пароль вайфай",
+   "wifi password",
+   "冰箱"
+  ],
+  "window_summer": [
+   "开窗",
+   "通风",
+   "每天",
+   "проветривание",
+   "ventilation",
+   "冬天"
+  ]
+ }
+}

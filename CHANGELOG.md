@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+### Measurement tooling (no change by default)
+- **What a fact's vector is made from is one function**, for
+  [#95](https://github.com/itpartypattaya/hermes-plugin-holographic/issues/95) (@liwangcc: embed keywords too).
+  `embeddings.vector_text(content, tags)` builds the text a vector is made from and its hash is taken of, and every
+  place tied to that text uses it: the vector index, what is sent after a turn, the store's check before keeping a
+  vector, and the scores recall and `fact_store search` keep for a fact read again. By default it is the content
+  alone, as before: nothing is sent differently, no hash changes, no store's vectors are made again. The module value
+  `EMBED_TEXT = "content+keywords"` (not a setting; only `tools/provenance_probe.py --embed-text` sets it, for one arm
+  of a measurement) adds the fact's keywords on a line after the content — never the person's own tags — and falls
+  back to the content alone when the joined text may not be sent.
+- `tools/provenance_probe.py`: `--embed-text`, `--keywords FILE` with `--kw-coverage all|half` and `--kw-seed`; rows
+  and file names carry the vector text, the keywords file's hash and coverage, the embedding model's label and vector
+  size and each store's vector coverage; each run gets stores of its own; a store left short of vectors stops the run
+  (it used to report ready after 60 tries). `tools/mcnemar_gate.py --pair embed_text`: gate G1, fixed before any run —
+  exact McNemar on rescued against lost top-five hits (p < 0.05, more rescued than lost), every lost target named,
+  noise and confusion as rows added minus rows removed, at most 0; two arms that differ in anything but the vector
+  text are refused. `--pair margin` is the PR #17 gate (`--margin-pair` still works). Keywords for the probe's sets,
+  written blind by a separate agent that saw only the facts and the field's description: `tools/issue95_keywords/`.
+
 ## 0.28.0 — 2026-11-15
 
 ### Added

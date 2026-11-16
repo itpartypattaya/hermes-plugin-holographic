@@ -2500,4 +2500,38 @@ def question_parts(text: str) -> tuple[tuple[frozenset, bool, str], tuple[frozen
     return part(words[:n], parts[0]), part(words[n:], parts[1])
 
 
+# Keywords (document expansion, as doc2query does for lexical search): words a person might ask with that the fact
+# does not contain, given by the agent when it stores the fact. Kept in the indexed tags column after a marker line,
+# so older versions and FTS5 see them too and no schema changes; never shown in the recalled block.
+_KW_MARK = "keywords: "
+_MAX_KEYWORDS, _MAX_KEYWORD_CHARS = 12, 40
+
+
+def _keywords(value) -> list[str]:
+    """A list of strings or one comma-separated string -> distinct, trimmed keywords (at most 12 of 40 characters)."""
+    items = value if isinstance(value, list) else str(value or "").split(",")
+    out: list[str] = []
+    for item in items:
+        word = " ".join(item.split()).strip(" ,;") if isinstance(item, str) else ""
+        if word and len(word) <= _MAX_KEYWORD_CHARS and word.casefold() not in {o.casefold() for o in out}:
+            out.append(word)
+    return out[:_MAX_KEYWORDS]
+
+
+def _split_tags(stored: str | None) -> tuple[str, list[str]]:
+    """(the user's tags, the keywords) of a stored tags value."""
+    text = stored or ""
+    if text.startswith(_KW_MARK):
+        return "", _keywords(text[len(_KW_MARK):])
+    head, mark, tail = text.rpartition("\n" + _KW_MARK)
+    return (head, _keywords(tail)) if mark else (text, [])
+
+
+def _join_tags(tags: str | None, keywords: list[str]) -> str:
+    base = (tags or "").strip()
+    if not keywords:
+        return base
+    return (base + "\n" if base else "") + _KW_MARK + ", ".join(keywords)
+
+
 _ja_ready = True  # every word list above is built: Japanese spelling variants may load from here on

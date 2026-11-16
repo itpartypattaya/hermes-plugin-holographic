@@ -19,14 +19,21 @@ Run:
     # --endpoint http://127.0.0.1:1235/v1/rerank   a real rerank (otherwise a mock)
     # --emb on|off|both                              embeddings from :1237 (default off)
 
+Issue #95, keywords in a fact's vector — two arms on the same frozen keywords, each in stores of its own:
+    EMB_URL=http://127.0.0.1:1241/v1 EMB_MODEL=bge-m3 python -I tools/provenance_probe.py --set household         --split test --modes off --emb on --keywords tools/issue95_keywords/household.json --kw-coverage half         --embed-text content          # then the same with --embed-text content+keywords
+    python tools/mcnemar_gate.py --pair embed_text <the two files>
+
 Rows: results/provenance_<set>_<emb>.jsonl (one row per query; mode is a row field, git_sha is the commit).
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.util
 import json
 import os
+import random
+import shutil
 import sys
 import tempfile
 import time
@@ -74,12 +81,60 @@ ENDPOINT = os.environ.get("RERANK_URL", "http://127.0.0.1:1235/v1/rerank")
 SCALE = os.environ.get("RERANK_SCALE", "logit")  # endpoint scale (fix-list item 4, 14:01)
 
 
+# Issue #95 (main sets them for one run and puts them back): the keywords this run stores with the facts, per language
+# and fact key (only those the coverage keeps), and the folder this run's stores live in — a store of its own per arm.
+KEYWORDS: dict | None = None
+DB_DIR: Path | None = None
+
+
+def _db(name: str) -> Path:
+    """A fresh store file of this run: nothing is left of an earlier run's file of that name."""
+    db = (DB_DIR or Path(tempfile.gettempdir())) / name
+    for s in ("", "-shm", "-wal"):
+        try:
+            Path(str(db) + s).unlink()
+        except OSError:
+            pass
+    return db
+
+
+def store_facts(p: HolographicMemoryProvider, lang: str, facts: dict) -> dict[int, str]:
+    """Store *facts* (key -> (text, entities)) through the tool, each with the keywords this run gives its key;
+    returns fact_id -> key. A keyword the plugin did not keep, or keywords for a key the set does not have, stop the
+    run: frozen keywords are stored as written or not measured at all."""
+    if KEYWORDS is not None and lang not in KEYWORDS:  # a file of another set: both arms would run without keywords
+        raise SystemExit(f"the keywords file has no {lang!r} — it is not this set's file")
+    given = (KEYWORDS or {}).get(lang, {})
+    unknown = sorted(set(given) - set(facts))
+    if unknown:
+        raise SystemExit(f"keywords for facts the set does not have ({lang}): {unknown[:5]}")
+    back = {}
+    for key, (text, entities) in facts.items():
+        args = {"action": "add", "content": text, "entities": entities}
+        if given.get(key):
+            args["keywords"] = given[key]
+        r = json.loads(p.handle_tool_call("fact_store", args))
+        if "error" in r or r.get("keywords_dropped") or ("keywords" in args and r.get("keywords") != args["keywords"]):
+            raise SystemExit(f"{lang}/{key}: not stored as written: {r}")
+        back[int(r["fact_id"])] = key
+    return back
+
+
+def _kw_facts(p: HolographicMemoryProvider) -> int:
+    """How many facts of this store carry keywords: both arms of a pair must have the same."""
+    return len(p._store.read("SELECT 1 FROM facts WHERE tags LIKE 'keywords: %' OR tags LIKE ?", ("%\nkeywords: %",)))
+
+
 def _git_sha() -> str:
-    """Stem of the commit: every JSONL row knows at which code it was captured (review item 8, 2026-10-22)."""
+    """Stem of the commit: every JSONL row knows at which code it was captured (review item 8, 2026-10-22). A tree
+    with uncommitted changes is "<sha>-dirty": the rows were not captured at that commit (issue #95 review)."""
     try:
         import subprocess
-        return subprocess.run(["git", "rev-parse", "HEAD"], cwd=_REPO,
-                              capture_output=True, text=True, timeout=10).stdout.strip() or "unknown"
+        sha = subprocess.run(["git", "rev-parse", "HEAD"], cwd=_REPO,
+                             capture_output=True, text=True, timeout=10).stdout.strip() or "unknown"
+        dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], cwd=_REPO,
+                               capture_output=True, text=True, timeout=10).stdout.strip()
+        return f"{sha}-dirty" if dirty and sha != "unknown" else sha
     except Exception:
         return "unknown"
 
@@ -261,28 +316,32 @@ class Probe:
         return block, ctx
 
 
-def catch_up_vectors(p: HolographicMemoryProvider) -> bool:
-    """Fact vectors are built only in _catch_up_vectors (the core's after-turn hook).
-    A driver run never calls it -> the index is empty -> meaning=None.
-    We run it manually while pending remains: ready() checks "at least one vector"
-    (LIMIT 1), while a single _catch_up_vectors budget (embedding_catch_up_seconds)
-    cuts off the tail — on a wide base (600+ facts) this cut the targets of real queries
-    (fact_id 1..25): "done" while 25 were still un-embedded."""
+def catch_up_vectors(p: HolographicMemoryProvider) -> dict:
+    """Fact vectors are built only in _catch_up_vectors (the core's after-turn hook), which a driver run never calls,
+    and one call has a time budget that leaves the tail of a wide store without vectors: it runs while facts wait.
+
+    Returns what the rows of this store are stamped with: the embedding model's label and its one vector size, the
+    usable vectors (made from the fact's present vector text, by that model) and the expected ones (every fact whose
+    vector text may be sent). A store left short stops the run — it used to report "ready" after 60 tries whatever
+    was missing, and a run with part of the vectors missing compares two different stores (issue #95)."""
     if not p._embedding:
-        return True
-    idx = p._retriever.vector_index(p._embedding.tag)
+        return {}
+    tag = p._embedding.tag
+    idx = p._retriever.vector_index(tag)
     for _ in range(60):
-        try:
-            pending = idx.pending(_holographic_embeddings.BATCH, allowed=_holographic_sendable)
-        except Exception:
-            pending = None
-        if pending is None:  # an unexpected API shape — the old heuristic
-            if idx.ready():
-                return True
-        elif not pending:
-            return True
+        if not idx.pending(_holographic_embeddings.BATCH, allowed=_holographic_sendable):
+            break
         p._catch_up_vectors()
-    return True
+    counts = idx.counts(_holographic_sendable)
+    expected = counts["facts_with_vector"] + counts["waiting"]
+    sizes = sorted(r[0] for r in p._store.read(
+        "SELECT DISTINCT LENGTH(e.vector) FROM fact_embeddings e JOIN facts f ON f.fact_id = e.fact_id "
+        "WHERE e.model = ?", (tag,)))
+    if counts["waiting"] or len(sizes) != 1:
+        raise SystemExit(f"incomplete vector coverage: {counts['facts_with_vector']} of {expected} usable, vector "
+                         f"sizes {sizes} — the run is discarded")
+    return {"emb_model": tag, "emb_dim": sizes[0] // 4, "vectors": counts["facts_with_vector"],
+            "vectors_expected": expected, "never_sent": counts["never_sent"]}
 
 
 def parse_ids(block: str) -> list[int]:
@@ -346,22 +405,13 @@ def run_multilingual(langs, modes, emb, endpoint, extra: dict | None = None) -> 
     rows = []
     for mode in modes:
         for lang in langs:
-            db = Path(tempfile.gettempdir()) / f"prov_ml_{lang}_{mode}.db"
-            for s in ("", "-shm", "-wal"):
-                try:
-                    Path(str(db) + s).unlink()
-                except OSError:
-                    pass
-            p = make_provider(db, mode, emb, extra)
-            back = {}
-            for key, (text, entities) in data.CORPUS[lang].items():
-                r = json.loads(p.handle_tool_call(
-                    "fact_store", {"action": "add", "content": text, "entities": entities}))
-                back[int(r["fact_id"])] = key
+            p = make_provider(_db(f"prov_ml_{lang}_{mode}.db"), mode, emb, extra)
+            back = store_facts(p, lang, data.CORPUS[lang])
             probe = Probe(p)
-            if emb == "on":
-                ok = catch_up_vectors(p)
-                print(f"  [{lang}] vectors ready: {ok}")
+            coverage = {**(catch_up_vectors(p) if emb == "on" else {}), "kw_facts": _kw_facts(p)}
+            if "vectors" in coverage:
+                print(f"  [{lang}] vectors: {coverage['vectors']} of {coverage['vectors_expected']}")
+            first = len(rows)
             persons = dict(data.PROBES[lang])
             for i, (query, relevant) in enumerate(data.QUERIES[lang]):
                 p.on_session_switch(f"pv{li(mode, lang)}_{i}", reset=True)
@@ -401,6 +451,8 @@ def run_multilingual(langs, modes, emb, endpoint, extra: dict | None = None) -> 
                          "rerank_call": ctx.get("rerank_call"),
                              "rerank_top5": ctx.get("rerank_top5") or [],
                              "rank_order": ctx.get("rank_order") or []})
+            for r in rows[first:]:
+                r.update(coverage)
             p.shutdown()
     return rows
 
@@ -413,22 +465,13 @@ def run_contrast(set_name, modes, emb, endpoint, extra: dict | None = None) -> l
     contrast = load_contrast(set_name)
     rows = []
     for mode in modes:
-        db = Path(tempfile.gettempdir()) / f"prov_{set_name}_{mode}.db"
-        for s in ("", "-shm", "-wal"):
-            try:
-                Path(str(db) + s).unlink()
-            except OSError:
-                pass
-        p = make_provider(db, mode, emb, extra)
-        back = {}
-        for key, (text, entities) in contrast.FACTS.items():
-            r = json.loads(p.handle_tool_call(
-                "fact_store", {"action": "add", "content": text, "entities": entities}))
-            back[int(r["fact_id"])] = key
+        p = make_provider(_db(f"prov_{set_name}_{mode}.db"), mode, emb, extra)
+        back = store_facts(p, set_name, contrast.FACTS)
         probe = Probe(p)
-        if emb == "on":
-            ok = catch_up_vectors(p)
-            print(f"  [{set_name}] vectors ready: {ok}")
+        coverage = {**(catch_up_vectors(p) if emb == "on" else {}), "kw_facts": _kw_facts(p)}
+        if "vectors" in coverage:
+            print(f"  [{set_name}] vectors: {coverage['vectors']} of {coverage['vectors_expected']}")
+        first = len(rows)
         for pi, pair in enumerate(contrast.PAIRS):
             partner = [pair["queries"][1 - i][1] for i in range(len(pair["queries"]))]
             for i, (query, target) in enumerate(pair["queries"]):
@@ -469,6 +512,8 @@ def run_contrast(set_name, modes, emb, endpoint, extra: dict | None = None) -> l
                          "gate_called": ctx.get("gate_called"),
                          "rerank_call": ctx.get("rerank_call"),
                          "rerank_top5": ctx.get("rerank_top5") or []})
+        for r in rows[first:]:
+            r.update(coverage)
         p.shutdown()
     return rows
 
@@ -491,26 +536,16 @@ def run_household(modes, emb, endpoint, split="all", names_fit="on",
     hids = [k for k, h in hh.CHITCHAT.items() if split == "all" or h["split"] == split]
     for mode in modes:
         for lang in hh.LANGS:
-            db = Path(tempfile.gettempdir()) / f"prov_hh_{lang}_{mode}_{names_fit}.db"
-            for s in ("", "-shm", "-wal"):
-                try:
-                    Path(str(db) + s).unlink()
-                except OSError:
-                    pass
-            p = make_provider(db, mode, emb, extra)
+            p = make_provider(_db(f"prov_hh_{lang}_{mode}_{names_fit}.db"), mode, emb, extra)
             if names_fit == "off":
                 p._retriever.names_fit = lambda *a, **k: True
-            back: dict[int, str] = {}
-            for key, v in hh.FACTS.items():
-                text, ents = v[lang]
-                r = json.loads(p.handle_tool_call(
-                    "fact_store", {"action": "add", "content": text, "entities": ents}))
-                back[int(r["fact_id"])] = key
+            back = store_facts(p, lang, {key: v[lang] for key, v in hh.FACTS.items()})
             ent_map = hh.entities(lang)  # key -> entity names of this language
             probe = Probe(p)
-            if emb == "on":
-                ok = catch_up_vectors(p)
-                print(f"  [household {lang}] vectors ready: {ok}")
+            coverage = {**(catch_up_vectors(p) if emb == "on" else {}), "kw_facts": _kw_facts(p)}
+            if "vectors" in coverage:
+                print(f"  [household {lang}] vectors: {coverage['vectors']} of {coverage['vectors_expected']}")
+            first = len(rows)
             for qid in qids:
                 q = hh.QUERIES[qid]
                 query, targets = q[lang], set(q["targets"])
@@ -568,6 +603,8 @@ def run_household(modes, emb, endpoint, split="all", names_fit="on",
                          "rerank_call": ctx.get("rerank_call"),
                              "rerank_top5": ctx.get("rerank_top5") or [],
                              "rank_order": ctx.get("rank_order") or []})
+            for r in rows[first:]:
+                r.update(coverage)
             p.shutdown()
     return rows
 
@@ -796,13 +833,29 @@ def summarize(rows: list[dict]) -> None:
               f"{wrong:>5} {wrong5:>6} {out_avg:>4.1f} | {src_s} | {cls_s}")
 
 
+def _load_keywords(path: str, coverage: str, seed: int) -> dict:
+    """The frozen keywords file ({lang: {fact key: [keywords]}}), cut to the run's coverage: "all", or "half" — per
+    language half of the facts, chosen by *seed* over the sorted keys, so both arms of a comparison and any later
+    rerun keep the same half."""
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    if coverage == "all":
+        return data
+    out = {}
+    for lang, by_key in data.items():
+        keys = sorted(by_key)
+        kept = set(random.Random(f"{seed}:{lang}").sample(keys, len(keys) // 2))
+        out[lang] = {k: v for k, v in by_key.items() if k in kept}
+    return out
+
+
 def main(argv):
-    global ENDPOINT, SCALE
+    global ENDPOINT, SCALE, KEYWORDS, DB_DIR
     # Every override below is process-global: a later main([]) in the same process must not run at this
     # run's margin, endpoint or scale under the plain file name and overwrite a baseline (review of PR #31:
     # item 3 for RECALL_MARGIN; ENDPOINT is also --endpoint's default below, so it leaked the same way).
     saved_endpoint, saved_scale = ENDPOINT, SCALE
     saved_margin = _holographic_embeddings.RECALL_MARGIN
+    saved_embed_text, saved_keywords, saved_db_dir = _holographic_embeddings.EMBED_TEXT, KEYWORDS, DB_DIR
     ap = argparse.ArgumentParser(description="Provenance probe: the sources of facts in prefetch")
     ap.add_argument("--set", default="multi",
                     help="multi | contrast_ru | contrast_en | contrast_zh | household | budget")
@@ -828,10 +881,29 @@ def main(argv):
     ap.add_argument("--recall-margin", default=None, type=float,
                     help="override embeddings.RECALL_MARGIN for this run and stamp the value into every row "
                          "and the file name (the 0.6 gate, PR #17); default: the module's own value")
+    ap.add_argument("--embed-text", default=None, choices=list(_holographic_embeddings.EMBED_TEXTS),
+                    help="what fact vectors are made from for this run (issue #95), stamped into every row and the "
+                         "file name; default: the module's own value (content)")
+    ap.add_argument("--keywords", default=None,
+                    help="a frozen keywords file ({lang: {fact key: [keywords]}}): stored with the facts, the same in "
+                         "both arms; its sha256 and the coverage are stamped into every row")
+    ap.add_argument("--kw-coverage", default="all", choices=["all", "half"],
+                    help="with --keywords: every fact, or half of each language's chosen by --kw-seed")
+    ap.add_argument("--kw-seed", type=int, default=95, help="with --kw-coverage half: the seed (default 95)")
     args = ap.parse_args(argv)
     try:
         if args.recall_margin is not None:
             _holographic_embeddings.RECALL_MARGIN = args.recall_margin
+        if args.embed_text is not None:
+            _holographic_embeddings.EMBED_TEXT = args.embed_text
+        kw_file, kw_coverage = None, "none"
+        if args.keywords:
+            if args.set == "budget":
+                raise SystemExit("--keywords: the budget set has no keywords axis")
+            kw_file = hashlib.sha256(Path(args.keywords).read_bytes()).hexdigest()[:12]
+            kw_coverage = "all" if args.kw_coverage == "all" else f"half:seed={args.kw_seed}"
+            KEYWORDS = _load_keywords(args.keywords, args.kw_coverage, args.kw_seed)
+        DB_DIR = Path(tempfile.mkdtemp(prefix=f"prov_{args.set}_"))  # this run's stores: an arm of its own
 
         ENDPOINT = args.endpoint
         SCALE = args.rerank_scale
@@ -879,13 +951,21 @@ def main(argv):
             label = f"_{args.label}" if args.label else ""
             # --recall-margin: two margins must not overwrite each other (PR #17 recipe, 2026-10-24)
             margin_sfx = "" if args.recall_margin is None else f"_m{args.recall_margin!r}"
-            path = out_dir / f"provenance_{args.set}{suffix}{label}{margin_sfx}_{emb}.jsonl"
+            # --keywords / --embed-text: the two arms of issue #95 and each coverage get files of their own
+            kw_sfx = "" if not args.keywords else (
+                "_kwall" if args.kw_coverage == "all" else f"_kwhalf{args.kw_seed}")
+            et_sfx = "" if args.embed_text is None else "_et" + args.embed_text.replace("+", "-")
+            path = out_dir / f"provenance_{args.set}{suffix}{label}{margin_sfx}{kw_sfx}{et_sfx}_{emb}.jsonl"
             sha = _git_sha()
             for r in rows:
                 r["git_sha"] = sha
                 r["endpoint"] = args.endpoint or "mock"
                 r["scale"] = SCALE  # which scale was set for the run
                 r["margin"] = _holographic_embeddings.RECALL_MARGIN  # which RECALL_MARGIN the run used
+                r["embed_text"] = _holographic_embeddings.EMBED_TEXT  # what the fact vectors were made from
+                r["kw_file"], r["kw_coverage"] = kw_file, kw_coverage
+                r.setdefault("emb_model", None)  # the store's own stamp when embeddings were on (catch_up_vectors)
+                r["names_fit"] = args.names_fit if args.set == "household" else "on"
             with open(path, "w", encoding="utf-8") as fh:
                 for r in rows:
                     fh.write(json.dumps(r, ensure_ascii=False) + "\n")
@@ -899,6 +979,10 @@ def main(argv):
     finally:
         ENDPOINT, SCALE = saved_endpoint, saved_scale
         _holographic_embeddings.RECALL_MARGIN = saved_margin
+        _holographic_embeddings.EMBED_TEXT = saved_embed_text
+        if DB_DIR is not None and DB_DIR != saved_db_dir:  # this run's stores, closed by now: nothing left in Temp
+            shutil.rmtree(DB_DIR, ignore_errors=True)
+        KEYWORDS, DB_DIR = saved_keywords, saved_db_dir
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ import threading
 from pathlib import Path
 
 from . import holographic as hrr
-from .embeddings import text_hash
+from .embeddings import text_hash, vector_text
 from .entities import _GIVEN_ALIAS, _MAX_COUNTED_IDS, _SPLITS, EntityMixin
 from .entity_names import _clean_given, entity_key, fold
 from .entity_names import (  # noqa: F401 - re-exported: they lived here, and the provider and tests import them from store
@@ -586,13 +586,13 @@ class MemoryStore(EntityMixin, GraphMixin, HistoryMixin, ExperienceMixin):
     # -- vectors of search by meaning (embeddings.py) -------------------------------------------------------------
 
     def put_vectors(self, model: str, rows) -> int:
-        """Store vectors made by *model* from (fact_id, text hash, blob); a fact that is gone, or whose text changed
-        while its vector was being made, is skipped. Returns how many were stored."""
+        """Store vectors made by *model* from (fact_id, hash of its vector text, blob); a fact that is gone, or whose
+        vector text changed while its vector was being made, is skipped. Returns how many were stored."""
         stored = 0
         with self._tx():
             for fact_id, digest, blob in rows:
-                row = self._one("SELECT content FROM facts WHERE fact_id = ?", (fact_id,))
-                if row is None or text_hash(row["content"]) != digest:
+                row = self._one("SELECT content, tags FROM facts WHERE fact_id = ?", (fact_id,))
+                if row is None or text_hash(vector_text(row["content"], row["tags"])) != digest:
                     continue
                 self._write("INSERT INTO fact_embeddings (fact_id, model, text_hash, vector, revision) "
                             "VALUES (?, ?, ?, ?, ?) ON CONFLICT(fact_id) DO UPDATE SET model = excluded.model, "

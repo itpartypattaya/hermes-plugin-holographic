@@ -629,7 +629,8 @@ class FactRetriever:
                 hrr_sim = _shift(hrr.similarity(query_vec, fact_vec))
             relevance = self.fts_weight * fact.get("fts_rank", 0.0) + self.jaccard_weight * jaccard + self.hrr_weight * hrr_sim
             if meaning is not None:  # the words keep (1 - weight) of the say; off, the score is 0.13.0's to the bit
-                cos = meaning.cos(fact["fact_id"]) if meaning.fits(fact["fact_id"], fact["content"]) else meaning.neutral
+                fits = meaning.fits(fact["fact_id"], fact["content"], fact.get("tags"))
+                cos = meaning.cos(fact["fact_id"]) if fits else meaning.neutral
                 relevance = (1.0 - meaning.weight) * relevance + meaning.weight * cos
             fact["score"] = relevance * fact["trust_score"]
             if decays is not None:
@@ -716,7 +717,8 @@ class FactRetriever:
         out = []
         for fact_id in picked:
             fact = rows.get(fact_id)
-            if fact is not None and meaning.fits(fact_id, fact["content"]):  # changed meanwhile: not its score
+            # changed meanwhile: not its score
+            if fact is not None and meaning.fits(fact_id, fact["content"], fact.get("tags")):
                 fact.pop("hrr_vector", None)
                 fact["similarity"] = round(meaning.sims[fact_id], 4)
                 fact["score"] = meaning.sims[fact_id] * fact["trust_score"]
@@ -734,7 +736,7 @@ class FactRetriever:
         if not words:
             return []
         have = {f["fact_id"] for f in words} | set(exclude)
-        bar = max(meaning.cos(f["fact_id"]) if meaning.fits(f["fact_id"], f["content"]) else meaning.neutral
+        bar = max(meaning.cos(f["fact_id"]) if meaning.fits(f["fact_id"], f["content"], f.get("tags")) else meaning.neutral
                   for f in words) + beat
         top = [fact_id for fact_id, s in meaning.ranked()[:k]
                if fact_id not in have and s > bar and meaning.z(fact_id) >= z_min and (min_score is None or s >= min_score)]
@@ -742,7 +744,8 @@ class FactRetriever:
         out = []
         for fact_id in top:
             fact = rows.get(fact_id)
-            if fact is None or not meaning.fits(fact_id, fact["content"]) or not self.names_fit(query, fact):
+            if (fact is None or not meaning.fits(fact_id, fact["content"], fact.get("tags"))
+                    or not self.names_fit(query, fact)):
                 continue
             fact.pop("hrr_vector", None)
             fact["similarity"] = round(meaning.sims[fact_id], 4)

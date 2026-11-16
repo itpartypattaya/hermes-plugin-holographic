@@ -1,0 +1,1298 @@
+{
+ "de": {
+  "anton_bike": [
+   "Motorroller",
+   "Fortbewegung",
+   "Motorrad",
+   "мотоцикл",
+   "摩托车",
+   "Verkehrsmittel"
+  ],
+  "anton_coffee": [
+   "Kaffeevorliebe",
+   "Getränk",
+   "ungesüßt",
+   "кофе",
+   "咖啡",
+   "wie er Kaffee trinkt"
+  ],
+  "backup": [
+   "Datensicherung",
+   "Sicherungskopie",
+   "nächtlicher Job",
+   "бэкап",
+   "备份",
+   "Zeitplan"
+  ],
+  "budget": [
+   "Werbeausgaben",
+   "Geld",
+   "monatliche Kosten",
+   "бюджет",
+   "预算",
+   "Werbung"
+  ],
+  "cat": [
+   "Haustier",
+   "Rasse",
+   "Katze Name",
+   "кошка",
+   "猫",
+   "Tier"
+  ],
+  "copilot": [
+   "Produkt",
+   "Transkription",
+   "KI-Werkzeug",
+   "расшифровка",
+   "面试",
+   "Bewerberabgleich"
+  ],
+  "dentist": [
+   "Zähne",
+   "Arzttermin",
+   "Gesundheit",
+   "стоматолог",
+   "牙医",
+   "Zahnarztbesuch"
+  ],
+  "deploy": [
+   "Veröffentlichung",
+   "Release",
+   "Continuous Integration",
+   "деплой",
+   "部署",
+   "Automatisierung"
+  ],
+  "dj": [
+   "Musik",
+   "Party",
+   "elektronische Musik",
+   "диджей",
+   "techno",
+   "Auftritt"
+  ],
+  "editor": [
+   "Schreibstil",
+   "Antwortformat",
+   "Kommunikationsvorliebe",
+   "стиль ответов",
+   "回答风格",
+   "Kürze"
+  ],
+  "kid_allergy": [
+   "Nahrungsmittelallergie",
+   "Nüsse",
+   "Gesundheit",
+   "аллергия",
+   "过敏",
+   "Unverträglichkeit"
+  ],
+  "kid_school": [
+   "Bildung",
+   "Kind",
+   "Tochter",
+   "wo sie lernt",
+   "школа",
+   "学校"
+  ],
+  "kid_swim": [
+   "Kurs",
+   "Sport",
+   "wöchentlicher Termin",
+   "плавание",
+   "游泳",
+   "Sonntag"
+  ],
+  "ksenia_job": [
+   "Beruf",
+   "Recruiting",
+   "Headhunter",
+   "работа",
+   "猎头",
+   "Personalvermittlung"
+  ],
+  "ksenia_search": [
+   "Stellenangebot",
+   "offene Stelle",
+   "Einstellung",
+   "VAE",
+   "вакансия",
+   "Mitarbeitersuche"
+  ],
+  "laptop": [
+   "Computer",
+   "Hardware",
+   "RAM",
+   "ноутбук",
+   "笔记本",
+   "lokale Modelle Grenze"
+  ],
+  "meetup": [
+   "Treffen",
+   "IT-Event",
+   "wöchentliche Veranstaltung",
+   "тусовка",
+   "聚会",
+   "Startzeit"
+  ],
+  "move": [
+   "Umzug",
+   "Pläne",
+   "Wohnortwechsel",
+   "переезд",
+   "搬家",
+   "Zukunft"
+  ],
+  "python": [
+   "Programmierung",
+   "Interpreter",
+   "Skriptversion",
+   "питон",
+   "编程",
+   "Laufzeit"
+  ],
+  "server": [
+   "Hosting",
+   "Betriebssystem",
+   "Arbeitsspeicher",
+   "сервер",
+   "服务器",
+   "VPS"
+  ]
+ },
+ "en": {
+  "anton_bike": [
+   "motorbike",
+   "transport",
+   "motorcycle",
+   "мотоцикл",
+   "摩托车",
+   "commute"
+  ],
+  "anton_coffee": [
+   "coffee preference",
+   "drink",
+   "unsweetened",
+   "кофе",
+   "咖啡",
+   "how he takes coffee"
+  ],
+  "backup": [
+   "database copy",
+   "nightly job",
+   "data safety",
+   "бэкап",
+   "备份",
+   "schedule"
+  ],
+  "budget": [
+   "ad spend",
+   "money",
+   "monthly cost",
+   "бюджет",
+   "预算",
+   "promotion"
+  ],
+  "cat": [
+   "pet",
+   "breed",
+   "feline",
+   "кошка",
+   "猫",
+   "animal name"
+  ],
+  "copilot": [
+   "product",
+   "interview transcription",
+   "AI tool",
+   "расшифровка",
+   "面试",
+   "candidate matching"
+  ],
+  "dentist": [
+   "teeth",
+   "doctor visit",
+   "medical appointment",
+   "стоматолог",
+   "牙医",
+   "health"
+  ],
+  "deploy": [
+   "CI/CD",
+   "release process",
+   "publishing",
+   "деплой",
+   "部署",
+   "automation"
+  ],
+  "dj": [
+   "music",
+   "party",
+   "electronic music",
+   "диджей",
+   "音乐",
+   "lineup"
+  ],
+  "editor": [
+   "writing style",
+   "response format",
+   "communication preference",
+   "стиль ответов",
+   "回答风格",
+   "brevity"
+  ],
+  "kid_allergy": [
+   "food allergy",
+   "nuts",
+   "health",
+   "аллергия",
+   "过敏",
+   "dietary restriction"
+  ],
+  "kid_school": [
+   "education",
+   "child",
+   "daughter",
+   "where she studies",
+   "школа",
+   "学校"
+  ],
+  "kid_swim": [
+   "weekly activity",
+   "lessons",
+   "sport",
+   "плавание",
+   "游泳",
+   "Sunday schedule"
+  ],
+  "ksenia_job": [
+   "occupation",
+   "recruitment company",
+   "headhunting",
+   "работа",
+   "猎头",
+   "staffing agency"
+  ],
+  "ksenia_search": [
+   "vacancy",
+   "open position",
+   "hiring",
+   "UAE",
+   "вакансия",
+   "招聘"
+  ],
+  "laptop": [
+   "computer",
+   "RAM",
+   "hardware",
+   "ноутбук",
+   "笔记本",
+   "AI models limit"
+  ],
+  "meetup": [
+   "IT event",
+   "gathering",
+   "weekly event",
+   "тусовка",
+   "聚会",
+   "start time"
+  ],
+  "move": [
+   "relocation",
+   "moving plans",
+   "future",
+   "переезд",
+   "搬家",
+   "new home"
+  ],
+  "python": [
+   "programming",
+   "script runtime",
+   "interpreter",
+   "питон",
+   "编程",
+   "version"
+  ],
+  "server": [
+   "hosting",
+   "VPS",
+   "operating system",
+   "сервер",
+   "服务器",
+   "memory"
+  ]
+ },
+ "it": {
+  "anton_bike": [
+   "motocicletta",
+   "trasporto",
+   "mezzo di spostamento",
+   "мотоцикл",
+   "摩托车",
+   "motorino"
+  ],
+  "anton_coffee": [
+   "preferenza caffè",
+   "bevanda",
+   "amaro",
+   "кофе",
+   "coffee",
+   "come beve il caffè"
+  ],
+  "backup": [
+   "copia di sicurezza",
+   "salvataggio database",
+   "lavoro notturno",
+   "бэкап",
+   "备份",
+   "orario"
+  ],
+  "budget": [
+   "spesa pubblicitaria",
+   "denaro",
+   "costi mensili",
+   "бюджет",
+   "预算",
+   "promozione"
+  ],
+  "cat": [
+   "animale domestico",
+   "razza",
+   "gatto nome",
+   "кошка",
+   "猫",
+   "micio"
+  ],
+  "copilot": [
+   "prodotto",
+   "trascrizione",
+   "strumento AI",
+   "расшифровка",
+   "面试",
+   "confronto candidati"
+  ],
+  "dentist": [
+   "denti",
+   "visita medica",
+   "appuntamento",
+   "стоматолог",
+   "牙医",
+   "salute"
+  ],
+  "deploy": [
+   "rilascio",
+   "pubblicazione",
+   "integrazione continua",
+   "деплой",
+   "部署",
+   "automazione"
+  ],
+  "dj": [
+   "musica",
+   "festa",
+   "musica elettronica",
+   "диджей",
+   "techno",
+   "esibizione"
+  ],
+  "editor": [
+   "stile di scrittura",
+   "formato risposte",
+   "preferenza di comunicazione",
+   "стиль ответов",
+   "回答风格",
+   "brevità"
+  ],
+  "kid_allergy": [
+   "allergia alimentare",
+   "frutta secca",
+   "salute",
+   "аллергия",
+   "过敏",
+   "intolleranza"
+  ],
+  "kid_school": [
+   "istruzione",
+   "bambina",
+   "figlia",
+   "dove studia",
+   "школа",
+   "学校"
+  ],
+  "kid_swim": [
+   "corso",
+   "sport",
+   "attività settimanale",
+   "плавание",
+   "游泳",
+   "domenica"
+  ],
+  "ksenia_job": [
+   "lavoro",
+   "selezione del personale",
+   "cacciatore di teste",
+   "работа",
+   "猎头",
+   "headhunting"
+  ],
+  "ksenia_search": [
+   "posto vacante",
+   "assunzione",
+   "ricerca personale",
+   "Emirati",
+   "вакансия",
+   "offerta di lavoro"
+  ],
+  "laptop": [
+   "computer",
+   "hardware",
+   "RAM",
+   "ноутбук",
+   "笔记本",
+   "limite modelli locali"
+  ],
+  "meetup": [
+   "incontro IT",
+   "evento settimanale",
+   "ritrovo",
+   "тусовка",
+   "聚会",
+   "orario di inizio"
+  ],
+  "move": [
+   "trasloco",
+   "piani futuri",
+   "cambio di residenza",
+   "переезд",
+   "搬家",
+   "nuova casa"
+  ],
+  "python": [
+   "programmazione",
+   "interprete",
+   "versione script",
+   "питон",
+   "编程",
+   "esecuzione"
+  ],
+  "server": [
+   "hosting",
+   "sistema operativo",
+   "memoria",
+   "сервер",
+   "服务器",
+   "VPS"
+  ]
+ },
+ "ja": {
+  "anton_bike": [
+   "バイク",
+   "スクーター",
+   "移動手段",
+   "мотоцикл",
+   "motorbike",
+   "乗り物"
+  ],
+  "anton_coffee": [
+   "コーヒーの好み",
+   "飲み物",
+   "無糖",
+   "кофе",
+   "coffee",
+   "コーヒーの飲み方"
+  ],
+  "backup": [
+   "バックアップ",
+   "データベース保存",
+   "夜間ジョブ",
+   "бэкап",
+   "backup",
+   "定期実行"
+  ],
+  "budget": [
+   "広告費",
+   "お金",
+   "月額費用",
+   "бюджет",
+   "ad spend",
+   "宣伝"
+  ],
+  "cat": [
+   "ペット",
+   "猫種",
+   "飼い猫",
+   "кошка",
+   "pet",
+   "名前"
+  ],
+  "copilot": [
+   "製品",
+   "文字起こし",
+   "AIツール",
+   "расшифровка",
+   "interview",
+   "候補者比較"
+  ],
+  "dentist": [
+   "歯科",
+   "通院",
+   "病院の予約",
+   "стоматолог",
+   "dentist",
+   "健康"
+  ],
+  "deploy": [
+   "デプロイ",
+   "リリース",
+   "公開手順",
+   "CI/CD",
+   "деплой",
+   "自動化"
+  ],
+  "dj": [
+   "音楽",
+   "パーティー",
+   "テクノ",
+   "диджей",
+   "DJ",
+   "出演"
+  ],
+  "editor": [
+   "文章スタイル",
+   "回答形式",
+   "好み",
+   "стиль ответов",
+   "brevity",
+   "簡潔"
+  ],
+  "kid_allergy": [
+   "食物アレルギー",
+   "ナッツ",
+   "健康",
+   "аллергия",
+   "allergy",
+   "食べられないもの"
+  ],
+  "kid_school": [
+   "学校",
+   "教育",
+   "子供",
+   "娘",
+   "школа",
+   "通学先"
+  ],
+  "kid_swim": [
+   "習い事",
+   "スイミング",
+   "スポーツ",
+   "плавание",
+   "swimming",
+   "日曜の予定"
+  ],
+  "ksenia_job": [
+   "職業",
+   "人材紹介",
+   "ヘッドハンティング",
+   "работа",
+   "recruiting",
+   "仕事"
+  ],
+  "ksenia_search": [
+   "求人",
+   "採用",
+   "人探し",
+   "UAE",
+   "вакансия",
+   "営業職募集"
+  ],
+  "laptop": [
+   "パソコン",
+   "ハードウェア",
+   "RAM",
+   "ноутбук",
+   "local LLM",
+   "メモリ制限"
+  ],
+  "meetup": [
+   "IT交流会",
+   "集まり",
+   "毎週のイベント",
+   "тусовка",
+   "meetup",
+   "開始時間"
+  ],
+  "move": [
+   "転居",
+   "移住",
+   "将来の計画",
+   "переезд",
+   "relocation",
+   "新居"
+  ],
+  "python": [
+   "プログラミング",
+   "スクリプト実行",
+   "バージョン",
+   "питон",
+   "interpreter",
+   "言語"
+  ],
+  "server": [
+   "サーバー構成",
+   "ホスティング",
+   "OS",
+   "メモリ",
+   "сервер",
+   "VPS"
+  ]
+ },
+ "nl": {
+  "anton_bike": [
+   "motor",
+   "scooter",
+   "vervoer",
+   "мотоцикл",
+   "摩托车",
+   "vervoermiddel"
+  ],
+  "anton_coffee": [
+   "koffievoorkeur",
+   "drankje",
+   "ongezoet",
+   "кофе",
+   "coffee",
+   "hoe hij koffie drinkt"
+  ],
+  "backup": [
+   "reservekopie",
+   "databasekopie",
+   "nachtelijke taak",
+   "бэкап",
+   "备份",
+   "schema"
+  ],
+  "budget": [
+   "advertentiekosten",
+   "geld",
+   "maandelijkse kosten",
+   "бюджет",
+   "预算",
+   "promotie"
+  ],
+  "cat": [
+   "huisdier",
+   "ras",
+   "poes naam",
+   "кошка",
+   "猫",
+   "dier"
+  ],
+  "copilot": [
+   "product",
+   "transcriptie",
+   "AI-hulpmiddel",
+   "расшифровка",
+   "面试",
+   "kandidaten vergelijken"
+  ],
+  "dentist": [
+   "tanden",
+   "doktersbezoek",
+   "afspraak",
+   "стоматолог",
+   "牙医",
+   "gezondheid"
+  ],
+  "deploy": [
+   "release",
+   "publicatie",
+   "continuous integration",
+   "деплой",
+   "部署",
+   "automatisering"
+  ],
+  "dj": [
+   "muziek",
+   "feest",
+   "elektronische muziek",
+   "диджей",
+   "techno",
+   "optreden"
+  ],
+  "editor": [
+   "schrijfstijl",
+   "antwoordformaat",
+   "communicatievoorkeur",
+   "стиль ответов",
+   "回答风格",
+   "beknoptheid"
+  ],
+  "kid_allergy": [
+   "voedselallergie",
+   "noten",
+   "gezondheid",
+   "аллергия",
+   "过敏",
+   "dieetbeperking"
+  ],
+  "kid_school": [
+   "onderwijs",
+   "kind",
+   "dochter",
+   "waar ze studeert",
+   "школа",
+   "学校"
+  ],
+  "kid_swim": [
+   "les",
+   "sport",
+   "wekelijkse activiteit",
+   "плавание",
+   "游泳",
+   "zondag"
+  ],
+  "ksenia_job": [
+   "beroep",
+   "werving",
+   "headhunter",
+   "работа",
+   "猎头",
+   "recruitment"
+  ],
+  "ksenia_search": [
+   "vacature",
+   "aanname",
+   "personeel zoeken",
+   "Emiraten",
+   "вакансия",
+   "openstaande functie"
+  ],
+  "laptop": [
+   "computer",
+   "hardware",
+   "RAM",
+   "ноутбук",
+   "笔记本",
+   "lokale modellen limiet"
+  ],
+  "meetup": [
+   "IT-bijeenkomst",
+   "evenement",
+   "wekelijkse samenkomst",
+   "тусовка",
+   "聚会",
+   "starttijd"
+  ],
+  "move": [
+   "verhuizing",
+   "toekomstplannen",
+   "naar andere stad",
+   "переезд",
+   "搬家",
+   "nieuw huis"
+  ],
+  "python": [
+   "programmeren",
+   "interpreter",
+   "scriptversie",
+   "питон",
+   "编程",
+   "uitvoeren"
+  ],
+  "server": [
+   "hosting",
+   "besturingssysteem",
+   "geheugen",
+   "сервер",
+   "服务器",
+   "VPS"
+  ]
+ },
+ "ru": {
+  "anton_bike": [
+   "мотоцикл",
+   "скутер",
+   "транспорт",
+   "motorbike",
+   "摩托车",
+   "на чём ездит"
+  ],
+  "anton_coffee": [
+   "предпочтения в кофе",
+   "напиток",
+   "без добавок",
+   "coffee",
+   "咖啡",
+   "как пьёт кофе"
+  ],
+  "backup": [
+   "бэкап",
+   "копия базы данных",
+   "ночная задача",
+   "backup",
+   "备份",
+   "сохранность данных"
+  ],
+  "budget": [
+   "рекламные расходы",
+   "деньги",
+   "расходы в месяц",
+   "ad spend",
+   "预算",
+   "продвижение"
+  ],
+  "cat": [
+   "питомец",
+   "порода",
+   "домашнее животное",
+   "pet",
+   "猫",
+   "кличка"
+  ],
+  "copilot": [
+   "продукт",
+   "транскрибация",
+   "ИИ-инструмент",
+   "interview",
+   "面试",
+   "подбор кандидатов"
+  ],
+  "dentist": [
+   "зубы",
+   "визит к врачу",
+   "запись к врачу",
+   "dentist",
+   "牙医",
+   "здоровье"
+  ],
+  "deploy": [
+   "CI/CD",
+   "публикация сайта",
+   "релиз",
+   "deployment",
+   "部署",
+   "автоматизация"
+  ],
+  "dj": [
+   "музыка",
+   "вечеринка",
+   "электронная музыка",
+   "techno",
+   "DJ",
+   "состав выступающих"
+  ],
+  "editor": [
+   "стиль общения",
+   "формат ответа",
+   "пожелания к ответам",
+   "brevity",
+   "回答风格",
+   "краткость"
+  ],
+  "kid_allergy": [
+   "пищевая аллергия",
+   "орехи",
+   "здоровье",
+   "allergy",
+   "过敏",
+   "что нельзя есть"
+  ],
+  "kid_school": [
+   "образование",
+   "ребёнок",
+   "дочь",
+   "где учится",
+   "school",
+   "学校"
+  ],
+  "kid_swim": [
+   "занятия",
+   "секция",
+   "спорт",
+   "swimming",
+   "游泳",
+   "расписание в воскресенье"
+  ],
+  "ksenia_job": [
+   "профессия",
+   "кадровое агентство",
+   "хедхантинг",
+   "recruiting",
+   "猎头",
+   "чем занимается"
+  ],
+  "ksenia_search": [
+   "вакансия",
+   "поиск сотрудника",
+   "найм",
+   "ОАЭ",
+   "hiring",
+   "招聘"
+  ],
+  "laptop": [
+   "компьютер",
+   "оперативная память",
+   "железо",
+   "RAM",
+   "笔记本",
+   "ограничение моделей ИИ"
+  ],
+  "meetup": [
+   "IT-встреча",
+   "митап",
+   "еженедельное событие",
+   "gathering",
+   "聚会",
+   "время начала"
+  ],
+  "move": [
+   "релокация",
+   "планы на будущее",
+   "смена места жительства",
+   "relocation",
+   "搬家",
+   "новый дом"
+  ],
+  "python": [
+   "программирование",
+   "интерпретатор",
+   "версия языка",
+   "script",
+   "编程",
+   "запуск скриптов"
+  ],
+  "server": [
+   "хостинг",
+   "VPS",
+   "операционная система",
+   "production",
+   "服务器",
+   "оперативная память"
+  ]
+ },
+ "th": {
+  "anton_bike": [
+   "มอเตอร์ไซค์",
+   "พาหนะ",
+   "การเดินทาง",
+   "мотоцикл",
+   "摩托车",
+   "รถสกู๊ตเตอร์"
+  ],
+  "anton_coffee": [
+   "กาแฟที่ชอบ",
+   "เครื่องดื่ม",
+   "ไม่หวาน",
+   "кофе",
+   "coffee",
+   "ดื่มกาแฟแบบไหน"
+  ],
+  "backup": [
+   "สำรองฐานข้อมูล",
+   "ก๊อปปี้ข้อมูล",
+   "งานตอนกลางคืน",
+   "бэкап",
+   "备份",
+   "ตารางเวลา"
+  ],
+  "budget": [
+   "ค่าโฆษณา",
+   "เงิน",
+   "ค่าใช้จ่ายรายเดือน",
+   "бюджет",
+   "预算",
+   "โปรโมต"
+  ],
+  "cat": [
+   "สัตว์เลี้ยง",
+   "สายพันธุ์",
+   "ชื่อแมว",
+   "кошка",
+   "猫",
+   "เหมียว"
+  ],
+  "copilot": [
+   "ผลิตภัณฑ์",
+   "ถอดเสียง",
+   "เครื่องมือ AI",
+   "расшифровка",
+   "面试",
+   "เทียบผู้สมัคร"
+  ],
+  "dentist": [
+   "ฟัน",
+   "พบแพทย์",
+   "นัดหมาย",
+   "стоматолог",
+   "牙医",
+   "สุขภาพ"
+  ],
+  "deploy": [
+   "ปล่อยเวอร์ชัน",
+   "เผยแพร่เว็บ",
+   "CI/CD",
+   "деплой",
+   "部署",
+   "ระบบอัตโนมัติ"
+  ],
+  "dj": [
+   "ดนตรี",
+   "ปาร์ตี้",
+   "เพลงอิเล็กทรอนิกส์",
+   "диджей",
+   "techno",
+   "การแสดง"
+  ],
+  "editor": [
+   "สไตล์การเขียน",
+   "รูปแบบคำตอบ",
+   "ความชอบในการสื่อสาร",
+   "стиль ответов",
+   "回答风格",
+   "กระชับ"
+  ],
+  "kid_allergy": [
+   "อาหารที่แพ้",
+   "ถั่ว",
+   "สุขภาพ",
+   "аллергия",
+   "allergy",
+   "ข้อจำกัดด้านอาหาร"
+  ],
+  "kid_school": [
+   "การศึกษา",
+   "เด็ก",
+   "ลูกสาว",
+   "เรียนที่ไหน",
+   "школа",
+   "学校"
+  ],
+  "kid_swim": [
+   "คลาสเรียน",
+   "กีฬา",
+   "กิจกรรมประจำสัปดาห์",
+   "плавание",
+   "swimming",
+   "วันอาทิตย์"
+  ],
+  "ksenia_job": [
+   "อาชีพ",
+   "สรรหาบุคลากร",
+   "เฮดฮันเตอร์",
+   "работа",
+   "猎头",
+   "recruiting"
+  ],
+  "ksenia_search": [
+   "ตำแหน่งงานว่าง",
+   "รับสมัครงาน",
+   "หาพนักงาน",
+   "UAE",
+   "вакансия",
+   "hiring"
+  ],
+  "laptop": [
+   "คอมพิวเตอร์",
+   "ฮาร์ดแวร์",
+   "RAM",
+   "ноутбук",
+   "笔记本",
+   "ข้อจำกัดโมเดลในเครื่อง"
+  ],
+  "meetup": [
+   "กิจกรรมไอที",
+   "การพบปะ",
+   "งานประจำสัปดาห์",
+   "тусовка",
+   "聚会",
+   "เวลาเริ่ม"
+  ],
+  "move": [
+   "การย้ายบ้าน",
+   "แผนในอนาคต",
+   "ย้ายถิ่นฐาน",
+   "переезд",
+   "搬家",
+   "บ้านใหม่"
+  ],
+  "python": [
+   "เขียนโปรแกรม",
+   "ตัวแปลภาษา",
+   "เวอร์ชันสคริปต์",
+   "питон",
+   "编程",
+   "การรัน"
+  ],
+  "server": [
+   "โฮสติ้ง",
+   "ระบบปฏิบัติการ",
+   "หน่วยความจำ",
+   "сервер",
+   "服务器",
+   "VPS"
+  ]
+ },
+ "zh": {
+  "anton_bike": [
+   "交通工具",
+   "摩托",
+   "出行",
+   "motorbike",
+   "мотоцикл",
+   "踏板车"
+  ],
+  "anton_coffee": [
+   "咖啡偏好",
+   "饮品",
+   "无糖",
+   "coffee",
+   "кофе",
+   "怎么喝咖啡"
+  ],
+  "backup": [
+   "数据库备份",
+   "夜间任务",
+   "数据安全",
+   "бэкап",
+   "backup",
+   "定时任务"
+  ],
+  "budget": [
+   "广告费用",
+   "预算金额",
+   "每月开销",
+   "бюджет",
+   "ad spend",
+   "推广"
+  ],
+  "cat": [
+   "宠物",
+   "品种",
+   "家养动物",
+   "кошка",
+   "pet",
+   "猫名"
+  ],
+  "copilot": [
+   "产品",
+   "语音转文字",
+   "AI工具",
+   "расшифровка",
+   "interview",
+   "候选人匹配"
+  ],
+  "dentist": [
+   "牙科",
+   "看医生",
+   "就诊预约",
+   "стоматолог",
+   "dentist",
+   "健康"
+  ],
+  "deploy": [
+   "持续集成",
+   "发布流程",
+   "上线",
+   "деплой",
+   "CI/CD",
+   "自动化"
+  ],
+  "dj": [
+   "音乐",
+   "派对",
+   "电子音乐",
+   "диджей",
+   "techno",
+   "表演"
+  ],
+  "editor": [
+   "写作风格",
+   "回复格式",
+   "沟通偏好",
+   "стиль ответов",
+   "brevity",
+   "简洁"
+  ],
+  "kid_allergy": [
+   "食物过敏",
+   "坚果",
+   "健康",
+   "аллергия",
+   "allergy",
+   "忌口"
+  ],
+  "kid_school": [
+   "教育",
+   "孩子",
+   "女儿",
+   "在哪上学",
+   "школа",
+   "学校"
+  ],
+  "kid_swim": [
+   "兴趣班",
+   "每周课程",
+   "运动",
+   "плавание",
+   "swimming",
+   "周日安排"
+  ],
+  "ksenia_job": [
+   "职业",
+   "人才招聘",
+   "猎头",
+   "работа",
+   "recruiting agency",
+   "人力资源公司"
+  ],
+  "ksenia_search": [
+   "职位空缺",
+   "找人",
+   "招人",
+   "阿联酋",
+   "вакансия",
+   "hiring"
+  ],
+  "laptop": [
+   "电脑",
+   "硬件",
+   "内存限制",
+   "ноутбук",
+   "RAM",
+   "本地模型限制"
+  ],
+  "meetup": [
+   "技术聚会",
+   "IT活动",
+   "每周活动",
+   "тусовка",
+   "meetup",
+   "开始时间"
+  ],
+  "move": [
+   "搬迁",
+   "未来计划",
+   "迁居",
+   "переезд",
+   "relocation",
+   "新家"
+  ],
+  "python": [
+   "编程",
+   "解释器",
+   "脚本运行",
+   "питон",
+   "version",
+   "Python版本"
+  ],
+  "server": [
+   "主机",
+   "服务器配置",
+   "操作系统",
+   "сервер",
+   "VPS",
+   "内存"
+  ]
+ }
+}

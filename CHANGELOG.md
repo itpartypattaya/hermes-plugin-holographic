@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.29.2 — 2026-11-17
 
 ### Fixes
 - **A trust change, a trust floor or a limit that is no number is refused, never read as some other value.** The

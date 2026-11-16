@@ -226,6 +226,16 @@ class Rescorer:
     def usable(self) -> bool:
         return self.status() == "ready"
 
+    def outcome(self) -> str:
+        """last_status without its free text, for the memory journal (0.28.1): answered / skipped_* / not_called as
+        they are; a failure is paused (no request: an earlier error's pause), unavailable (a refused address) or
+        failed (this call)."""
+        status = self.last_status
+        if not status.startswith("failed: "):
+            return status
+        why = status[len("failed: "):]
+        return "paused" if why.startswith("paused") else "unavailable" if why.startswith("unavailable") else "failed"
+
     def note_failure(self, why: str) -> None:
         """A failure OUTSIDE scores() — an exception in the mapping/window of the rerank stage at the provider (point 3
         of the maintainer's 24:10 checklist): the same result as a failed call — the endpoint is

@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Diagnostics
+- **The journal says why the reranker did or did not order a recall.** With `rerank: on` and `experience_trace: on`,
+  a prefetch receipt carries one `rerank` stage with `status`: `answered`, `skipped_single`, `skipped_long`,
+  `skipped_secret`, `skipped_busy`, `not_called`, `paused`, `unavailable` or `failed` — one word, no error text, no
+  facts ([docs/experience.md](docs/experience.md)). Measured on a deployment (28.10–16.11.2026): 78 of 109 traced
+  recalls kept the rerank-off order; 52 were messages over 500 characters (job prompts, image descriptions, long
+  briefs), and for about 23 short ones nothing on record said why — the outcome lived only in a DEBUG log line. A
+  recall with nothing sendable records `not_called`, not the previous turn's outcome. Nothing else changes: the
+  order, the cut and what is sent are as before. Tests: `tests/test_experience_rerank_outcome.py`.
+
 ### Measurement tooling (no change by default)
 - **What a fact's vector is made from is one function**, for
   [#95](https://github.com/itpartypattaya/hermes-plugin-holographic/issues/95) (@liwangcc: embed keywords too).

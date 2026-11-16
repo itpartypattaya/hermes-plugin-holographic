@@ -228,9 +228,11 @@ class ExperienceMixin:
             if trace:
                 # A candidate another writer changed or forgot meanwhile (a rerank call can take seconds) is left out
                 # and counted: the emission stays exact and the trace never names a version it did not see.
-                for name, facts in stages[:16]:
+                for name, facts, *status in stages[:16]:
                     seen = [ref(f, strict=False) for f in facts[:MAX_REFS]]
                     observation = {"stage": name, "facts": [r for r in seen if r], "truncated": len(facts) > MAX_REFS}
+                    if status:  # the rerank stage (0.28.1): the call's outcome, a word from Rescorer.outcome()
+                        observation["status"] = status[0]
                     if None in seen:
                         observation["changed"] = seen.count(None)
                     observations.append(observation)

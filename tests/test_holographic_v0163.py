@@ -366,19 +366,29 @@ def test_a_fact_request_that_never_ends_is_ours_only_for_a_while(monkeypatch):
 def test_a_batch_that_ended_just_before_the_message_gave_up_still_explains_its_wait(monkeypatch):
     """Review 0.16.3 (round 2): on a one-slot server a message waited behind a batch that ended just before the
     message's deadline; nothing of ours was running at that moment, and the endpoint was paused."""
-    slot = threading.Lock()
+    slot, held, asked = threading.Lock(), threading.Event(), threading.Event()
 
     class OneSlot(FakeEndpoint):
+        # The order is set by events, not by sleeps a slow runner overran (macOS CI: the message took the slot
+        # first): the batch holds the slot before the message is sent, and ends 0.4 s after the message reached the
+        # server — inside the message's 0.5 s, which its own 0.15 s then overruns.
         def open(self, request, timeout=None):
+            if len(json.loads(request.data)["input"]) == 1:
+                asked.set()
             with slot:
-                time.sleep(0.45 if len(json.loads(request.data)["input"]) > 1 else 0.15)
+                if len(json.loads(request.data)["input"]) > 1:
+                    held.set()
+                    asked.wait(5)
+                    time.sleep(0.4)
+                else:
+                    time.sleep(0.15)
                 return super().open(request, timeout)
 
     monkeypatch.setattr(embeddings, "_OPENER", OneSlot())
     e = _embedder(embedding_url="http://127.0.0.1:8731/v1", embedding_timeout=0.5)
     batch = threading.Thread(target=e.embed_facts, args=(["one", "two"], 5.0))
     batch.start()
-    time.sleep(0.02)
+    assert held.wait(5)
     assert e.query("which machine copies our data while we sleep?") is None
     batch.join(5)
     assert e.status() == "ready"
@@ -387,13 +397,17 @@ def test_a_batch_that_ended_just_before_the_message_gave_up_still_explains_its_w
 def test_a_batch_a_socket_timeout_ended_still_explains_a_message_s_wait(monkeypatch):
     """Review 0.16.3 (round 3, Antigravity): a batch ended by urllib's own timeout (its thread over before the join)
     left no trace, and a message queued behind it on a one-slot server paused the endpoint."""
-    slot = threading.Lock()
+    slot, held, asked = threading.Lock(), threading.Event(), threading.Event()
 
-    class OneSlot(FakeEndpoint):
+    class OneSlot(FakeEndpoint):  # ordered by events, as in the test above
         def open(self, request, timeout=None):
+            if len(json.loads(request.data)["input"]) == 1:
+                asked.set()
             with slot:
                 if len(json.loads(request.data)["input"]) > 1:
-                    time.sleep(0.4)
+                    held.set()
+                    asked.wait(5)
+                    time.sleep(0.35)
                     raise TimeoutError("read timed out")
                 time.sleep(0.2)
                 return super().open(request, timeout)
@@ -402,8 +416,8 @@ def test_a_batch_a_socket_timeout_ended_still_explains_a_message_s_wait(monkeypa
     e = _embedder(embedding_url="http://127.0.0.1:8731/v1", embedding_timeout=0.5)
     batch = threading.Thread(target=e.embed_facts, args=(["one", "two"], 1.0))
     batch.start()
-    time.sleep(0.02)
-    assert e.query("which machine copies our data while we sleep?") is None  # 0.4 s behind the batch, then 0.2 s
+    assert held.wait(5)
+    assert e.query("which machine copies our data while we sleep?") is None  # 0.35 s behind the batch, then 0.2 s
     batch.join(5)
     assert e.status() == "ready" and "not done" in e.last_batch
 

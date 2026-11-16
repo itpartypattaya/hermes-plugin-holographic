@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.29.1 — 2026-11-17
 
 ### Fixes
 - **A fact id that is not a whole number is refused, never read as fact #1.** Hermes core coerces only string

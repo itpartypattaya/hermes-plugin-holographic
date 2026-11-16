@@ -1,0 +1,13 @@
+
+== embed_text content vs content+keywords | 36 real, 12 other rows | git_sha 5068883eca90099e2e81f0aecc122c6581906552 | https://api.openai.com/v1/text-embedding-3-small (1536 dims) | keywords ['0cbae96e2265'] half:seed=95 | splits ['all']
+hit@5: 19/36 -> 19/36; b=0 rescued, c=0 lost, exact McNemar p=1.0000
+target anywhere in the output: 19/36 -> 19/36; b=0, c=0, p=1.0000
+facts by meaning in the output: 2 -> 2
+lost targets in the top five (0): -
+gained targets in the top five (0): -
+  synthetic_zh/en: 8 real, b=0, c=0
+  synthetic_zh/zh: 28 real, b=0, c=0
+  FAIL  gain: McNemar p < 0.05 with b > c (b=0, c=0, p=1.000)
+  PASS  noise: added 0 - removed 0 <= 0
+  PASS  confusion: added 0 - removed 0 <= 0
+  => gate G1 DOES NOT PASS on these files

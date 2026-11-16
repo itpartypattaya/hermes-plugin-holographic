@@ -174,9 +174,10 @@ def _noise(r: dict) -> bool:
 
 # One clean head for a whole paired comparison: a field that differs between the two runs is a second change.
 _HEAD = ("git_sha", "emb", "mode", "scale", "endpoint")
-# Issue #95 adds the embedding model and its vector size (two models are not one change of vector text), the margin
-# and the keywords in the store (the same file and coverage on both sides: only the vector text may differ).
-_EMBED_TEXT_HEAD = _HEAD + ("emb_model", "emb_dim", "margin", "kw_file", "kw_coverage", "names_fit")
+# Issue #95 adds the embedding model and its vector size (two models are not one change of vector text), the margin,
+# the keyword coverage and names_fit. The keywords file is one per set, so it is compared inside each pair, with the
+# store's count of facts with keywords: only the vector text may differ.
+_EMBED_TEXT_HEAD = _HEAD + ("emb_model", "emb_dim", "margin", "kw_coverage", "names_fit")
 
 
 def _paired(paths: list[str], field: str, head: tuple, value=lambda v: v,
@@ -310,7 +311,7 @@ def report_embed_text(paths: list[str]) -> bool:
     facts that came in by meaning, and the top-five count per set and language. Returns whether the gate passes."""
     # each store's keyword count too: a pair whose stores hold different keywords is not one question
     rows, values, by, real_keys = _paired(paths, "embed_text", _EMBED_TEXT_HEAD,
-                                          same=("q", "kind", "split", "kw_facts"))
+                                          same=("q", "kind", "split", "kw_file", "kw_facts"))
     if any(str(r["git_sha"]).endswith("-dirty") for r in rows):
         raise SystemExit("rows captured on a tree with uncommitted changes (git_sha ...-dirty): measure at a commit")
     if any(r.get("split") == "dev" for r in rows):
@@ -355,8 +356,8 @@ def report_embed_text(paths: list[str]) -> bool:
 
     head = rows[0]
     print(f"\n== embed_text content vs content+keywords | {n} real, {len(by[base]) - n} other rows | "
-          f"git_sha {head['git_sha']} | {head['emb_model']} ({head['emb_dim']} dims) | keywords {head['kw_file']} "
-          f"{head['kw_coverage']} | splits {sorted({str(r.get('split')) for r in rows})}")
+          f"git_sha {head['git_sha']} | {head['emb_model']} ({head['emb_dim']} dims) | keywords "
+          f"{sorted({str(r['kw_file']) for r in rows})} {head['kw_coverage']} | splits {sorted({str(r.get('split')) for r in rows})}")
     print(f"hit@5: {hits5[base]}/{n} -> {hits5[prop]}/{n}; b={b} rescued, c={c} lost, exact McNemar p={p:.4f}")
     print(f"target anywhere in the output: {hits_all[base]}/{n} -> {hits_all[prop]}/{n}; b={b_all}, c={c_all}, "
           f"p={p_all:.4f}")

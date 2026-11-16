@@ -162,6 +162,16 @@ def test_a_pair_whose_stores_differ_is_refused(tmp_path, field, other):
         gate.report_embed_text(_files(base, prop, tmp_path))
 
 
+def test_sets_with_keyword_files_of_their_own_pool_together(tmp_path, capsys):
+    """Each set has its own keywords file: the pool of several sets is one comparison as long as each pair agrees."""
+    base, prop = _six_rescued()
+    for arm in (base, prop):
+        for r in arm[:3]:
+            r["set"], r["kw_file"], r["wrong"] = "contrast_en", "fedcba987654", False
+    assert gate.report_embed_text(_files(base, prop, tmp_path)) is True
+    assert "gate G1 PASSES" in capsys.readouterr().out
+
+
 def test_rows_of_an_uncommitted_tree_are_refused(tmp_path):
     base, prop = _six_rescued()
     for r in base + prop:

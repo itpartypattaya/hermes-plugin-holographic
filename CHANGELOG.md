@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+- **A trust change, a trust floor or a limit that is no number is refused, never read as some other value.** The
+  same gap as the fact ids: `float(True)` is 1.0, and the core leaves `"nan"` and `"inf"` strings (they are no JSON
+  numbers), which `float()` reads; the trust clamp then made NaN 1.0. `update {trust_delta: true}` (or `"nan"`,
+  `inf`) raised a fact's trust to the top and `"-inf"` dropped it to 0, below the recall floor; `min_trust: true` or
+  `"nan"` made `search`, `list`, `probe` and `related` answer nothing as if nothing were known; `limit: true` gave
+  one result. Such a call now answers `trust_delta must be a number such as 0.1` (`min_trust` likewise, `limit`: a
+  whole number) and changes nothing; `0.1`, `"0.1"`, `2`, `"2"` and `2.0` work as before.
+  Tests: `tests/test_holographic_number_type.py`.
+
 ## 0.29.1 — 2026-11-17
 
 ### Fixes

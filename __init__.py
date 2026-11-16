@@ -18,6 +18,7 @@ import functools
 import hashlib
 import json
 import logging
+import math
 import re
 import threading
 import time
@@ -200,6 +201,24 @@ def _is_fact_id(value) -> bool:
     if isinstance(value, float):
         return value.is_integer()
     return isinstance(value, int) or (isinstance(value, str) and re.fullmatch(r"\s*-?\d+\s*", value) is not None)
+
+
+def _is_number(value) -> bool:
+    """A finite number as a model may send one: 0.1, -1 or "0.1"; never a bool (float(True) is 1.0), NaN or an
+    infinity (the core leaves "nan" a string, float() reads it, and the trust clamp makes NaN 1.0)."""
+    if isinstance(value, bool) or not isinstance(value, (int, float, str)):
+        return False
+    try:
+        return math.isfinite(float(value))
+    except (ValueError, OverflowError):
+        return False
+
+
+# The number arguments, checked as a call comes in for the same reason as the fact ids: update {trust_delta: true}
+# or "nan" raised a fact's trust to the top, min_trust: true hid every fact from search and list, limit: true gave one
+_NUMBER_ARGUMENTS = {"fact_store": {"trust_delta": (_is_number, "a number such as 0.1"),
+                                    "min_trust": (_is_number, "a number such as 0.3"),
+                                    "limit": (_is_fact_id, "a whole number such as 10")}}
 
 # French (after itpartypattaya/hermes-plugin-holographic#86 by maxandrieux): only a sentence that opens with the
 # first-person statement, so a quote ("Paul dit que je préfère …"), a lead-in ("Moi, je préfère …") or a condition
@@ -1789,6 +1808,9 @@ class HolographicMemoryProvider(MemoryProvider):
             if args.get(key) is not None and not _is_fact_id(args[key]):
                 return tool_error(f"{key} must be a fact id, a whole number such as 12 (got "
                                   f"{type(args[key]).__name__}); nothing was changed.")
+        for key, (valid, wanted) in _NUMBER_ARGUMENTS.get(tool_name, {}).items():
+            if args.get(key) is not None and not valid(args[key]):
+                return tool_error(f"{key} must be {wanted} (got {type(args[key]).__name__}); nothing was changed.")
         if not self._tool_writable and (tool_name == "fact_feedback" or args.get("action") in _WRITE_ACTIONS
                                        or (tool_name == "fact_experience" and args.get("action") == "outcome")):
             return tool_error("The fact store is read-only in this context (subagent, flush, or cron with "

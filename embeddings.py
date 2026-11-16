@@ -33,7 +33,8 @@ from collections import OrderedDict
 
 from . import holographic as hrr  # its numpy loader: one import attempt for the plugin, a failure said once
 from . import net  # the socket of the in-flight request, for the caller to end the read (issue #26)
-from .text import UNSEGMENTED, is_greeting, query_terms
+from .screen import _sendable
+from .text import _KW_MARK, UNSEGMENTED, _split_tags, is_greeting, query_terms
 
 np = None  # numpy is optional and loaded on first use (see _numpy): this module is imported from
 # inside the plugin loader's lock while a managed worker starts its reader thread, and a top-level
@@ -84,6 +85,26 @@ SEARCH_TOP_K = 3
 SEARCH_BEAT_WORDS = 0.06
 SEARCH_Z_FLOOR = 1.0
 MIN_VECTORS_FOR_Z = 20
+# What a fact's vector is made from (issue #95): "content", its text alone (the default, and all a vector was ever made
+# from before), or "content+keywords", its text and, on a line after it, the keywords the agent stored with it — never
+# the person's own tags. A module value, not a setting, like RECALL_MARGIN: tools/provenance_probe.py sets it for one
+# arm of a measurement and puts it back. Not to be switched on before that measurement passes its gate.
+EMBED_TEXTS = ("content", "content+keywords")
+EMBED_TEXT = "content"
+
+
+def vector_text(content: str, tags: str | None) -> str:
+    """The text a fact's vector is made from, and the one its hash is taken of (EMBED_TEXT). Keywords join only when
+    the whole text may be sent (_sendable): keywords the content does not hold could carry what must not leave the
+    machine, and then the vector is made from the content alone — never no vector, never the keywords sent."""
+    content = content or ""
+    if EMBED_TEXT == "content":
+        return content
+    keywords = _split_tags(tags)[1]
+    if not keywords:
+        return content
+    joined = f"{content}\n{_KW_MARK}{', '.join(keywords)}"
+    return joined if _sendable(joined) else content
 
 
 def z_bar(count: int, margin: float) -> float:
@@ -742,9 +763,10 @@ class Meaning:
     def cos(self, fact_id: int) -> float:
         return self.sims.get(fact_id, self.neutral)
 
-    def fits(self, fact_id: int, content: str) -> bool:
-        """Is *content* still the text this fact's score was computed from (always, when no hashes were kept)?"""
-        return self.hashes is None or self.hashes.get(fact_id) == text_hash(content)
+    def fits(self, fact_id: int, content: str, tags: str | None = None) -> bool:
+        """Is the vector text of *content* and *tags* still the one this fact's score was computed from (always, when no
+        hashes were kept)?"""
+        return self.hashes is None or self.hashes.get(fact_id) == text_hash(vector_text(content, tags))
 
     def z(self, fact_id: int) -> float:
         s = self.sims.get(fact_id)
@@ -772,31 +794,33 @@ class VectorIndex:
     def __init__(self, store, tag: str):
         self.store, self.tag = store, tag
         self._lock = threading.Lock()
-        # fact_id -> (cheap fingerprint of the content, its hash): no plaintext kept in memory (a forgotten fact's
-        # text must not outlive it in the process either; forget also calls drop)
-        self._hashes: dict[int, tuple[tuple[int, int], str]] = {}
+        # fact_id -> (cheap fingerprint of what its vector text is made of, the text's hash): no plaintext kept in
+        # memory (a forgotten fact's text must not outlive it in the process either; forget also calls drop)
+        self._hashes: dict[int, tuple[tuple, str]] = {}
         self._vectors: dict[int, tuple[tuple, object]] = {}  # fact_id -> ((text hash, size, revision), vector)
         self._matrix: tuple | None = None  # (fresh set, dimension, ids, matrix)
         # The size of the last message's vector: a fact vector of another size (the endpoint changed what it returns
         # under the same name) is made again (pending) instead of staying out of recall for good.
         self._dim: int | None = None
 
-    def _state(self) -> list[tuple[int, str, str, str | None, int, str]]:
-        """(fact_id, content, hash of the content, hash its vector of this model was made from or None, the vector's
-        byte size, its revision — new with every write, so a vector made again is read again) of every current
-        fact."""
+    def _state(self) -> list[tuple[int, str, str | None, str, str | None, int, str]]:
+        """(fact_id, content, tags, hash of its vector text, hash its vector of this model was made from or None, the
+        vector's byte size, its revision — new with every write, so a vector made again is read again) of every
+        current fact."""
         try:
-            rows = self.store.read("SELECT f.fact_id, f.content, e.text_hash, LENGTH(e.vector), e.revision FROM facts f "
-                                   "LEFT JOIN fact_embeddings e ON e.fact_id = f.fact_id AND e.model = ? "
+            rows = self.store.read("SELECT f.fact_id, f.content, f.tags, e.text_hash, LENGTH(e.vector), e.revision "
+                                   "FROM facts f LEFT JOIN fact_embeddings e ON e.fact_id = f.fact_id AND e.model = ? "
                                    "ORDER BY f.fact_id", (self.tag,))
         except sqlite3.OperationalError:  # no table yet: a store no writer of 0.14.0 has opened
             return []
         out = []
-        for fact_id, content, made_from, size, revision in rows:
-            hit, seen = self._hashes.get(fact_id), (len(content or ""), hash(content or ""))
+        for fact_id, content, tags, made_from, size, revision in rows:
+            # what the vector text is made of, the switch included: the text itself is built (and screened) only when
+            # one of them changed
+            hit, seen = self._hashes.get(fact_id), (len(content or ""), hash(content or ""), hash((EMBED_TEXT, tags)))
             if hit is None or hit[0] != seen:
-                hit = self._hashes[fact_id] = (seen, text_hash(content))
-            out.append((fact_id, content, hit[1], made_from, size or 0, revision or ""))
+                hit = self._hashes[fact_id] = (seen, text_hash(vector_text(content, tags)))
+            out.append((fact_id, content, tags, hit[1], made_from, size or 0, revision or ""))
         if len(self._hashes) > len(out) + 1024:  # deleted facts
             alive = {row[0] for row in out}
             self._hashes = {k: v for k, v in self._hashes.items() if k in alive}
@@ -827,7 +851,7 @@ class VectorIndex:
         """matrix() plus, for each row, the hash of the text its vector was made from."""
         np = _numpy()
         with self._lock:
-            fresh = tuple((fact_id, (digest, size, revision)) for fact_id, _, digest, made_from, size, revision
+            fresh = tuple((fact_id, (digest, size, revision)) for fact_id, _, _, digest, made_from, size, revision
                           in self._state() if made_from == digest and size > 0 and size % 4 == 0)
             need = [fact_id for fact_id, made in fresh if self._vectors.get(fact_id, ((),))[0] != made]
             for start in range(0, len(need), 500):
@@ -855,16 +879,17 @@ class VectorIndex:
         return made_from == digest and size > 0 and size % 4 == 0 and (self._dim is None or size == 4 * self._dim)
 
     def pending(self, limit: int, allowed) -> list[tuple[int, str, str]]:
-        """Up to *limit* (fact_id, content, hash) of current facts with no usable vector of this model — none, one
-        made from an older text, or one of another size than the last message's — newest first; facts *allowed*
-        refuses are never sent."""
+        """Up to *limit* (fact_id, vector text, its hash) of current facts with no usable vector of this model — none,
+        one made from an older text, or one of another size than the last message's — newest first; a text *allowed*
+        refuses is never sent."""
         with self._lock:
-            waiting = [(fact_id, content, digest) for fact_id, content, digest, made_from, size, _ in self._state()
-                       if not self._usable(digest, made_from, size)]
+            waiting = [(fact_id, content, tags, digest) for fact_id, content, tags, digest, made_from, size, _
+                       in self._state() if not self._usable(digest, made_from, size)]
         out = []
-        for item in reversed(waiting):
-            if allowed(item[1]):
-                out.append(item)
+        for fact_id, content, tags, digest in reversed(waiting):
+            text = vector_text(content, tags)
+            if allowed(text):
+                out.append((fact_id, text, digest))
                 if len(out) >= limit:
                     break
         return out
@@ -872,7 +897,8 @@ class VectorIndex:
     def counts(self, allowed) -> dict:
         with self._lock:
             state = self._state()
-            usable = [self._usable(digest, made_from, size) for _, _, digest, made_from, size, _ in state]
+            usable = [self._usable(digest, made_from, size) for _, _, _, digest, made_from, size, _ in state]
         done = sum(usable)
-        held = sum(1 for ok, (_, content, *_rest) in zip(usable, state) if not ok and not allowed(content))
+        held = sum(1 for ok, (_, content, tags, *_rest) in zip(usable, state)
+                   if not ok and not allowed(vector_text(content, tags)))
         return {"facts_with_vector": done, "waiting": len(state) - done - held, "never_sent": held}

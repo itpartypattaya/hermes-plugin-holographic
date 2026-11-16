@@ -1,0 +1,487 @@
+{
+ "contrast_zh": {
+  "andrey_cat": [
+   "安德鲁养猫",
+   "安德鲁宠物",
+   "喂猫",
+   "安德鲁照顾猫",
+   "Andrey cat"
+  ],
+  "andrey_dacha": [
+   "安德鲁周末去哪",
+   "安德鲁度周末",
+   "安德鲁去乡下",
+   "别墅",
+   "Andrey weekend"
+  ],
+  "andrey_dentist": [
+   "安德鲁看牙",
+   "安德鲁牙科",
+   "安德鲁看医生",
+   "周六预约",
+   "Andrey dentist"
+  ],
+  "andrey_flex": [
+   "安德鲁上班时间",
+   "弹性上班",
+   "安德鲁工作安排",
+   "安德鲁作息",
+   "Andrey schedule"
+  ],
+  "andrey_meet": [
+   "安德鲁周会",
+   "周五会议",
+   "安德鲁开会时间",
+   "上午十一点",
+   "Andrey meeting"
+  ],
+  "andrey_vacation": [
+   "安德鲁休假",
+   "安德鲁放假",
+   "安德鲁请假",
+   "安德鲁五月不在",
+   "Andrey vacation"
+  ],
+  "app_deadline": [
+   "报名截止",
+   "提交期限",
+   "最后期限",
+   "申请截止时间",
+   "application deadline"
+  ],
+  "baji_vaccine": [
+   "巴奇打疫苗",
+   "猫打针",
+   "宠物疫苗",
+   "兽医预约",
+   "巴奇接种"
+  ],
+  "david_bd": [
+   "大卫出生日期",
+   "大卫几号生日",
+   "David birthday",
+   "生辰",
+   "大卫诞辰"
+  ],
+  "dawei_bd": [
+   "大伟出生日期",
+   "大伟几号生日",
+   "Dawei birthday",
+   "生辰",
+   "大伟诞辰"
+  ],
+  "denis_car": [
+   "德尼斯买车",
+   "德尼斯汽车",
+   "德尼斯座驾",
+   "德尼斯新车款",
+   "Denis car"
+  ],
+  "denis_license": [
+   "德尼斯驾驶证",
+   "德尼斯驾照有效期",
+   "驾照过期",
+   "德尼斯行驶证件",
+   "Denis driver license"
+  ],
+  "denis_passport": [
+   "德尼斯护照有效期",
+   "德尼斯证件",
+   "护照过期",
+   "德尼斯出国证件",
+   "Denis passport"
+  ],
+  "denis_qingdao": [
+   "德尼斯度假",
+   "德尼斯暑假",
+   "德尼斯旅行",
+   "德尼斯去海边",
+   "Denis Qingdao"
+  ],
+  "denis_rights2019": [
+   "德尼斯拿驾照",
+   "德尼斯考驾照",
+   "驾照首次获得",
+   "德尼斯学车",
+   "Denis license 2019"
+  ],
+  "denis_tires": [
+   "德尼斯换胎",
+   "德尼斯轮胎",
+   "德尼斯保养车",
+   "冬胎",
+   "Denis tires"
+  ],
+  "denis_work": [
+   "德尼斯的工作",
+   "德尼斯公司",
+   "德尼斯单位",
+   "德尼斯任职",
+   "Huawei Shenzhen"
+  ],
+  "dennis_flat": [
+   "丹尼斯买房",
+   "丹尼斯住房",
+   "丹尼斯房产",
+   "丹尼斯置业",
+   "Dennis apartment"
+  ],
+  "dennis_work": [
+   "丹尼斯的工作",
+   "丹尼斯公司",
+   "丹尼斯单位",
+   "丹尼斯任职",
+   "Huawei Wuhan"
+  ],
+  "dina_chess": [
+   "迪娜下棋",
+   "迪娜爱好",
+   "迪娜周末活动",
+   "迪娜棋类",
+   "Dina chess"
+  ],
+  "dina_flat": [
+   "迪娜买房",
+   "迪娜住房",
+   "迪娜房产",
+   "迪娜置业",
+   "Dina apartment"
+  ],
+  "dina_pool": [
+   "迪娜游泳",
+   "迪娜泳池",
+   "迪娜哪天游泳",
+   "迪娜运动日",
+   "Dina swimming"
+  ],
+  "dina_serials": [
+   "迪娜追剧",
+   "迪娜看剧",
+   "迪娜周五晚上",
+   "迪娜电视剧",
+   "Dina TV series"
+  ],
+  "filler_berries": [
+   "野果成熟",
+   "山上水果",
+   "采果季节",
+   "浆果",
+   "wild berries July"
+  ],
+  "filler_coffee": [
+   "咖啡涨价",
+   "办公室咖啡",
+   "咖啡价格",
+   "咖啡变贵",
+   "coffee price"
+  ],
+  "filler_market": [
+   "菜市场营业时间",
+   "周末集市",
+   "市场关门",
+   "赶集",
+   "market hours"
+  ],
+  "filler_sneakers": [
+   "球鞋发售",
+   "新鞋上市",
+   "跑步鞋发布",
+   "运动鞋",
+   "sneakers release"
+  ],
+  "filler_tires": [
+   "换冬胎",
+   "冬季轮胎",
+   "雪地轮胎",
+   "入冬换胎",
+   "winter tires"
+  ],
+  "filler_train": [
+   "高铁时刻",
+   "青岛火车",
+   "发车时间",
+   "早班车",
+   "Qingdao train"
+  ],
+  "huawei_hq": [
+   "华为总部地址",
+   "华为办公地点",
+   "华为公司位置",
+   "华为在哪",
+   "Huawei headquarters"
+  ],
+  "lena_cams": [
+   "莲娜监控",
+   "莲娜被拍",
+   "摄像头",
+   "地铁站",
+   "Lena CCTV"
+  ],
+  "lena_diet": [
+   "莲娜素食",
+   "莲娜饮食",
+   "莲娜吃什么",
+   "莲娜忌口",
+   "Lena vegetarian"
+  ],
+  "lena_flat": [
+   "莲娜地址",
+   "莲娜住在哪",
+   "莲娜住处",
+   "莲娜家",
+   "Lena address"
+  ],
+  "lena_office": [
+   "莲娜工作",
+   "莲娜上班",
+   "莲娜办公室",
+   "莲娜工作日",
+   "Lena work"
+  ],
+  "lena_spanish": [
+   "莲娜学外语",
+   "莲娜上课",
+   "莲娜语言学习",
+   "莲娜周三",
+   "Lena Spanish"
+  ],
+  "lena_walk": [
+   "莲娜散步",
+   "莲娜夜间",
+   "莲娜河边",
+   "莲娜傍晚",
+   "Lena evening walk"
+  ],
+  "light_evening": [
+   "停电",
+   "晚上没电",
+   "定时断电",
+   "电力中断",
+   "power outage"
+  ],
+  "mary_car": [
+   "玛丽的车",
+   "玛丽座驾",
+   "玛丽开什么车",
+   "玛丽汽车",
+   "Mary car"
+  ],
+  "mary_ielts": [
+   "玛丽英语考试",
+   "玛丽成绩",
+   "玛丽英语水平",
+   "IELTS分数",
+   "Mary IELTS"
+  ],
+  "mary_kids": [
+   "玛丽的孩子",
+   "玛丽接送",
+   "玛丽课外班",
+   "玛丽带娃",
+   "Mary children"
+  ],
+  "mary_run": [
+   "玛丽晨跑",
+   "玛丽锻炼",
+   "玛丽慢跑",
+   "玛丽运动",
+   "Mary running"
+  ],
+  "mary_ski": [
+   "玛丽滑雪",
+   "玛丽冬季运动",
+   "玛丽雪场",
+   "玛丽每年旅行",
+   "Mary skiing"
+  ],
+  "mary_teach": [
+   "玛丽的职业",
+   "玛丽教书",
+   "玛丽工作",
+   "数学教师",
+   "Mary teacher"
+  ],
+  "mary_tent": [
+   "玛丽野营",
+   "玛丽露营",
+   "玛丽帐篷",
+   "玛丽户外",
+   "Mary camping"
+  ],
+  "mary_wedding": [
+   "玛丽结婚",
+   "玛丽婚期",
+   "玛丽办喜事",
+   "Mary wedding",
+   "婚礼日期"
+  ],
+  "net_off": [
+   "网络被停",
+   "断网",
+   "宽带欠费",
+   "没有网络",
+   "internet cut off"
+  ],
+  "net_weak": [
+   "WiFi信号差",
+   "晚上网络慢",
+   "无线网络不好",
+   "网速慢",
+   "weak wifi signal"
+  ],
+  "peter_bank": [
+   "彼得的工作",
+   "彼得职业",
+   "彼得上班",
+   "银行职员",
+   "Peter bank teller"
+  ],
+  "peter_bd": [
+   "彼得出生日期",
+   "彼得几号生日",
+   "Peter birthday",
+   "生辰",
+   "彼得诞辰"
+  ],
+  "peter_cat": [
+   "彼得的宠物",
+   "彼得养猫",
+   "彼得的猫",
+   "花猫",
+   "Peter cat"
+  ],
+  "peter_cook": [
+   "彼得做饭",
+   "彼得周末",
+   "彼得下厨",
+   "彼得烹饪",
+   "Peter cooking"
+  ],
+  "peter_earphones": [
+   "彼得耳机丢了",
+   "彼得丢东西",
+   "耳塞",
+   "彼得遗失",
+   "Peter lost earbud"
+  ],
+  "peter_guitar": [
+   "彼得学琴",
+   "彼得音乐",
+   "彼得上课",
+   "彼得乐器",
+   "Peter guitar"
+  ],
+  "peter_marathon": [
+   "彼得参赛",
+   "彼得跑马拉松",
+   "彼得比赛",
+   "彼得赛事",
+   "Peter marathon"
+  ],
+  "peter_run": [
+   "彼得跑步",
+   "彼得晚上锻炼",
+   "彼得公园",
+   "彼得运动",
+   "Peter running"
+  ],
+  "pite_pool_card": [
+   "皮特游泳会员",
+   "皮特办卡",
+   "皮特泳池卡",
+   "皮特健身",
+   "Pete swimming card"
+  ],
+  "pool_hours": [
+   "泳池营业时间",
+   "游泳馆关门时间",
+   "泳池开放",
+   "22点",
+   "pool opening hours"
+  ],
+  "provider": [
+   "网络运营商",
+   "宽带公司",
+   "恢复网速",
+   "一周内恢复",
+   "ISP promise"
+  ],
+  "sergey_dog": [
+   "谢尔盖养狗",
+   "谢尔盖宠物",
+   "谢尔盖带狗散步",
+   "遛狗",
+   "Sergey dog"
+  ],
+  "sergey_fear": [
+   "谢尔盖恐飞",
+   "谢尔盖害怕",
+   "谢尔盖担心坐飞机",
+   "飞行恐惧",
+   "Sergey fear of flying"
+  ],
+  "sergey_flat": [
+   "谢尔盖住处",
+   "谢尔盖租房子",
+   "谢尔盖住哪",
+   "谢尔盖房东",
+   "Sergey rental"
+  ],
+  "sergey_guitar": [
+   "谢尔盖音乐",
+   "谢尔盖学乐器",
+   "谢尔盖晚上爱好",
+   "谢尔盖练琴",
+   "Sergey guitar"
+  ],
+  "sergey_huawei": [
+   "谢尔盖辞职",
+   "谢尔盖前雇主",
+   "谢尔盖离开公司",
+   "谢尔盖离职",
+   "Sergey quit Huawei"
+  ],
+  "sergey_market": [
+   "谢尔盖买菜",
+   "谢尔盖购物",
+   "谢尔盖周末",
+   "谢尔盖逛市场",
+   "Sergey market"
+  ],
+  "sergey_pattaya": [
+   "谢尔盖旅行目的地",
+   "谢尔盖去泰国",
+   "谢尔盖度假",
+   "谢尔盖选目的地",
+   "Sergey Hua Hin"
+  ],
+  "tina_pool": [
+   "蒂娜游泳",
+   "蒂娜泳池",
+   "蒂娜哪天游泳",
+   "蒂娜运动日",
+   "Tina swimming"
+  ],
+  "tina_suv": [
+   "蒂娜的车",
+   "蒂娜座驾",
+   "蒂娜开什么车",
+   "蒂娜汽车",
+   "Tina SUV"
+  ],
+  "tina_trip": [
+   "蒂娜旅行计划",
+   "蒂娜度假",
+   "蒂娜秋季出游",
+   "蒂娜去贵州",
+   "Tina trip"
+  ],
+  "tina_yoga": [
+   "蒂娜早晨锻炼",
+   "蒂娜瑜伽",
+   "蒂娜健身",
+   "蒂娜晨练",
+   "Tina yoga"
+  ]
+ }
+}

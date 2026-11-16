@@ -32,6 +32,8 @@ from utils import is_truthy_value
 from . import embeddings
 from . import holographic as hrr
 from . import rerank
+from .text import (  # they lived here, and tests import _split_tags from the package
+    _KW_MARK, _MAX_KEYWORD_CHARS, _MAX_KEYWORDS, _join_tags, _keywords, _split_tags)
 from .history import ORIGINS, ChangedSince, HistoryTooNew, NotFound, NotOwned, parse_day
 from .store import DuplicateContentError, MemoryStore, unusable_names
 from .retrieval import FactRetriever, _warn_once, error_kind
@@ -350,24 +352,6 @@ _WRITE_ACTIONS = frozenset({"add", "update", "remove", "alias", "change", "end",
 _DECLARING_ACTIONS = frozenset({"add", "update", "change", "correct"})
 # Context fields Hermes passes to initialize() that a version's source keeps (chat names are not kept: they change).
 _IDENTITY = ("chat_id", "chat_type", "thread_id", "user_id", "user_name")
-# Keywords (document expansion, as doc2query does for lexical search): words a person might ask with that the fact
-# does not contain, given by the agent when it stores the fact. Kept in the indexed tags column after a marker line,
-# so older versions and FTS5 see them too and no schema changes; never shown in the recalled block.
-_KW_MARK = "keywords: "
-_MAX_KEYWORDS, _MAX_KEYWORD_CHARS = 12, 40
-
-
-def _keywords(value) -> list[str]:
-    """A list of strings or one comma-separated string -> distinct, trimmed keywords (at most 12 of 40 characters)."""
-    items = value if isinstance(value, list) else str(value or "").split(",")
-    out: list[str] = []
-    for item in items:
-        word = " ".join(item.split()).strip(" ,;") if isinstance(item, str) else ""
-        if word and len(word) <= _MAX_KEYWORD_CHARS and word.casefold() not in {o.casefold() for o in out}:
-            out.append(word)
-    return out[:_MAX_KEYWORDS]
-
-
 def _keyword_report(value) -> dict:
     """What add / change / update kept of the keywords given, for the result (issue #23: the limits were silent): the
     kept list and, when some were not kept, their positions in the list given and why. Never their text: a keyword
@@ -397,20 +381,6 @@ def _keyword_report(value) -> dict:
     return report
 
 
-def _split_tags(stored: str | None) -> tuple[str, list[str]]:
-    """(the user's tags, the keywords) of a stored tags value."""
-    text = stored or ""
-    if text.startswith(_KW_MARK):
-        return "", _keywords(text[len(_KW_MARK):])
-    head, mark, tail = text.rpartition("\n" + _KW_MARK)
-    return (head, _keywords(tail)) if mark else (text, [])
-
-
-def _join_tags(tags: str | None, keywords: list[str]) -> str:
-    base = (tags or "").strip()
-    if not keywords:
-        return base
-    return (base + "\n" if base else "") + _KW_MARK + ", ".join(keywords)
 _SCOPES = frozenset({"profile", "user", "chat", "thread"})
 # How a switch may be written (the core's truthy strings, and their opposites)
 _TRUE_WORDS, _FALSE_WORDS = frozenset({"1", "true", "yes", "on"}), frozenset({"0", "false", "no", "off"})
@@ -1602,10 +1572,10 @@ class HolographicMemoryProvider(MemoryProvider):
                 # A fair test of the server: the turn's first request, with most of the budget (a wait for the
                 # provider lock may have taken the rest; review 0.16.3)
                 fair = turn_request == 0 and left >= 0.8 * (budget - _CATCH_UP_RESERVE)
-                todo = todo[:self._embedder.fact_batch([len(content) for _, content, _ in todo], left, probe=fair)]
+                todo = todo[:self._embedder.fact_batch([len(text) for _, text, _ in todo], left, probe=fair)]
                 if not todo:  # not even one fact fits in what is left: the next turn goes on
                     return
-                vectors = self._embedder.embed_facts([content for _, content, _ in todo], budget=left, decisive=fair)
+                vectors = self._embedder.embed_facts([text for _, text, _ in todo], budget=left, decisive=fair)
                 if vectors is None or not self._locked_until(deadline):
                     return
                 try:

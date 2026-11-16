@@ -9,6 +9,8 @@ files you point it at:
 
     python tools/mcnemar_gate.py                      # all dev files
     python tools/mcnemar_gate.py results/provenance_household_dev_on.jsonl
+    python tools/mcnemar_gate.py --pair margin <two files>       # PR #17 (--margin-pair is the same)
+    python tools/mcnemar_gate.py --pair embed_text <two files>   # issue #95, gate G1
 
 A file that cannot be compared honestly aborts instead of printing a pass: duplicated
 rows, mixed runs (several git_sha/scale/endpoint/emb/split values) and targets that
@@ -170,6 +172,74 @@ def _noise(r: dict) -> bool:
     return r.get("kind") == "real" and not (r.get("targets") or [])
 
 
+# One clean head for a whole paired comparison: a field that differs between the two runs is a second change.
+_HEAD = ("git_sha", "emb", "mode", "scale", "endpoint")
+# Issue #95 adds the embedding model and its vector size (two models are not one change of vector text), the margin,
+# the keyword coverage and names_fit. The keywords file is one per set, so it is compared inside each pair, with the
+# store's count of facts with keywords: only the vector text may differ.
+_EMBED_TEXT_HEAD = _HEAD + ("emb_model", "emb_dim", "margin", "kw_coverage", "names_fit")
+
+
+def _paired(paths: list[str], field: str, head: tuple, value=lambda v: v,
+            same: tuple = ("q", "kind", "split")) -> tuple[list[dict], list, dict, list]:
+    """Rows of two runs that differ only in *field*, paired per (set, lang, qid): (rows, the two values sorted, value ->
+    key -> row, the keys of real rows). Refuses — never reports — when the field has not exactly two values, a row
+    does not carry it, the *head* differs or is missing, a key repeats or has no partner, or a pair differs in its
+    query, kind, split or targets."""
+    rows = []
+    for path in paths:
+        rows.extend(json.loads(line) for line in open(path, encoding="utf-8") if line.strip())
+    unstamped = [i for i, r in enumerate(rows) if r.get(field) in (None, "")]
+    if unstamped:
+        raise SystemExit(f"{len(unstamped)} rows carry no {field} (row {unstamped[0]}) — a row that does "
+                         f"not say which run it came from cannot be paired")
+    values = sorted({value(r[field]) for r in rows})
+    if len(values) != 2:
+        raise SystemExit(f"expected rows stamped with exactly two values of {field}, got {values} — "
+                         f"run provenance_probe twice and pass both files")
+    # One clean head for the WHOLE comparison — the endpoint too: two rerank/embedding servers are not one
+    # change. A field no row carries refuses the run instead of passing it (PR #31, item 2: the old
+    # filter dropped empty values, so a run stamped with no endpoint at all was a run nobody checked).
+    for name in head:
+        missing = [i for i, r in enumerate(rows) if r.get(name) in (None, "")]
+        if missing:
+            raise SystemExit(f"{name} missing from {len(missing)} rows (row {missing[0]}) — the pairing "
+                             f"needs one clean head")
+        vals = sorted({str(r[name]) for r in rows})
+        if len(vals) > 1:
+            raise SystemExit(f"mixed runs — {name}={vals}: the pairing needs one clean head")
+    seen = {m: set() for m in values}
+    for r in rows:
+        key = (r.get("set"), r.get("lang"), r.get("qid"))
+        if key in seen[value(r[field])]:
+            raise SystemExit(f"duplicate rows for {field} {r[field]} {key} — the report is impossible")
+        seen[value(r[field])].add(key)
+    # pairing is per (set, lang, qid): the field is what differs, not part of the pair key
+    both = seen[values[0]] & seen[values[1]]
+    only = {m: sorted(seen[m] - both, key=str) for m in values}
+    if only[values[0]] or only[values[1]]:
+        raise SystemExit(f"unpaired rows: {only[values[0]][:3]} vs {only[values[1]][:3]}")
+    by = {m: {(r.get("set"), r.get("lang"), r.get("qid")): r for r in rows if value(r[field]) == m} for m in values}
+    # Inside a pair only the field may differ: the query, the row kind, the split and the target set are
+    # compared field by field, and a field one side does not carry refuses the pair (PR #31, item 2 —
+    # real keys used to come from the proposal alone and the targets from the default with a fallback,
+    # so a pair of different questions or different targets was reported as if it were one question).
+    for key in sorted(both, key=str):
+        a, b = by[values[0]][key], by[values[1]][key]
+        for name in same:
+            if name not in a or name not in b:
+                raise SystemExit(f"unpaired {key}: {name} missing — a pair may differ only in {field}")
+            if a[name] != b[name]:
+                raise SystemExit(f"unpaired {key}: {name} {a[name]!r} != {b[name]!r}")
+        if "targets" not in a or "targets" not in b:
+            raise SystemExit(f"unpaired {key}: targets missing — a pair may differ only in {field}")
+        if set(a["targets"]) != set(b["targets"]):
+            raise SystemExit(f"unpaired {key}: targets {a['targets']} != {b['targets']}")
+    # both sides carry the same kind (checked above): neither side alone decides what is real
+    real_keys = [k for k, r in by[values[0]].items() if r.get("kind") == "real"]
+    return rows, values, by, real_keys
+
+
 def report_margins(paths: list[str]) -> None:
     """Two-margin pairing for the PR #17 gate: rows stamped with `margin` (provenance_probe
     --recall-margin) are paired per (set, lang, qid) and compared 0.6 against 1.0 on one head.
@@ -178,58 +248,8 @@ def report_margins(paths: list[str]) -> None:
     `set/lang qid -> target`, noise (chit AND no-answer rows with output) and confusion — the four
     guards of the recipe: no target lost anywhere, noise not higher, confusion not higher, and the
     rescue passing p < 0.05 pooled (2026-10-24)."""
-    rows = []
-    for path in paths:
-        rows.extend(json.loads(line) for line in open(path, encoding="utf-8") if line.strip())
-    margins = sorted({float(r["margin"]) for r in rows if r.get("margin") is not None})
-    if len(margins) != 2:
-        raise SystemExit(f"expected rows stamped with exactly two margins, got {margins} — "
-                         f"run provenance_probe --recall-margin twice and pass both files")
+    rows, margins, by, real_keys = _paired(paths, "margin", _HEAD, value=float)
     lo, hi = margins  # sorted ascending: lo is the proposal (0.6), hi the current default (1.0)
-    unstamped = [i for i, r in enumerate(rows) if r.get("margin") in (None, "")]
-    if unstamped:
-        raise SystemExit(f"{len(unstamped)} rows carry no margin (row {unstamped[0]}) — a row that does "
-                         f"not say which run it came from cannot be paired")
-    # One clean head for the WHOLE comparison — the endpoint too: two rerank/embedding servers are not one
-    # margin change. A field no row carries refuses the run instead of passing it (PR #31, item 2: the old
-    # filter dropped empty values, so a run stamped with no endpoint at all was a run nobody checked).
-    for field in ("git_sha", "emb", "mode", "scale", "endpoint"):
-        missing = [i for i, r in enumerate(rows) if r.get(field) in (None, "")]
-        if missing:
-            raise SystemExit(f"{field} missing from {len(missing)} rows (row {missing[0]}) — the pairing "
-                             f"needs one clean head")
-        vals = sorted({str(r[field]) for r in rows})
-        if len(vals) > 1:
-            raise SystemExit(f"mixed runs — {field}={vals}: the pairing needs one clean head")
-    seen = {m: set() for m in margins}
-    for r in rows:
-        key = (r.get("set"), r.get("lang"), r.get("qid"))
-        if key in seen[float(r["margin"])]:
-            raise SystemExit(f"duplicate rows for margin {r['margin']} {key} — the report is impossible")
-        seen[float(r["margin"])].add(key)
-    # pairing is per (set, lang, qid): the margin is what differs, not part of the pair key
-    only = {m: sorted(seen[m] - (seen[margins[0]] & seen[margins[1]]), key=str) for m in margins}
-    if only[margins[0]] or only[margins[1]]:
-        raise SystemExit(f"unpaired rows: {only[margins[0]][:3]} vs {only[margins[1]][:3]}")
-    by = {m: {(r.get("set"), r.get("lang"), r.get("qid")): r for r in rows if float(r["margin"]) == m}
-          for m in margins}
-    # Inside a pair only the margin may differ: the query, the row kind, the split and the target set are
-    # compared field by field, and a field one side does not carry refuses the pair (PR #31, item 2 —
-    # real keys used to come from the proposal alone and the targets from the default with a fallback,
-    # so a pair of different questions or different targets was reported as if it were one question).
-    for key in sorted(seen[margins[0]] & seen[margins[1]], key=str):
-        a, b = by[lo][key], by[hi][key]
-        for field in ("q", "kind", "split"):
-            if field not in a or field not in b:
-                raise SystemExit(f"unpaired {key}: {field} missing — a pair may differ only in margin")
-            if a[field] != b[field]:
-                raise SystemExit(f"unpaired {key}: {field} {a[field]!r} != {b[field]!r}")
-        if "targets" not in a or "targets" not in b:
-            raise SystemExit(f"unpaired {key}: targets missing — a pair may differ only in margin")
-        if set(a["targets"]) != set(b["targets"]):
-            raise SystemExit(f"unpaired {key}: targets {a['targets']} != {b['targets']}")
-    # both sides carry the same kind (checked above): the proposal alone no longer decides what is real
-    real_keys = [k for k, r in by[lo].items() if r.get("kind") == "real"]
 
     hit = {m: {k: bool(by[m][k].get("hit5")) for k in real_keys} for m in margins}
     # b/c of McNemar: b = rescued BY the proposal (miss at the default, hit at the proposal), c = lost
@@ -272,9 +292,108 @@ def report_margins(paths: list[str]) -> None:
     print(f"  => gate {'PASSES' if verdict else 'DOES NOT PASS'} on these files")
 
 
+def _covered(r: dict) -> bool:
+    """Did this row's store have every vector it should (provenance_probe stamps the counts per store)?"""
+    return isinstance(r.get("vectors"), int) and r.get("vectors") == r.get("vectors_expected")
+
+
+def report_embed_text(paths: list[str]) -> bool:
+    """Gate G1 of issue #95 (decided 2026-11-16, before any run): two arms that differ only in what fact vectors are
+    made from — `embed_text` content against content+keywords — on one head, one embedding model and one keywords
+    file and coverage, every store fully covered. A new vector text moves every similarity, so targets and noise rows
+    can both come and go; the gate counts both directions:
+
+    - the gain: exact McNemar on top-five hits, b = rescued against c = lost, p < 0.05 with b > c;
+    - every lost top-five target is listed as `set qid:target, lang` (listed, not a veto);
+    - noise (chit and no-answer rows with output) and confusion as rows added minus rows removed, each <= 0.
+
+    Reported beside the gate: the target anywhere in the output (a fact by meaning comes after up to five word matches),
+    facts that came in by meaning, and the top-five count per set and language. Returns whether the gate passes."""
+    # each store's keyword count too: a pair whose stores hold different keywords is not one question
+    rows, values, by, real_keys = _paired(paths, "embed_text", _EMBED_TEXT_HEAD,
+                                          same=("q", "kind", "split", "kw_file", "kw_facts"))
+    if any(str(r["git_sha"]).endswith("-dirty") for r in rows):
+        raise SystemExit("rows captured on a tree with uncommitted changes (git_sha ...-dirty): measure at a commit")
+    if any(r.get("split") == "dev" for r in rows):
+        raise SystemExit("dev rows: the decisive pool is the test split and the sets without a split")
+    if values != ["content", "content+keywords"]:
+        raise SystemExit(f"expected embed_text content and content+keywords, got {values}")
+    if any(str(r["emb"]) != "on" for r in rows):
+        raise SystemExit("embed_text pairs need embeddings on: off, both arms are the same run")
+    short = [i for i, r in enumerate(rows) if not _covered(r)]
+    if short:
+        r = rows[short[0]]
+        raise SystemExit(f"{len(short)} rows from stores with incomplete vector coverage (row {short[0]}: "
+                         f"{r.get('vectors')} of {r.get('vectors_expected')}) — the run is discarded")
+    base, prop = "content", "content+keywords"
+    n = len(real_keys)
+
+    def mcnemar_of(field):
+        hit = {m: {k: bool(by[m][k].get(field)) for k in real_keys} for m in (base, prop)}
+        b = sum(1 for k in real_keys if not hit[base][k] and hit[prop][k])
+        c = sum(1 for k in real_keys if hit[base][k] and not hit[prop][k])
+        return {m: sum(hit[m].values()) for m in (base, prop)}, b, c, mcnemar(b, c)
+
+    def moved(flag) -> tuple[int, int]:
+        """(rows the proposal added, rows it removed) of a per-row flag."""
+        keys = list(by[base])
+        added = sum(1 for k in keys if flag(by[prop][k]) and not flag(by[base][k]))
+        removed = sum(1 for k in keys if flag(by[base][k]) and not flag(by[prop][k]))
+        return added, removed
+
+    hits5, b, c, p = mcnemar_of("hit5")
+    hits_all, b_all, c_all, p_all = mcnemar_of("hit")
+    lost, gained = [], []
+    for k in real_keys:
+        targets = set(by[base][k]["targets"])
+        top = {m: set((by[m][k].get("keys") or [])[:5]) for m in (base, prop)}
+        lost += [f"{k[0]} {k[2]}:{t}, {k[1]}" for t in sorted(targets & (top[base] - top[prop]))]
+        gained += [f"{k[0]} {k[2]}:{t}, {k[1]}" for t in sorted(targets & (top[prop] - top[base]))]
+    noise_add, noise_rm = moved(_noise)
+    conf_add, conf_rm = moved(lambda r: r.get("kind") == "real" and _confused(r))
+    by_meaning = {m: sum(1 for r in by[m].values() for tags in (r.get("sources") or {}).values() if "meaning" in tags)
+                  for m in (base, prop)}
+
+    head = rows[0]
+    print(f"\n== embed_text content vs content+keywords | {n} real, {len(by[base]) - n} other rows | "
+          f"git_sha {head['git_sha']} | {head['emb_model']} ({head['emb_dim']} dims) | keywords "
+          f"{sorted({str(r['kw_file']) for r in rows})} {head['kw_coverage']} | splits {sorted({str(r.get('split')) for r in rows})}")
+    print(f"hit@5: {hits5[base]}/{n} -> {hits5[prop]}/{n}; b={b} rescued, c={c} lost, exact McNemar p={p:.4f}")
+    print(f"target anywhere in the output: {hits_all[base]}/{n} -> {hits_all[prop]}/{n}; b={b_all}, c={c_all}, "
+          f"p={p_all:.4f}")
+    print(f"facts by meaning in the output: {by_meaning[base]} -> {by_meaning[prop]}")
+    print(f"lost targets in the top five ({len(lost)}): " + ("; ".join(lost) or "-"))
+    print(f"gained targets in the top five ({len(gained)}): " + ("; ".join(gained) or "-"))
+    slices = sorted({(k[0], k[1]) for k in real_keys}, key=str)
+    for s in slices:
+        keys = [k for k in real_keys if (k[0], k[1]) == s]
+        sb = sum(1 for k in keys if not by[base][k].get("hit5") and by[prop][k].get("hit5"))
+        sc = sum(1 for k in keys if by[base][k].get("hit5") and not by[prop][k].get("hit5"))
+        print(f"  {s[0]}/{s[1]}: {len(keys)} real, b={sb}, c={sc}")
+    guards = {
+        f"gain: McNemar p < 0.05 with b > c (b={b}, c={c}, p={p:.3f})": p < 0.05 and b > c,
+        f"noise: added {noise_add} - removed {noise_rm} <= 0": noise_add - noise_rm <= 0,
+        f"confusion: added {conf_add} - removed {conf_rm} <= 0": conf_add - conf_rm <= 0,
+    }
+    for name, ok in guards.items():
+        print(f"  {'PASS' if ok else 'FAIL'}  {name}")
+    verdict = all(guards.values())
+    print(f"  => gate G1 {'PASSES' if verdict else 'DOES NOT PASS'} on these files")
+    return verdict
+
+
 def main() -> None:
     if sys.argv[1:2] == ["--margin-pair"]:
         report_margins(sys.argv[2:])
+        return
+    if sys.argv[1:2] == ["--pair"]:
+        field = sys.argv[2] if len(sys.argv) > 2 else ""
+        if field == "margin":
+            report_margins(sys.argv[3:])
+        elif field == "embed_text":
+            report_embed_text(sys.argv[3:])
+        else:
+            raise SystemExit("--pair margin|embed_text <files>")
         return
     paths = sys.argv[1:] or sorted(
         glob.glob(os.path.join(os.path.dirname(__file__), "..",

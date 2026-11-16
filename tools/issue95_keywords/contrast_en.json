@@ -1,0 +1,457 @@
+{
+ "contrast_en": {
+  "andrey_cat": [
+   "Andrey pet feeding",
+   "Andrey kitty",
+   "Andrey feeding schedule",
+   "Andrey pet care",
+   "Andrey meals for cat"
+  ],
+  "andrey_dacha": [
+   "Andrey weekends",
+   "Andrey country house",
+   "Andrey cottage",
+   "Andrey days off outside city",
+   "Andrey rests"
+  ],
+  "andrey_dentist": [
+   "Andrey dental appointment",
+   "Andrey teeth checkup",
+   "Andrey doctor visit",
+   "Andrey Saturday plans",
+   "Andrey tooth"
+  ],
+  "andrey_flex": [
+   "Andrey work hours",
+   "Andrey flexible hours",
+   "Andrey working schedule",
+   "Andrey flextime",
+   "Andrey timetable"
+  ],
+  "andrey_meet": [
+   "Andrey weekly meeting",
+   "Andrey Friday call",
+   "Andrey 11 am",
+   "Andrey standup",
+   "Andrey sync time"
+  ],
+  "andrey_vacation": [
+   "Andrey holiday",
+   "Andrey days off",
+   "Andrey leave",
+   "Andrey time off",
+   "Andrey away in May"
+  ],
+  "app_deadline": [
+   "submission cut-off",
+   "due date for applying",
+   "last day to apply",
+   "application closing date",
+   "when to submit"
+  ],
+  "barsik_shot": [
+   "Barsik vaccine",
+   "cat immunization",
+   "Barsik vet appointment",
+   "Barsik jab",
+   "pet inoculation date"
+  ],
+  "denis_car": [
+   "Denis vehicle",
+   "Denis purchase of auto",
+   "Denis new car",
+   "Denis automobile",
+   "Denis bought wheels"
+  ],
+  "denis_license": [
+   "Denis driving licence",
+   "Denis license validity",
+   "Denis driving permit",
+   "Denis license renewal",
+   "Denis licence expiry"
+  ],
+  "denis_passport": [
+   "Denis travel document",
+   "Denis passport expiry",
+   "Denis ID validity",
+   "Denis passport renewal",
+   "Denis international passport"
+  ],
+  "denis_rights2019": [
+   "Denis regained license",
+   "Denis driving rights",
+   "Denis licence reinstated",
+   "Denis driving permit returned",
+   "Denis rights back"
+  ],
+  "denis_sochi": [
+   "Denis lived in Sochi",
+   "Denis 2023 location",
+   "Denis year in Sochi",
+   "Denis residence",
+   "Denis spent year"
+  ],
+  "denis_tires": [
+   "Denis winter tyres",
+   "Denis seasonal wheels",
+   "Denis tire swap",
+   "Denis car maintenance",
+   "Denis snow tires"
+  ],
+  "denis_work": [
+   "Denis job",
+   "Denis employer",
+   "Denis workplace",
+   "Denis company",
+   "where Denis is employed",
+   "Nornickel Moscow"
+  ],
+  "dina_cat": [
+   "Dina pet",
+   "Dina kitten",
+   "Dina adopted",
+   "Dina new pet",
+   "Dina feline"
+  ],
+  "dina_course": [
+   "Dina studies",
+   "Dina bookkeeping",
+   "Dina training",
+   "Dina education",
+   "Dina classes"
+  ],
+  "dina_flat": [
+   "Dina apartment",
+   "Dina real estate",
+   "Dina bought home",
+   "Dina property purchase",
+   "Dina housing"
+  ],
+  "dina_serials": [
+   "Dina TV series",
+   "Dina watching shows",
+   "Dina Friday evening",
+   "Dina streaming",
+   "Dina binge-watching"
+  ],
+  "dina_suv": [
+   "Dina vehicle",
+   "Dina automobile",
+   "Dina crossover",
+   "Dina large car",
+   "Dina what she drives"
+  ],
+  "dina_trip": [
+   "Dina travel plans",
+   "Dina vacation",
+   "Dina autumn holiday",
+   "Dina Caucasus",
+   "Dina going abroad"
+  ],
+  "dina_work": [
+   "Dina job",
+   "Dina employer",
+   "Dina workplace",
+   "Dina company",
+   "where Dina is employed",
+   "Nornickel Yekaterinburg"
+  ],
+  "filler_berries": [
+   "dacha harvest",
+   "summer cottage berries",
+   "fruit picking season",
+   "berry picking",
+   "July harvest"
+  ],
+  "filler_coffee": [
+   "office coffee price",
+   "coffee cost increase",
+   "price hike",
+   "pricier coffee",
+   "33 percent"
+  ],
+  "filler_market": [
+   "weekend market hours",
+   "Saturday bazaar",
+   "market closing time",
+   "farmers market",
+   "2 pm"
+  ],
+  "filler_sneakers": [
+   "trainers release",
+   "new shoes launch",
+   "sneaker drop",
+   "footwear release",
+   "kicks"
+  ],
+  "filler_train": [
+   "Petersburg railway",
+   "departure time",
+   "morning train",
+   "rail schedule",
+   "SPb train",
+   "Питер поезд"
+  ],
+  "filler_winter_tires": [
+   "snow tyres",
+   "winter wheels",
+   "tire change timing",
+   "cold weather tires",
+   "first freeze"
+  ],
+  "lena_bd": [
+   "Lena birth date",
+   "Lena born",
+   "Lena anniversary of birth",
+   "Lena turns a year older",
+   "Lena's age day"
+  ],
+  "light_evening": [
+   "electricity outage",
+   "blackout",
+   "scheduled power cut",
+   "no electricity",
+   "power cuts at night"
+  ],
+  "marina_cams": [
+   "Marina CCTV",
+   "Marina surveillance",
+   "Marina spotted",
+   "Marina security footage",
+   "Marina subway station"
+  ],
+  "marina_car": [
+   "Marina vehicle",
+   "Marina automobile",
+   "Marina silver car",
+   "Marina what she drives",
+   "Marina wheels"
+  ],
+  "marina_chinese": [
+   "Marina language study",
+   "Marina Mandarin",
+   "Marina studying language",
+   "Marina evening classes",
+   "Marina learning"
+  ],
+  "marina_diet": [
+   "Marina vegetarian",
+   "Marina food preferences",
+   "Marina eating habits",
+   "Marina no meat",
+   "Marina nutrition"
+  ],
+  "marina_gagarin": [
+   "Marina address",
+   "Marina home",
+   "Marina residence",
+   "Marina lives where",
+   "Marina street"
+  ],
+  "marina_night": [
+   "Marina evening walk",
+   "Marina after dark",
+   "Marina stroll",
+   "Marina nighttime",
+   "Marina outdoors at night"
+  ],
+  "marina_office": [
+   "Marina job",
+   "Marina workplace",
+   "Marina work days",
+   "Marina commute",
+   "Marina employment"
+  ],
+  "masha_dress": [
+   "Masha purchase",
+   "Masha clothing",
+   "Masha shopping",
+   "Masha bought outfit",
+   "Masha spent 4000 rub"
+  ],
+  "masha_pool": [
+   "Masha swimming",
+   "Masha membership",
+   "Masha enrolled",
+   "Masha swim subscription",
+   "Masha joined"
+  ],
+  "masha_return": [
+   "Masha refund",
+   "Masha returned item",
+   "Masha gave back purchase",
+   "Masha store return",
+   "Masha took back"
+  ],
+  "masha_savings": [
+   "Masha saves",
+   "Masha thrifty",
+   "Masha budget",
+   "Masha puts aside",
+   "Masha monthly saving"
+  ],
+  "net_off": [
+   "internet disconnected",
+   "wifi shut down",
+   "unpaid bill",
+   "no connection",
+   "broadband cut",
+   "online service suspended"
+  ],
+  "nornickel_office": [
+   "Nornickel premises shut",
+   "office renovation",
+   "Pyatnitskaya office",
+   "building closed for refurbishment",
+   "Nornickel Moscow office"
+  ],
+  "olga_car": [
+   "Olga vehicle",
+   "Olga compact car",
+   "Olga automobile",
+   "Olga what she drives",
+   "Olga wheels"
+  ],
+  "olga_ielts": [
+   "Olga English exam",
+   "Olga test score",
+   "Olga language certificate",
+   "Olga band score",
+   "Olga English level"
+  ],
+  "olga_kids": [
+   "Olga children",
+   "Olga after-school activities",
+   "Olga school pickup",
+   "Olga extracurricular",
+   "Olga parenting"
+  ],
+  "olga_run": [
+   "Olga jogging",
+   "Olga morning exercise",
+   "Olga cardio",
+   "Olga workout",
+   "Olga sport"
+  ],
+  "olga_ski": [
+   "Olga skiing holiday",
+   "Olga winter sport",
+   "Olga slopes",
+   "Olga yearly trip",
+   "Olga snow sport"
+  ],
+  "olga_teach": [
+   "Olga profession",
+   "Olga job",
+   "Olga teacher",
+   "Olga mathematics",
+   "Olga occupation"
+  ],
+  "olga_wedding": [
+   "Olga marriage",
+   "Olga married",
+   "Olga ceremony",
+   "Olga's nuptials",
+   "Olga got married"
+  ],
+  "peter_bd": [
+   "Peter birth date",
+   "Peter born",
+   "Peter anniversary of birth",
+   "Peter turns a year older",
+   "Peter's age day"
+  ],
+  "pool_hours": [
+   "swimming pool opening hours",
+   "pool closing time",
+   "Sportivnaya",
+   "pool schedule",
+   "pool working hours",
+   "10 pm"
+  ],
+  "provider": [
+   "ISP promise",
+   "internet company",
+   "connection speed restore",
+   "service provider",
+   "bandwidth back in a week"
+  ],
+  "sasha_chess": [
+   "Sasha hobby",
+   "Sasha board game",
+   "Sasha weekend activity",
+   "Sasha chess day",
+   "Sasha game"
+  ],
+  "sasha_pool": [
+   "Sasha swimming",
+   "Sasha swim day",
+   "Sasha weekly sport",
+   "Sasha aquatic",
+   "Sasha swimming schedule"
+  ],
+  "sergey_dog": [
+   "Sergey pet walking",
+   "Sergey puppy",
+   "Sergey canine",
+   "Sergey dog routine",
+   "Sergey walks pet"
+  ],
+  "sergey_fear": [
+   "Sergey aerophobia",
+   "Sergey afraid of flying",
+   "Sergey anxiety",
+   "Sergey travel worry",
+   "Sergey phobia"
+  ],
+  "sergey_flat": [
+   "Sergey apartment",
+   "Sergey rental",
+   "Sergey lives near subway",
+   "Sergey tenant",
+   "Sergey housing"
+  ],
+  "sergey_guitar": [
+   "Sergey music lessons",
+   "Sergey instrument",
+   "Sergey hobby evenings",
+   "Sergey learning music",
+   "Sergey strings"
+  ],
+  "sergey_market": [
+   "Sergey shopping",
+   "Sergey groceries",
+   "Sergey Saturday errand",
+   "Sergey bazaar",
+   "Sergey weekend routine"
+  ],
+  "sergey_nornickel": [
+   "Sergey resigned",
+   "Sergey left job",
+   "Sergey former employer",
+   "Sergey ex-employee",
+   "Sergey dismissed"
+  ],
+  "sergey_pattaya": [
+   "Sergey trip to Thailand",
+   "Sergey destination",
+   "Sergey travel choice",
+   "Sergey flight",
+   "Sergey holiday spot"
+  ],
+  "sonya_pool": [
+   "Sonya swimming",
+   "Sonya swim day",
+   "Sonya weekly sport",
+   "Sonya aquatic",
+   "Sonya swimming schedule"
+  ],
+  "sonya_yoga": [
+   "Sonya exercise",
+   "Sonya morning routine",
+   "Sonya workout",
+   "Sonya stretching",
+   "Sonya fitness"
+  ]
+ }
+}

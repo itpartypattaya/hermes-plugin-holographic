@@ -187,6 +187,19 @@ FACT_EXPERIENCE_SCHEMA = {
 # The arguments each tool takes: a KeyError naming one of them is a missing argument, any other a fault (0.17.8)
 _ARGUMENTS = {schema["name"]: frozenset(schema["parameters"]["properties"])
               for schema in (FACT_STORE_SCHEMA, FACT_FEEDBACK_SCHEMA, FACT_EXPERIENCE_SCHEMA)}
+# The arguments that name one fact, checked as a call comes in: the core coerces only strings to the schema, so a
+# native true or 1.9 reaches the handlers, and int() made them fact #1 (forget erased it). merge's 'from' and
+# fact_experience's correction_refs check their own ids.
+_FACT_ID_ARGUMENTS = {"fact_store": ("fact_id", "supersedes"), "fact_feedback": ("fact_id",)}
+
+
+def _is_fact_id(value) -> bool:
+    """A whole number as a model may send one: 12, "12" or 12.0; never a bool (int(True) is 1) or 1.9."""
+    if isinstance(value, bool):
+        return False
+    if isinstance(value, float):
+        return value.is_integer()
+    return isinstance(value, int) or (isinstance(value, str) and re.fullmatch(r"\s*-?\d+\s*", value) is not None)
 
 # French (after itpartypattaya/hermes-plugin-holographic#86 by maxandrieux): only a sentence that opens with the
 # first-person statement, so a quote ("Paul dit que je préfère …"), a lead-in ("Moi, je préfère …") or a condition
@@ -1772,6 +1785,10 @@ class HolographicMemoryProvider(MemoryProvider):
         if args.get("origin") not in (None, "", *ORIGINS):
             return tool_error("origin must be 'said' (the person said it), 'confirmed' (your conclusion, the person "
                               "agreed) or 'inferred' (your own conclusion).")
+        for key in _FACT_ID_ARGUMENTS.get(tool_name, ()):
+            if args.get(key) is not None and not _is_fact_id(args[key]):
+                return tool_error(f"{key} must be a fact id, a whole number such as 12 (got "
+                                  f"{type(args[key]).__name__}); nothing was changed.")
         if not self._tool_writable and (tool_name == "fact_feedback" or args.get("action") in _WRITE_ACTIONS
                                        or (tool_name == "fact_experience" and args.get("action") == "outcome")):
             return tool_error("The fact store is read-only in this context (subagent, flush, or cron with "

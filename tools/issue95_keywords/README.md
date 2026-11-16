@@ -13,3 +13,17 @@ as written, since picking them over after a run would tune the measurement.
 
 Every file was checked once on entry: every fact key of the set present, none extra, 3–8 keywords of at most 40
 characters each, no comma inside a keyword. The probe stops a run when the plugin does not keep a keyword as written.
+
+## synthetic_zh (issue #95 contribution)
+
+`synthetic_zh.json` (`{synthetic_zh: {fact key "1".."30": [keywords]}}`) accompanies `tools/synthetic_zh.py`, a
+Chinese-heavy synthetic set: 30 generic software-project facts, 36 labelled questions (direct / paraphrase /
+crosslingual / colloquial) and 12 noise rows (6 negative chit-chat + 6 in-domain no-answer). MIT, copyright
+liwangcc; no personal data. 219 keywords, 6–8 per fact.
+
+Written blind by a separate pass that saw only the fact texts and the `keywords` field description — no queries,
+results, or eval README. Disclosure, as provided by the contributor: **information-blind, but not a separate
+session** (the queries existed calendar-wise before the keywords were written, but the writing pass had no access
+to them; a transcript audit found no read of queries/results before the freeze). Frozen before any run with them;
+the file's sha256 is in the PR description. Checked on entry against the same rules: every fact key present, none
+extra, 3–8 keywords of at most 40 characters, no comma inside a keyword.

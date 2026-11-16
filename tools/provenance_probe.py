@@ -609,6 +609,85 @@ def run_household(modes, emb, endpoint, split="all", names_fit="on",
     return rows
 
 
+def run_synthetic_zh(modes, emb, endpoint, extra: dict | None = None) -> list[dict]:
+    """Issue #95 synthetic Chinese-heavy set (tools/synthetic_zh.py): one store, 30 facts,
+    36 labelled questions (direct/paraphrase/crosslingual/colloquial) and 12 noise rows
+    (6 negative chit-chat + 6 in-domain no-answer). Each query carries its text under its
+    own language key (zh/en); crosslingual questions are English text targeting Chinese
+    facts. Rows mirror run_household so the gate pairs them by (set, lang, qid)."""
+    sz = load_contrast("synthetic_zh")
+    sz.self_check()
+    rows = []
+    lang = sz.LANG  # the keywords file key; both arms store under it
+    for mode in modes:
+        p = make_provider(_db(f"prov_synthetic_zh_{mode}.db"), mode, emb, extra)
+        back = store_facts(p, lang, sz.FACTS)
+        probe = Probe(p)
+        coverage = {**(catch_up_vectors(p) if emb == "on" else {}), "kw_facts": _kw_facts(p)}
+        if "vectors" in coverage:
+            print(f"  [synthetic_zh] vectors: {coverage['vectors']} of {coverage['vectors_expected']}")
+        first = len(rows)
+        for qid, q in sz.QUERIES.items():
+            qlang = "en" if "en" in q else "zh"
+            query, targets = q[qlang], set(q["targets"])
+            p.on_session_switch(f"sz_{mode}_{qid}", reset=True)
+            t0 = time.perf_counter()
+            block, ctx = probe.prefetch(query)
+            ms = (time.perf_counter() - t0) * 1000
+            found = parse_ids(block)
+            keys = [back[f] for f in found if f in back]
+            hit = bool(set(keys) & targets) if targets else None
+            hit5 = bool(set(keys[:5]) & targets) if targets else None
+            cov = (len(set(keys) & targets) / len(targets)) if targets else None
+            conf = sorted(set(keys[:5]) - targets)
+            miss, miss_cls = [], "-"
+            for t in q["targets"]:
+                if t in keys[:5]:
+                    continue
+                if t in keys:
+                    miss.append(f"C: below top-5 (pos {keys.index(t) + 1})")
+                else:
+                    cls = classify(next((f for f, k in back.items() if k == t), None), ctx)
+                    miss.append(cls)
+                    if miss_cls == "-":
+                        miss_cls = cls
+            rows.append({"set": "synthetic_zh", "lang": qlang, "mode": mode, "emb": emb,
+                         "split": "all", "slice": q["slice"], "qid": qid,
+                         "kind": "real", "q": query, "keys": keys,
+                         "targets": sorted(targets), "hit": hit, "hit5": hit5,
+                         "cov": cov, "named": [], "confused": conf, "out_n": len(keys),
+                         "wrong": conf, "wrong5": conf, "miss": miss, "miss_cls": miss_cls,
+                         "ms": round(ms, 1),
+                         "sources": {str(f): ctx["tags"].get(f, ["pool-only"]) for f in found},
+                         "pool_n": len(ctx.get("pool") or []),
+                         "gate_called": ctx.get("gate_called"),
+                         "rerank_call": ctx.get("rerank_call"),
+                         "rerank_top5": ctx.get("rerank_top5") or [],
+                         "rank_order": ctx.get("rank_order") or []})
+        for hid, h in sz.CHITCHAT.items():
+            qlang = "en" if "en" in h else "zh"
+            query = h[qlang]
+            p.on_session_switch(f"sz_{mode}_{hid}", reset=True)
+            block, ctx = probe.prefetch(query)
+            found = parse_ids(block)
+            keys = [back[f] for f in found if f in back]
+            rows.append({"set": "synthetic_zh", "lang": qlang, "mode": mode, "emb": emb,
+                         "split": "all", "slice": "chit", "qid": hid, "kind": "chit",
+                         "cat": h["cat"], "q": query, "keys": keys, "targets": [],
+                         "hit": None, "hit5": None, "cov": None, "named": [], "confused": [],
+                         "out_n": len(keys), "wrong": [], "miss": [], "miss_cls": "-", "ms": None,
+                         "sources": {str(f): ctx["tags"].get(f, ["pool-only"]) for f in found},
+                         "pool_n": len(ctx.get("pool") or []),
+                         "gate_called": ctx.get("gate_called"),
+                         "rerank_call": ctx.get("rerank_call"),
+                         "rerank_top5": ctx.get("rerank_top5") or [],
+                         "rank_order": ctx.get("rank_order") or []})
+        for r in rows[first:]:
+            r.update(coverage)
+        p.shutdown()
+    return rows
+
+
 def run_budget(budgets, split="all", repeats=3) -> list[dict]:
     """prefetch_max_tokens (0.21.0) over tools/budget_set.py: one store per budget, the same facts in the same order
     (so the same ids), the changed facts stored first with their old text and then changed. Per question: hit (every
@@ -943,6 +1022,8 @@ def main(argv):
             elif args.set == "household":
                 rows = run_household(modes, emb, args.endpoint, split=args.split,
                                      names_fit=args.names_fit)
+            elif args.set == "synthetic_zh":
+                rows = run_synthetic_zh(modes, emb, args.endpoint)
             else:
                 rows = run_contrast(args.set, modes, emb, args.endpoint)
             suffix = "" if args.set != "household" else (

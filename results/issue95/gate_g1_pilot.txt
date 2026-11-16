@@ -1,0 +1,25 @@
+
+== embed_text content vs content+keywords | 340 real, 220 other rows | git_sha b1a3d73201f06bbbdf21cf6e9ffc98aabc6ec2e1 | https://api.openai.com/v1/text-embedding-3-small (1536 dims) | keywords ['4071638ac924', '76a3a39a56e8', '7c16f1dd6b87', '7c9912d1ee33', 'f3141822fe54'] half:seed=95 | splits ['all', 'test']
+hit@5: 289/340 -> 289/340; b=1 rescued, c=1 lost, exact McNemar p=1.0000
+target anywhere in the output: 289/340 -> 289/340; b=1, c=1, p=1.0000
+facts by meaning in the output: 34 -> 31
+lost targets in the top five (1): household q067:irina_walk, zh
+gained targets in the top five (1): household q056:keys_hook, ru
+  contrast_en/contrast_en: 30 real, b=0, c=0
+  contrast_ru/contrast_ru: 30 real, b=0, c=0
+  contrast_zh/contrast_zh: 30 real, b=0, c=0
+  household/en: 30 real, b=0, c=0
+  household/ru: 30 real, b=1, c=0
+  household/zh: 30 real, b=0, c=1
+  multi/de: 20 real, b=0, c=0
+  multi/en: 20 real, b=0, c=0
+  multi/it: 20 real, b=0, c=0
+  multi/ja: 20 real, b=0, c=0
+  multi/nl: 20 real, b=0, c=0
+  multi/ru: 20 real, b=0, c=0
+  multi/th: 20 real, b=0, c=0
+  multi/zh: 20 real, b=0, c=0
+  FAIL  gain: McNemar p < 0.05 with b > c (b=1, c=1, p=1.000)
+  PASS  noise: added 2 - removed 3 <= 0
+  PASS  confusion: added 0 - removed 1 <= 0
+  => gate G1 DOES NOT PASS on these files

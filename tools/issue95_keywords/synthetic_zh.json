@@ -1,0 +1,283 @@
+{
+ "synthetic_zh": {
+  "1": [
+   "服务端",
+   "backend",
+   "web framework",
+   "Python",
+   "async",
+   "技术栈",
+   "ASGI"
+  ],
+  "2": [
+   "database",
+   "DB",
+   "pg",
+   "关系型存储",
+   "持久化",
+   "对象关系映射",
+   "数据访问层"
+  ],
+  "3": [
+   "frontend",
+   "SPA",
+   "网页界面",
+   "UI",
+   "JavaScript",
+   "打包工具",
+   "bundler",
+   "客户端"
+  ],
+  "4": [
+   "reverse proxy",
+   "web server",
+   "WSGI",
+   "应用服务器",
+   "上线",
+   "生产环境",
+   "deploy"
+  ],
+  "5": [
+   "cache",
+   "session",
+   "内存数据库",
+   "键值",
+   "key-value",
+   "登录状态",
+   "NoSQL"
+  ],
+  "6": [
+   "message queue",
+   "消息中间件",
+   "异步任务",
+   "后台作业",
+   "background jobs",
+   "worker",
+   "task queue",
+   "AMQP"
+  ],
+  "7": [
+   "logging",
+   "structured logs",
+   "结构化",
+   "log format",
+   "可观测性",
+   "收集",
+   "ELK"
+  ],
+  "8": [
+   "unit test",
+   "coverage",
+   "80%",
+   "测试框架",
+   "自动化测试",
+   "testing",
+   "质量门槛"
+  ],
+  "9": [
+   "持续集成",
+   "continuous integration",
+   "流水线",
+   "pipeline",
+   "workflow",
+   "自动化构建",
+   "提交触发"
+  ],
+  "10": [
+   "environment variables",
+   ".env",
+   "config",
+   "secrets",
+   "凭证",
+   "API key",
+   "settings"
+  ],
+  "11": [
+   "认证",
+   "authentication",
+   "auth",
+   "token",
+   "有效期",
+   "登录态",
+   "身份验证",
+   "expiry"
+  ],
+  "12": [
+   "object storage",
+   "S3",
+   "OSS",
+   "upload",
+   "附件",
+   "云存储",
+   "bucket"
+  ],
+  "13": [
+   "ES",
+   "search engine",
+   "full-text search",
+   "检索",
+   "倒排索引",
+   "搜索引擎",
+   "关键词查询"
+  ],
+  "14": [
+   "monitoring",
+   "metrics",
+   "指标",
+   "dashboard",
+   "告警",
+   "可观测性",
+   "仪表盘",
+   "alerting"
+  ],
+  "15": [
+   "k8s",
+   "container",
+   "orchestration",
+   "集群",
+   "镜像",
+   "云原生",
+   "pod"
+  ],
+  "16": [
+   "migration",
+   "schema",
+   "表结构变更",
+   "DDL",
+   "升级脚本",
+   "回滚",
+   "建表"
+  ],
+  "17": [
+   "cross-origin",
+   "同源策略",
+   "gateway",
+   "预检",
+   "preflight",
+   "Access-Control-Allow-Origin",
+   "浏览器报错"
+  ],
+  "18": [
+   "rate limit",
+   "throttling",
+   "QPS",
+   "流控",
+   "token bucket",
+   "频率限制",
+   "防刷",
+   "100/s"
+  ],
+  "19": [
+   "error response",
+   "error handling",
+   "异常处理",
+   "报错",
+   "错误码",
+   "状态码",
+   "返回体"
+  ],
+  "20": [
+   "API docs",
+   "documentation",
+   "接口说明",
+   "接口文档",
+   "spec",
+   "API reference"
+  ],
+  "21": [
+   "蓝绿部署",
+   "发布策略",
+   "零停机",
+   "zero-downtime",
+   "release",
+   "rollout",
+   "不中断服务"
+  ],
+  "22": [
+   "备份",
+   "恢复演练",
+   "灾备",
+   "disaster recovery",
+   "每晚",
+   "数据恢复",
+   "snapshot",
+   "每月"
+  ],
+  "23": [
+   "encryption",
+   "PII",
+   "隐私数据",
+   "个人信息",
+   "脱敏",
+   "data protection",
+   "at rest"
+  ],
+  "24": [
+   "canary",
+   "金丝雀",
+   "canary release",
+   "5%",
+   "gradual rollout",
+   "渐进式上线",
+   "分批放量"
+  ],
+  "25": [
+   "tracing",
+   "distributed tracing",
+   "调用链",
+   "OTel",
+   "trace",
+   "可观测性",
+   "Jaeger",
+   "分布式追踪"
+  ],
+  "26": [
+   "static assets",
+   "内容分发",
+   "content delivery network",
+   "边缘节点",
+   "图片",
+   "JS/CSS",
+   "前端文件"
+  ],
+  "27": [
+   "password",
+   "hashing",
+   "加盐",
+   "bcrypt",
+   "口令",
+   "散列",
+   "password storage",
+   "salt"
+  ],
+  "28": [
+   "API versioning",
+   "版本号",
+   "v2",
+   "路由前缀",
+   "向后兼容",
+   "版本管理",
+   "path prefix"
+  ],
+  "29": [
+   "health check",
+   "liveness",
+   "readiness",
+   "探针",
+   "probe",
+   "存活检测",
+   "心跳",
+   "服务状态"
+  ],
+  "30": [
+   "batch job",
+   "cron",
+   "定时任务",
+   "夜间",
+   "调度",
+   "scheduled",
+   "off-peak",
+   "离线作业"
+  ]
+ }
+}

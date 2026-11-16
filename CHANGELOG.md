@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.29.0 — 2026-11-16
 
 ### Diagnostics
 - **The journal says why the reranker did or did not order a recall.** With `rerank: on` and `experience_trace: on`,
@@ -30,6 +30,18 @@
   noise and confusion as rows added minus rows removed, at most 0; two arms that differ in anything but the vector
   text are refused. `--pair margin` is the PR #17 gate (`--margin-pair` still works). Keywords for the probe's sets,
   written blind by a separate agent that saw only the facts and the field's description: `tools/issue95_keywords/`.
+- **A Chinese set for the probe**, `--set synthetic_zh`,
+  [#102](https://github.com/itpartypattaya/hermes-plugin-holographic/pull/102) by @liwangcc — thank you: 30 generic
+  software-project facts, 36 labelled questions (direct, paraphrase, crosslingual, colloquial) and 12 noise rows,
+  with keywords written blind on the contributor's side (`tools/issue95_keywords/synthetic_zh.json`, pinned to LF so
+  its recorded hash holds on any checkout). It has no curated confusers, so the gate reads its confusion as
+  "non-target in the top five" (`wrong5`).
+- **Result for #95: keywords in a fact's vector give no measurable gain**, so the vector stays the content alone.
+  The pilot on five sets (text-embedding-3-small, half coverage: 289/340 → 289/340), the contributor's own runs on
+  bge-m3 (one target rescued, none lost) and `synthetic_zh` on text-embedding-3-small (29/36 → 29/36 at full
+  coverage, 19/36 → 19/36 at half) all leave gate G1 failing, with noise and confusion unchanged. The keywords
+  already reach recall through the word search. Rows and gate reports:
+  [results/issue95/](results/issue95/README.md) (#104).
 
 ### Tests
 - Three more timing tests no longer depend on the runner's speed; on the macOS runner they failed four times in six

@@ -675,7 +675,7 @@ def run_synthetic_zh(modes, emb, endpoint, extra: dict | None = None) -> list[di
                          "split": "all", "slice": "chit", "qid": hid, "kind": "chit",
                          "cat": h["cat"], "q": query, "keys": keys, "targets": [],
                          "hit": None, "hit5": None, "cov": None, "named": [], "confused": [],
-                         "out_n": len(keys), "wrong": [], "miss": [], "miss_cls": "-", "ms": None,
+                         "out_n": len(keys), "wrong": [], "wrong5": [], "miss": [], "miss_cls": "-", "ms": None,
                          "sources": {str(f): ctx["tags"].get(f, ["pool-only"]) for f in found},
                          "pool_n": len(ctx.get("pool") or []),
                          "gate_called": ctx.get("gate_called"),

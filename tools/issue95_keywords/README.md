@@ -24,6 +24,16 @@ liwangcc; no personal data. 219 keywords, 6–8 per fact.
 Written blind by a separate pass that saw only the fact texts and the `keywords` field description — no queries,
 results, or eval README. Disclosure, as provided by the contributor: **information-blind, but not a separate
 session** (the queries existed calendar-wise before the keywords were written, but the writing pass had no access
-to them; a transcript audit found no read of queries/results before the freeze). Frozen before any run with them;
-the file's sha256 is in the PR description. Checked on entry against the same rules: every fact key present, none
-extra, 3–8 keywords of at most 40 characters, no comma inside a keyword.
+to them; a transcript audit found no read of queries/results before the freeze). Frozen before any run with them.
+Hash chain: frozen `blind_keywords.json`, sha256
+`eef343b0689afd7e356fa5e7839323e8571ee077316ca2630688682338426607` → reshaped to `{lang: {key: [...]}}` with
+nothing else changed (same 30 keys, same 219 keywords, same order) → this file, sha256
+`0cbae96e2265a597c1d8871b000bd3dc5e495d318238bd043cd76e08f4acf4f7` as committed (LF line endings). A working
+copy of the identical content with CRLF endings has sha256
+`ce260e160536973e277ec460b98d7940db08d0ffc64954fcecad932a93735612` — that is the hash the original PR
+description quoted; the committed LF bytes are what the probe reads and records. Checked on entry against the
+same rules: every fact key present, none extra, 3–8 keywords of at most 40 characters, no comma inside a keyword.
+
+The set has no curated confusers, so its confusion figure is "non-target in the top five" — the same measure as
+multi's `wrong5`, not household's curated-confuser count. The gate reads it through the `wrong5` branch of
+`_confused`; the figure is a precision proxy, identical in both arms.

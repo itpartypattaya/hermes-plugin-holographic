@@ -141,17 +141,17 @@ def report(path: str) -> None:
 
 
 def _confused(r: dict) -> bool:
-    """A confuser in the top five, read from the row's OWN field: household stamps `confused`, multi a
-    `wrong5` list, contrast a boolean `wrong` already computed against the top five.
+    """A confuser in the top five, read from the row's OWN field: household stamps `confused`, multi and
+    synthetic_zh a `wrong5` list, contrast a boolean `wrong` already computed against the top five.
 
     No fallback between the fields: multi's `wrong` covers the whole output, so an empty `wrong5` with a
     foreign key below the fifth position is not confusion — counting it anyway inflates the default side
     and hides a rise (the reviewer's reproduction of PR #31: top-five confusion 0 -> 1, reported 1 -> 1,
     gate passes)."""
     row_set = r.get("set")
-    if row_set in ("household", "synthetic_zh"):
+    if row_set == "household":
         field = "confused"
-    elif row_set == "multi":
+    elif row_set in ("multi", "synthetic_zh"):
         field = "wrong5"
     elif row_set in ("contrast_ru", "contrast_en", "contrast_zh"):
         field = "wrong"

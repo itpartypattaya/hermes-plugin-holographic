@@ -1,0 +1,4 @@
+# Keyword files are frozen measurement inputs: the probe records the sha256 of the
+# bytes it reads, so pin LF to keep the as-committed hash stable on any checkout
+# (same pattern as the root .gitattributes for *.py).
+*.json text eol=lf

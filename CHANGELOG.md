@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+- **Flushing recall counts leaves the connection's lock wait as it found it.** The flush writes with busy timeout 0
+  (it never waits on another process) and then set the timeout to a fixed 10 s instead of the value it read; the
+  scrub after forget and the experience prune already restore what they read. Today the connection opens with 10 s,
+  so nothing changed in practice; the fixed value would have overwritten any other setting of the shared connection.
+  Tests: `tests/test_holographic_recall_counts_timeout.py`.
+
 ## 0.29.0 — 2026-11-16
 
 ### Diagnostics

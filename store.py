@@ -678,6 +678,8 @@ class MemoryStore(EntityMixin, GraphMixin, HistoryMixin, ExperienceMixin):
         if not rows:
             return True
         with self._lock:
+            # restore what was set, as the scrub and the experience prune do: the connection is shared by the process
+            timeout = self._conn.execute("PRAGMA busy_timeout").fetchone()[0]
             self._conn.execute("PRAGMA busy_timeout = 0")
             try:
                 before = self._conn.total_changes
@@ -689,7 +691,7 @@ class MemoryStore(EntityMixin, GraphMixin, HistoryMixin, ExperienceMixin):
                 logger.debug("holographic: recall counts deferred (%s)", error_kind(exc))
                 return False
             finally:
-                self._conn.execute("PRAGMA busy_timeout = 10000")
+                self._conn.execute(f"PRAGMA busy_timeout = {int(timeout)}")
 
     def record_feedback(self, fact_id: int, helpful: bool) -> dict:
         """Adjust trust asymmetrically: helpful -> +0.05 and helpful_count += 1; unhelpful -> -0.10.

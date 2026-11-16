@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Tests
+- Three more timing tests no longer depend on the runner's speed; on the macOS runner they failed four times in six
+  runs of 12–15 November and passed when run again. The two one-slot server tests of 0.16.3 slept 20 ms and
+  assumed the batch held the slot by then; the message now goes out once the batch holds it, and the batch ends
+  0.4 s (0.35 s) after the message reached the server, so the order no longer rests on a sleep. The drip test
+  checked a 0.8 s bound for a 0.5 s timeout and took 0.87 s there; it now checks that the caller is back before
+  the server has sent its headers' last byte (1.7 s in, 2.4 s in chunked mode), which a wait the drip holds
+  cannot be. The linear-time test of 0.16.1 had a 0.5 s limit that the tabs took 0.57–0.65 s to read there;
+  it now compares one read of the text with sixteen reads of a sixteenth of it — about as long when linear,
+  sixteen times longer when quadratic, at most four times allowed. No plugin code changed; each test still fails
+  with its fix undone.
+
 ## 0.28.0 — 2026-11-15
 
 ### Added

@@ -302,12 +302,23 @@ def test_a_tombstone_written_by_0160_is_still_read(store):
                          ids=["spaces", "guillemets", "curly", "single", "straight", "backticks", "aka", "tabs"])
 def test_long_adversarial_text_is_read_in_linear_time(store, text):
     """Review 0.16.1: a leading run of spaces in the "aka" pattern and unbounded quoted spans were quadratic (10,000
-    spaces: 1.1 s per fact; three such facts held the rebuild's write lock for 6.5 s)."""
+    spaces: 1.1 s per fact; three such facts held the rebuild's write lock for 6.5 s).
+
+    Measured against the same text in pieces rather than a fixed limit, which a slow runner crossed in linear time
+    (macOS CI: 0.65 s for the tabs): reading the text once is as much work as reading a sixteenth of it sixteen times
+    when the text is read in linear time, and sixteen times more when quadratic. The two take about as long, so a busy
+    machine slows both alike; taken in turns, the fastest of three each, so a pause in one does not count."""
     import time
-    started = time.perf_counter()
-    store._extract_entities(text)
-    store.mentioned_entity_ids(text)
-    assert time.perf_counter() - started < 0.5
+
+    def took(sample, reads):
+        started = time.perf_counter()
+        for _ in range(reads):
+            store._extract_entities(sample)
+            store.mentioned_entity_ids(sample)
+        return time.perf_counter() - started
+
+    whole, pieces = zip(*[(took(text, 1), took(text[:len(text) // 16], 16)) for _ in range(3)])
+    assert min(whole) < 4 * min(pieces)
 
 
 def test_a_declared_name_keeps_its_leading_dot(store):

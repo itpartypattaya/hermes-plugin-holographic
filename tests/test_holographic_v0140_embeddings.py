@@ -812,17 +812,22 @@ def test_a_server_that_drips_its_answer_is_cut_off_at_the_timeout():
 
 class _DripHandler(BaseHTTPRequestHandler):
     """Never quiet long enough for a socket timeout: headers a byte at a time, or a chunked body whose chunk-size line
-    never ends."""
+    never ends. *late* is set just before the last byte of what precedes the endless part — the end of the headers
+    in chunked mode — is sent: 1.7 s in, or 2.4 s, and later on a slow machine."""
     mode = "headers"
+    late = threading.Event()
 
     def do_POST(self):
         self.rfile.read(int(self.headers["Content-Length"]))
+        head = b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n"
         if type(self).mode == "headers":
-            head = b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nX-Slow: " + b"a" * 200
+            head, endless = head + b"X-Slow: ", b"a" * 200
         else:
-            head = b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nTransfer-Encoding: chunked\r\n\r\n0" + b"0" * 200
+            head, endless = head + b"Transfer-Encoding: chunked\r\n\r\n", b"0" * 201
         try:
-            for byte in head:
+            for i, byte in enumerate(head + endless):
+                if i == len(head) - 1:
+                    type(self).late.set()
                 self.wfile.write(bytes([byte]))
                 self.wfile.flush()
                 time.sleep(0.03)
@@ -835,15 +840,19 @@ class _DripHandler(BaseHTTPRequestHandler):
 
 @pytest.mark.parametrize("mode", ["headers", "chunked"])
 def test_a_request_never_outlives_its_timeout(mode):
+    """The caller's wait ends at its 0.5 s timeout, not when the server stops dripping. Judged by how far the server
+    had got when the caller came back, not by a fixed limit on the clock, which a slow runner overran with the wait
+    bounded (macOS CI: 0.87 s): a wait the drip held — to its end, or to the end of the headers in chunked mode, where
+    the body's own deadline then ends it — comes back only after *late* was set."""
     _DripHandler.mode = mode
+    _DripHandler.late = threading.Event()
     server = ThreadingHTTPServer(("127.0.0.1", 0), _DripHandler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     try:
         e = embeddings.Embedder(embeddings.Settings({"embedding_url": f"http://127.0.0.1:{server.server_address[1]}/v1",
                                                      "embedding_timeout": 0.5}))
-        t = time.monotonic()
         assert e.embed(["x"]) is None
-        assert time.monotonic() - t < 0.5 + 0.3
+        assert not _DripHandler.late.is_set()
         assert e.status().startswith("paused after an error (no answer")
         # issue #26: the request the caller gave up on must actually end — without the caller's shutdown the
         # header-drip mode leaves its worker reading for ~7 s, past the join(3) below. The shutdown ends the read

@@ -3,6 +3,12 @@
 ## Unreleased
 
 ### Fixes
+- **A fact id that is not a whole number is refused, never read as fact #1.** Hermes core coerces only string
+  arguments to the schema, so a native `true`, `false` or `1.9` in `fact_id` (or `supersedes` on `add`) reached the
+  handlers, and `int()` made it fact #1 or #0: `fact_store(action="forget", fact_id=true)` erased fact #1 for good,
+  and `change`, `correct`, `end`, `remove` and `fact_feedback` acted on it. Such a call now answers
+  `fact_id must be a fact id, a whole number such as 12` and changes nothing; `12`, `"12"` and `12.0` work as before.
+  Tests: `tests/test_holographic_fact_id_type.py`.
 - **Flushing recall counts leaves the connection's lock wait as it found it.** The flush writes with busy timeout 0
   (it never waits on another process) and then set the timeout to a fixed 10 s instead of the value it read; the
   scrub after forget and the experience prune already restore what they read. Today the connection opens with 10 s,

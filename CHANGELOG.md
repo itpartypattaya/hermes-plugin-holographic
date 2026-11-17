@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+- **A number, a time or a date in a message no longer stops recall before a turn, nor recalls a fact by itself.**
+  Every word with a digit counted as an identifier, and a message naming an identifier recalls only facts that hold
+  it — a rule meant for `pve-01` and `v0.21.6`. So "Сегодня 17.11, на каком байке ездит Антон?", "Where is the
+  backup server located in 2026?" or "…, нужно до 18:00" recalled nothing, while "Wake me up at 15:30" brought a
+  ballet class at 15:30 and "Give me 3 reasons…" a printer with 3 trays. A count or a year of up to four digits, a
+  time (`15:30`, `9.30`, `5pm`) and a date (`17.11`, `17.11.2026`, `20/06`, `2026-11-17`) are now ordinary words of
+  the message: they count towards coverage, but a fact needs a word of the message besides them. Identifiers of any
+  other shape (`pve-01`, `v0.21.6`, `HR24`, `10.0.0.5`, `3.8.6`, a phone or order number) stay required and
+  decisive. `fact_store search` is unchanged. Tests: `tests/test_holographic_numbers_in_recall.py`.
+
 ## 0.29.2 — 2026-11-17
 
 ### Fixes

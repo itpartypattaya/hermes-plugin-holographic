@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.29.3 — 2026-11-18
 
 ### Fixes
 - **A number, a time or a date in a message no longer stops recall before a turn, nor recalls a fact by itself.**

@@ -32,6 +32,13 @@ _ROLE_ENTITY, _ROLE_CONTENT = hrr.ROLE_ENTITY, hrr.ROLE_CONTENT
 # tokens unicode61 indexed, adjacent (deleting them gave "pve01", which matches nothing).
 _FTS_OPERATORS = str.maketrans({c: " " for c in '"()*^:-+'})
 _RE_UNSEGMENTED = UNSEGMENTED
+# A count or a year ("3", "2026"), a time ("15:30", "9.30", "5pm") or a date ("17.11", "17.11.2026", "20/06",
+# "2026-11-17"): is_identifier keeps it exact, but it says when or how many, not what a message is about. In relevant()
+# it is one of the message's words, never required of a fact nor enough on its own (review 2026-11-17, H1: "Сегодня
+# 17.11, на каком байке ездит Антон?" recalled nothing, "Wake me up at 15:30" a ballet class at 15:30). A longer
+# number (a phone, an order) and the other shapes ("10.0.0.5", "3.8.6", "pve-01") stay identifiers.
+_PLAIN_NUMBER = re.compile(r"\d{1,4}|\d{1,2}(?:[:.]\d{2})?(?:am|pm)|\d{1,2}:\d{2}"
+                           r"|\d{1,2}[./]\d{1,2}(?:[./](?:\d{2}|\d{4}))?|\d{4}-\d{2}-\d{2}")
 # A letter or digit written against unsegmented script ("用keyring保存"): FTS5 holds the two as one token (_glued).
 # One character of that script, not a run (Codex review on GitHub: UNSEGMENTED's runs made a long run with no letter
 # after it n² steps, 16 s for 30,000 characters).
@@ -998,7 +1005,8 @@ class FactRetriever:
                         (char_cov >= max(0.5, min_coverage) and two):
                     gram_kept.append(f)
         terms = [t for t in query_terms(_RE_UNSEGMENTED.sub(" ", query or "")) if t.word]
-        identifiers = [t for t in terms if t.identifier]
+        numbers = {t for t in terms if t.identifier and _PLAIN_NUMBER.fullmatch(t.word)}  # words, not identifiers
+        identifiers = [t for t in terms if t.identifier and t not in numbers]
         if identifiers:  # "hr-vps" inside Chinese text: the character overlap must not stand in for the host
             gram_kept = [f for f in gram_kept
                          if any(t.found_in(analyze(_fact_text(f))) for t in identifiers)]
@@ -1050,7 +1058,8 @@ class FactRetriever:
                     strength[t] = 1.0
             # A root alone never recalls: suffix rules cannot tell a derivation from a look-alike ("войной" / "вой",
             # "полный" / "пол"), so a fact needs a word of the message itself, and its roots only add to that.
-            exact = any(s == 1.0 for s in strength.values())
+            # A shared number is no such word either: "Give me 3 reasons" is not about the printer with 3 trays.
+            exact = any(s == 1.0 for t, s in strength.items() if t not in numbers)
             # One shared word picks a fact out only when no other fact holds it: "What day is today?" shares "day"
             # with everything that happens every day and is about none of it. A message of that word alone ("Lena?")
             # is about it, and so is one that may name someone inside the sentence ("What is Dina studying?" of
@@ -1060,7 +1069,7 @@ class FactRetriever:
             lone = len(terms) > 1 and len(matched) == 1 and freq[matched[0]] > 1 \
                 and any(c.lower() != c.upper() for c in matched[0].word) and matched[0].keys.isdisjoint(name_keys) \
                 and held_by_others(matched[0])
-            if any(t.identifier and s for t, s in strength.items()) or fact in gram_kept or (
+            if any(t.identifier and t not in numbers and s for t, s in strength.items()) or fact in gram_kept or (
                     exact and not lone and sum(weights[t] * s for t, s in strength.items()) / total >= min_coverage):
                 kept.append(fact)
             elif self.clause_coverage and exact and not grams:

@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+- **The store opens against current hermes-agent `main` again.** `hermes_state_wal` was removed upstream, so
+  constructing `MemoryStore` failed with `ModuleNotFoundError` and was reported as a damaged `memory_store.db`.
+  Both helpers now come from the public `sqlite_support` API, falling back to their previous locations on cores
+  that predate it. A broken dependency or a circular import inside `sqlite_support` still raises instead of
+  silently downgrading the store to the legacy helpers.
+  Tests: tests/test_sqlite_support_import.py.
+
 ## 0.29.3 — 2026-11-18
 
 ### Fixes

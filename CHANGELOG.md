@@ -1,5 +1,99 @@
 # Changelog
 
+## Unreleased
+
+Fixes of the review of 2026-11-17 (H2–H17).
+
+### Fixes
+- **Tags, the category and the names given with a fact are screened as its text is.** Only `content` and `keywords`
+  were: `add {tags: "password=…"}` was stored, `update {tags: "token=…"}` updated, an instruction to the assistant in
+  the tags was kept, and a token given in `entities` became an entity — and all of it came back in `search`, `list`
+  and `entities`. A credential, an instruction or invisible characters in `tags` or `category` now refuse the write
+  (`Not stored: tags: …`), as in the text. Such a name in `entities` is not linked: the fact is stored and the answer
+  names the name's position in `entities_not_linked` (not its text), as for other refused names since 0.17.6; `alias`
+  and `rename` refuse it. Ordinary tags and names are stored as before. Tests:
+  `tests/test_holographic_labels_screened.py`.
+- **A scheduled job no longer brings back a forgotten text by changing another fact into it.** Only a plain `add`
+  from a cron job checked the forget tombstones; `change`, `add` with `supersedes`, `update {content}` and
+  `correct {content}` answered `changed` with the forgotten text — hermes-dreaming's nightly agent changes facts this
+  way. They now answer as the plain add does (`status: "forgotten"`, `stored: false`, `forgotten_fact_id`), and the
+  other fact stays as it was. A person in a chat may still say it again. Tests:
+  `tests/test_holographic_cron_forgotten.py`.
+- **One fact the embeddings endpoint refuses no longer stops search by meaning for everyone.** A text the endpoint
+  refused as input (HTTP 400, 413 or 422, as a text too long for the model) was in every turn's batch, and each
+  refusal paused the endpoint, up to 900 s: no fact got a vector, nor did the message. Now a refused batch goes again
+  in halves the same turn, the others get their vectors, and the one refused text is set aside (an empty vector of
+  its present text) until it changes; `stats` → `search_by_meaning` counts it as `refused_by_endpoint`. When the
+  endpoint refuses a plain text too, it is the endpoint or a setting, and it pauses as before; a key (401, 403), a
+  limit (429) or a server down (5xx) also pause as before. Tests: `tests/test_holographic_embeddings_rejected_input.py`.
+- **A Russian name in another case is linked to its entity.** «Подарок для Мии» was not linked to «Мия» unless the
+  agent passed `entities`, so `probe`, `related` and `reason` on Мия missed it: short names (Мия, Анна, Оля, Ира,
+  Ева, Илья…) have stems too short to be keys of a plain text, and Snowball stems «Андрея» and «Андрей» apart. A word
+  with a capital now mentions a name word that is its first form, as recall already reads names; a lower-case word
+  never does («в мае» is no Мая). So a message naming a person in any case brings that person's facts before a turn,
+  as «Яна, …» always did, and the checks at write time see the same person. Tests:
+  `tests/test_holographic_name_case_forms.py`; two tests of 0.18.3 that held «Яне» to naming no one now hold it to
+  what «Яна» does (`tests/test_holographic_name_cases.py`).
+- **A full name in another case is the known entity, and a deleted name stays deleted in every case.** «Анне
+  Петровой исполнилось 30» made an entity «Анне Петровой» beside «Анна Петрова»; after `delete_entity "Пётр Иванов"`
+  a fact saying «Петру Иванову…» brought the name back. A name of up to three words is read in its first form too;
+  a word ending in «-а» / «-я» only as written, so «Александра Петрова» stays her own name — and so «Петра Иванова»
+  and the instrumental of men's surnames («Петром Ивановым») are not folded yet.
+- **A lower-case common word is no mention of a one-word name.** «В мире много мест», «варю кофе», «машу рукой»,
+  «гены родителей» were linked to a declared Мира, Варя, Маша, Гена (a shared stem), came up in `probe` / `reason`
+  for them, and a message with such a word brought their facts before a turn. A Russian one-word name written with a
+  capital is now mentioned by a word with a capital in any case form («Мире», «Маше», «Вари»), or in lower case only
+  as written («что марк ест?»). Latin names, names written in lower case and names in scripts without case match as
+  before. A common word opening a sentence («Машу рукой…») may still be read as the name; text in capitals («МАША
+  ПРИДЁТ») and a lower-case case form («маше») no longer link, and are still found by search. Tests:
+  `tests/test_holographic_common_words_not_names.py`.
+- **Markdown glued to a word no longer hides it from search.** `` `pve-01` ``, `**pve-01**`, `scooter*` and `-server`
+  found nothing, and the same marks in a fact hid its word from a bare query; an agent hearing "nothing" could store
+  the fact again. Backticks and stars at a word's edges and a list dash before a word are read as punctuation; `_`,
+  `~`, `--flags` and negative numbers are unchanged, and the marks never reach FTS5 as syntax. Tests:
+  `tests/test_holographic_search_markup.py`.
+- **`reason` with a Chinese name finds what `search` finds.** `reason(["醫生"])` dropped a fact written «医生»: the
+  name was compared as typed, while search reads Traditional and Simplified characters as one; it is now compared
+  with the fact's folded text and tags. Tests: `tests/test_holographic_reason_han_variants.py`.
+- **`merge` names the fact that is missing.** `merge {fact_id: 1, from: [999]}` answered «fact #1 does not exist»;
+  it now names #999.
+- **In per-user memory one person's damaged database turns memory off for that person only.** Its «Unavailable this
+  session: cannot open …/telegram-222.db» stayed for the whole session: every other person's prompt carried it, with
+  the path of somebody else's file, and their tool calls were refused. Now it is said only on that person's turns.
+- **A mirrored memory entry replaced by a text the screen keeps out leaves no old copy** (`mirror_memory_writes`,
+  off by default). The old text stayed a current fact although the entry it mirrored was gone; it is now forgotten,
+  as a removed entry's copy is.
+- **A sync left running after `shutdown()` no longer reopens the database and writes to it.**
+- **A search query over 4000 characters is refused at once**, with a hint to search for the words or names the
+  answer would hold: 48 000 characters held the provider for 17 s. Recall before a turn already read 4000.
+- Small answers: `action` given as a list is an error answer, not an exception; `correct` with keywords alone points
+  to `update`; `update` of an ended fact says it ended and how to revert, of a missing one that it does not exist (it
+  answered `{"updated": false}`); `min_trust`'s description says what each action takes by default (0.3 for search,
+  probe, related and reason; 0 for list, export and contradict — as before); `memory_map --tz Nope/Zone` says the
+  zone is unknown (exit 2) instead of a traceback, and a confirmation is shown with the person's latest name, not the
+  name of whichever fact came last. Tests: `tests/test_holographic_small_answers.py`.
+
+### Screen
+- **Secrets written as people write them are refused.** «Пароль Антона — Qwerty123» (a name and a dash), «пароль у
+  него Qwerty123», `pass: …` and `pw: …` before a separator, a password of Latin letters after a Russian «пароль:»
+  («пароль: correcthorse»), a seed phrase of 12–24 words after its name, Stripe keys (`sk_live_…`, `rk_test_…`), a
+  2FA / TOTP secret, and a Slack or Discord webhook by its address alone. An instruction to drop the rules in
+  full-width letters or with a Cyrillic letter in a Latin word ("Ignоre all previous instructions") is one, and a
+  negation particle of another language after an English instruction no longer turns it into a reminder.
+  Not covered, by design: paraphrases outside the list of classic phrasings («Забудь всё, что тебе говорили») and a
+  seed phrase of bare words with no name before it.
+- **Everyday facts are no longer refused.** Keys to a flat, a bike or a door («Нужно отправить Ксюше ключи от
+  квартиры в субботу»; keys «от сервера», «от кошелька» are still credentials), the tokens a model counts («токены
+  GPT-4o по тарифу») and the API key of a service named after it («ключ API Яндекс.Метрики»).
+  Tests: `tests/test_holographic_screen_gaps.py`. `tests/test_holographic_screen_speed.py` now holds the screen to a
+  full scan of its current patterns (what 0.22.1's tries at the starts must give) and to 0.22.0's decisions on every
+  string of the older tests; the patterns changed on purpose are listed there with the reason.
+- **Role markup and markdown images are found in linear time.** `_recall_problem` spent seconds on 10 000 blank lines
+  inside a text (up to about 6 s for lines holding a space or CRLF) and about a second on 10 000 `![`; a megabyte of
+  either now takes under a quarter second. The same texts are refused as before. Tests:
+  `tests/test_holographic_screen_linear.py`.
+- hermes-dreaming vendors part of `screen.py`: its copy needs refreshing to get these.
+
 ## 0.29.3 — 2026-11-18
 
 ### Fixes

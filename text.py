@@ -1304,14 +1304,22 @@ _PT_CLITICS = frozenset("se me te lhe lhes nos vos o a os as lo la los las no na
 _CONTROL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]")
 
 
+# Markdown an agent glues to a word: a code span (`pve-01`), bold or italics with stars (**pve-01**, scooter*). Not
+# "_": it opens and ends identifiers ("__init__.py", "_private"), and not "~" ("~/.hermes"). Review 2026-11-17, H11:
+# "`pve-01`" was a term no fact holds, and search answered "nothing" for a fact the bare word finds.
+_MARKUP = "`*"
+
+
 def _edge(c: str) -> bool:
-    return c in PUNCT or (not c.isascii() and unicodedata.category(c)[0] == "P")
+    return c in PUNCT or c in _MARKUP or (not c.isascii() and unicodedata.category(c)[0] == "P")
 
 
 def _strip_edges(token: str) -> str:
     i, j = 0, len(token)
     while i < j and _edge(token[i]):
         i += 1
+    if token[i:i + 1] == "-" and token[i + 1:i + 2].isalpha():  # a list dash with no space after it: "-server" (H11);
+        i += 1  # not a flag ("--force") or a negative number ("-5")
     while j > i and _edge(token[j - 1]):
         j -= 1
     return token[i:j]

@@ -173,7 +173,7 @@ def test_a_paraphrase_is_recalled_before_the_turn_marked_and_alone(tmp_path, end
     assert after_turn["seconds"] == 8.0 and " facts in " in after_turn["last_batch"]
     assert stats == {"status": "ready", "model": "https://embeddings.example.net/v1/fake-1",
                      "facts_with_vector": len(FILLERS) + 2, "waiting": 0,
-                     "never_sent": 0}
+                     "never_sent": 0, "refused_by_endpoint": 0}
     p.shutdown()
 
 

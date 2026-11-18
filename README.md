@@ -182,7 +182,13 @@ risk: [docs/two-topics.md](docs/two-topics.md).
   chosen: `password-hunter2.txt` is not caught. A request to send a credential stays refused whatever follows the word ("send credentials-backup.json",
   and so "share the token-saver report" too); a Russian credential word counts as a word, not as the start of one
   (`секретарю`, `ключевые цифры`, `учётная политика`, `токенизатор`, "пин на карте" are none; `пин-код`, "пин от
-  карты", `секретная фраза`, `фраза восстановления` are). Recall
+  карты", `секретная фраза`, `фраза восстановления` are). Keys to a flat, a bike or a door are things («ключи от
+  квартиры»; «от сервера» they are credentials), the tokens a model counts are a count («токены GPT-4o»), and a
+  service named with dots is a name («ключ API Яндекс.Метрики»); refused besides: a password after a name and a dash
+  («Пароль Антона — …») or after «у него», `pass:` / `pw:`, a Latin word after «пароль:», a seed phrase after its
+  name, Stripe keys, a 2FA secret, Slack and Discord webhooks, an instruction in full-width or lookalike letters.
+  Tags and the category are screened as a fact's text is, and a name given in `entities` that holds a credential or
+  an instruction is not linked (unreleased). Recall
   checks a stored fact again before it goes into a prompt (0.13.0): one an older release, or another program, wrote
   past today's rules (markup, instructions, credentials, invisible characters, images) is left out of recall
   and logged once; `search`, `list` and `history` still show it, so it can be changed or forgotten. A quoted

@@ -820,7 +820,11 @@ class FactRetriever:
             lexical = self._linked_facts(known, category, min_trust, 500)
         else:
             lexical = self._ngram_candidates(" ".join(glued), category, min_trust, 500)
-        lexical = [f for f in lexical if all(g in (f.get("content") or "").lower() for g in glued)]
+        # each name in the fact's text as search reads it (content and tags, folded: Traditional and Simplified
+        # characters as one); as typed, reason dropped the «医生» fact search finds for «醫生» (review 2026-11-17, H17)
+        folded = [_text.fold(g) for g in glued]
+        lexical = [f for f in lexical if all(g in analyze(f'{f.get("content") or ""} {f.get("tags") or ""}').text
+                                             for g in folded)]
         if known:  # known names by identity (aliases included), unknown names by their words
             allowed = {f["fact_id"] for f in self._linked_facts(known, category, min_trust, 10_000)}
             lexical = [f for f in lexical if f["fact_id"] in allowed]

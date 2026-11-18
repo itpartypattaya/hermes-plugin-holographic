@@ -73,6 +73,12 @@ _PROBE_BATCH = 4  # facts in the first request to an endpoint whose speed is not
 _MAX_CUTS = 3  # batches of facts cut short in a row before the endpoint counts as failing (a server that never answers)
 _CUT = object()  # _request: a request for fact vectors ran out of time (embed_facts decides what that means)
 _BUSY = object()  # _request: not sent or not answered in time while our own fact request held the endpoint
+# A fact batch answered with one of these statuses was refused as input (a text too long for the model: OpenAI says
+# 400, Hugging Face TEI 413), unless the endpoint refuses a plain text too (a setting the model does not take): then it
+# fails as before (review 2026-11-17, H8: one such fact in every batch paused search by meaning for good).
+_INPUT_REFUSED = (400, 413, 422)
+_PLAIN = "hello"  # what is sent to tell a refused text from a refusing endpoint
+REFUSED = object()  # embed_facts (and _request): the endpoint refused these fact texts as input; it works otherwise
 RECALL_MARGIN = 1.0  # before a turn
 SEARCH_MARGIN = 0.5  # fact_store search: the agent asked, and judges what it gets
 # fact_store search beyond the words (Retriever.beyond_words): of the SEARCH_TOP_K facts closest in meaning, one is
@@ -432,7 +438,9 @@ class Embedder:
         failure — the server may be slow rather than down (issue #5: 7.7 s for 32 facts against 7 s left): the
         endpoint is not paused and the next batch is smaller. It is a failure when the request was *decisive* (a
         turn's first, with most of its budget) and carried one fact, or after _MAX_CUTS cuts in a row. Nothing is
-        sent, and nothing counts, while an earlier request of ours still holds the endpoint."""
+        sent, and nothing counts, while an earlier request of ours still holds the endpoint. REFUSED: the endpoint
+        refused these texts as input and embedded a plain text right after; the caller sends a batch again in halves
+        and sets one such text aside (review 2026-11-17, H8). Refused that too, it is the endpoint's failure."""
         if not texts or len(texts) > BATCH or budget < MIN_REQUEST_SECONDS or not self.usable():
             return None
         batch = [t[:TEXT_MAX_CHARS] for t in texts]
@@ -476,6 +484,16 @@ class Embedder:
                 logger.info("holographic: a batch of %d fact vectors took longer than the %.1f s left after the "
                             "turn; the next batch is smaller", len(batch), budget)
             return None
+        if got is REFUSED:
+            left = budget - timing.get("took", budget)
+            # the plain text goes as a message's request would: refused too, it pauses the endpoint, as before
+            checked = left >= MIN_REQUEST_SECONDS and isinstance(self._request([_PLAIN], left), list)
+            what = ("; set aside until its text changes" if len(batch) == 1 else "; sent again in halves") if checked \
+                else ""
+            with self._lock:
+                self.last_batch = (f"{_facts(len(batch))} refused by the endpoint as input (HTTP {timing['refused']})"
+                                   + what)
+            return REFUSED if checked else None
         if got is None:
             return None
         took = timing.get("took", 0.0)  # from sending: a wait for an earlier request is not the server's speed
@@ -563,7 +581,8 @@ class Embedder:
         lock prefetch holds — far longer (review 2026-10-14). A request given up on finishes or fails on its own
         thread; the endpoint is paused. Two exceptions (issue #5): a request for *fact* vectors that runs out of time
         returns _CUT, and embed_facts decides; a message's request that runs out of time while a fact request of ours
-        held the endpoint (a local server may answer one request at a time) returns _BUSY, without a pause.
+        held the endpoint (a local server may answer one request at a time) returns _BUSY, without a pause. A request
+        for *fact* vectors refused as input (_INPUT_REFUSED) returns REFUSED, also without one: embed_facts decides.
 
         While a request given up on is still running, no new one starts: this one waits for it up to half of its own
         time (one cut short after the last turn is often about to finish), then returns _BUSY if every request still
@@ -677,6 +696,10 @@ class Embedder:
             if "error" in box:
                 raise box["error"]
         except urllib.error.HTTPError as exc:  # the body may echo the request: not read
+            if fact and exc.code in _INPUT_REFUSED:  # embed_facts decides: these texts, or the endpoint (H8)
+                if timing is not None:
+                    timing["refused"] = exc.code
+                return REFUSED
             # A model that cannot shorten its vectors (bge-m3 behind an aggregator, reported on 0.14.1) answers 400 to
             # the `dimensions` field rather than ignoring it: name the likely cause instead of a bare code.
             hint = (" — embedding_dimensions is set; a model that cannot shorten its vectors rejects it, leave it unset"
@@ -837,7 +860,7 @@ class VectorIndex:
         """Does any current fact have a vector of this model (worth a call for the message)?"""
         try:
             return bool(self.store.read("SELECT 1 FROM fact_embeddings e JOIN facts f ON f.fact_id = e.fact_id "
-                                        "WHERE e.model = ? LIMIT 1", (self.tag,)))
+                                        "WHERE e.model = ? AND LENGTH(e.vector) > 0 LIMIT 1", (self.tag,)))
         except sqlite3.OperationalError:
             return False
 
@@ -881,10 +904,12 @@ class VectorIndex:
     def pending(self, limit: int, allowed) -> list[tuple[int, str, str]]:
         """Up to *limit* (fact_id, vector text, its hash) of current facts with no usable vector of this model — none,
         one made from an older text, or one of another size than the last message's — newest first; a text *allowed*
-        refuses is never sent."""
+        refuses is never sent, nor one the endpoint refused as input (an empty vector made from its present text;
+        review 2026-11-17, H8)."""
         with self._lock:
             waiting = [(fact_id, content, tags, digest) for fact_id, content, tags, digest, made_from, size, _
-                       in self._state() if not self._usable(digest, made_from, size)]
+                       in self._state() if not self._usable(digest, made_from, size)
+                       and not (made_from == digest and size == 0)]
         out = []
         for fact_id, content, tags, digest in reversed(waiting):
             text = vector_text(content, tags)
@@ -898,7 +923,9 @@ class VectorIndex:
         with self._lock:
             state = self._state()
             usable = [self._usable(digest, made_from, size) for _, _, _, digest, made_from, size, _ in state]
+        refused = [made_from == digest and size == 0 for _, _, _, digest, made_from, size, _ in state]
         done = sum(usable)
-        held = sum(1 for ok, (_, content, tags, *_rest) in zip(usable, state)
-                   if not ok and not allowed(vector_text(content, tags)))
-        return {"facts_with_vector": done, "waiting": len(state) - done - held, "never_sent": held}
+        held = sum(1 for ok, no, (_, content, tags, *_rest) in zip(usable, refused, state)
+                   if not ok and not no and not allowed(vector_text(content, tags)))
+        return {"facts_with_vector": done, "waiting": len(state) - done - held - sum(refused), "never_sent": held,
+                "refused_by_endpoint": sum(refused)}

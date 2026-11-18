@@ -22,6 +22,8 @@ pytest.importorskip("numpy")
 from hermes_plugin_holographic.retrieval import FactRetriever
 from hermes_plugin_holographic.store import MemoryStore
 
+pytestmark = pytest.mark.usefixtures("old_release_hermes")  # old releases import hermes_state_wal
+
 REPO = Path(__file__).resolve().parent.parent
 DIM = 256
 

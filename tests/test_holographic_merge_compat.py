@@ -33,6 +33,8 @@ from hermes_plugin_holographic import HolographicMemoryProvider
 from hermes_plugin_holographic.history import HistoryTooNew
 from hermes_plugin_holographic.store import MemoryStore
 
+pytestmark = pytest.mark.usefixtures("old_release_hermes")  # old releases import hermes_state_wal
+
 REPO = Path(__file__).resolve().parent.parent
 DIM = 256
 KEEP_TEXT, COPY_TEXT = "Alice Smith lives in Paris near the Louvre", "Alice Smith is living in Paris by the Louvre zorblat"

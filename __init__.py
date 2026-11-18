@@ -147,7 +147,9 @@ FACT_STORE_SCHEMA = {
             "category": {"type": "string", "enum": ["user_pref", "project", "tool", "general"]},
             "tags": {"type": "string", "description": "Comma-separated tags."},
             "trust_delta": {"type": "number", "description": "Trust adjustment for 'update'."},
-            "min_trust": {"type": "number", "description": "Minimum trust filter (default: 0.3)."},
+            "min_trust": {"type": "number", "description": "Minimum trust filter. Default: the min_trust_threshold "
+                                                          "setting (0.3) for search, probe, related and reason; 0 (every "
+                                                          "fact) for list, export and contradict."},
             "limit": {"type": "integer", "description": "Max results (default: 10, at most 100)."},
         },
         "required": ["action"],
@@ -806,7 +808,9 @@ class HolographicMemoryProvider(MemoryProvider):
         self._ident: dict[str, str] = {}  # chat / user Hermes named at start (a version's source)
         self._author: dict = {}  # the author of the current turn, when the platform says
         self._writable = self._tool_writable = True
-        self._init_error = ""
+        self._init_error = ""  # no store opens this session (a setting is wrong)
+        self._open_errors: dict[str, str] = {}  # store key -> why it could not be opened (H13: one store's, not all)
+        self._closed = False  # shutdown ran: nothing reopens a store until the next initialize (H15)
         self._session_id = ""
         self._op_lock = threading.RLock()
         self._pending: dict[str, Counter] = {}  # store key -> buffered recall counts for THAT database
@@ -1031,7 +1035,8 @@ class HolographicMemoryProvider(MemoryProvider):
         self._writable = context in _WRITER_CONTEXTS
         self._tool_writable = self._writable or (
             context == "cron" and is_truthy_value(self._config.get("cron_writes", True)))
-        self._session_id, self._init_error = session_id, ""
+        self._session_id, self._init_error, self._closed = session_id, "", False
+        self._open_errors.clear()
         if self._config_problems:  # no store opens this session (_open); the reason is what the prompt says
             self._init_error = "; ".join(self._config_problems) + "; fix it in config.yaml or with hermes memory setup."
             logger.error("holographic: %s", self._init_error)
@@ -1078,7 +1083,7 @@ class HolographicMemoryProvider(MemoryProvider):
 
     def _open(self, key: str) -> tuple | None:
         """(store, retriever) of *key*, opened on first use and kept in a small LRU; None if it cannot be opened."""
-        if self._config_problems:  # a setting that is no number: no store this session (initialize said which)
+        if self._config_problems or self._closed:  # a bad setting (initialize said which); after shutdown, nothing
             return None
         if key in self._stores:
             self._stores.move_to_end(key)
@@ -1090,10 +1095,11 @@ class HolographicMemoryProvider(MemoryProvider):
             store = MemoryStore(db_path=db_path, default_trust=self._default_trust, hrr_dim=hrr_dim,
                                 migrate=self._tool_writable, tz=_hermes_timezone())
         except Exception as exc:  # noqa: BLE001 - a damaged or unreadable database: keep the agent up, say why memory is off
-            self._init_error = f"cannot open {db_path} ({type(exc).__name__}: {exc})."
+            error = f"cannot open {db_path} ({type(exc).__name__}: {exc})."
             if not isinstance(exc, HistoryTooNew):
-                self._init_error += f" If the file is damaged, recover it with: sqlite3 {db_path} \".recover\" | sqlite3 recovered.db"
-            logger.error("holographic: %s", self._init_error)
+                error += f" If the file is damaged, recover it with: sqlite3 {db_path} \".recover\" | sqlite3 recovered.db"
+            self._open_errors[key] = error
+            logger.error("holographic: %s", error)
             return None
         retriever = FactRetriever(store=store, hrr_dim=hrr_dim, hrr_weight=self._hrr_weight,
                                   temporal_decay_half_life=self._half_life)
@@ -1115,6 +1121,7 @@ class HolographicMemoryProvider(MemoryProvider):
             except Exception as exc:  # noqa: BLE001 - optional journal: the next writer open or receipt write tries again
                 _warn_once("could not prune the task-outcome journal", exc)
         self._stores[key] = (store, retriever)
+        self._open_errors.pop(key, None)
         while len(self._stores) > _MAX_OPEN_STORES:
             old_key = next(k for k in self._stores if k not in (key, self._scope_key))
             self._flush_counts(old_key)
@@ -1166,8 +1173,9 @@ class HolographicMemoryProvider(MemoryProvider):
 
     @_serialized
     def system_prompt_block(self) -> str:
-        if self._init_error:
-            return f"# Holographic Memory\nUnavailable this session: {self._init_error}"
+        error = self._init_error or self._open_errors.get(self._scope_key)
+        if error:
+            return f"# Holographic Memory\nUnavailable this session: {error}"
         if self._scope_key is None:
             what = ("Per-user memory: off in this context (no user identity)." if self._scope == "user"
                     else "Per-chat memory: off in this context (no chat).")
@@ -1596,13 +1604,16 @@ class HolographicMemoryProvider(MemoryProvider):
         finally:
             self._op_lock.release()
         try:
+            # A batch the endpoint refused as input goes again in halves, so the others get their vectors and the
+            # text it refuses is found and set aside (review 2026-11-17, H8); what is left of them waits for a turn.
+            halves: list = []
             for turn_request in range(_CATCH_UP_REQUESTS):
                 if not self._embedder.usable() or not self._locked_until(deadline):
                     return
                 try:  # may wait for a prefetch: the budget is checked after it
                     if not self._open_here(store):
                         return
-                    todo = index.pending(embeddings.BATCH, allowed=_sendable)
+                    todo = halves.pop(0) if halves else index.pending(embeddings.BATCH, allowed=_sendable)
                 finally:
                     self._op_lock.release()
                 left = deadline - time.monotonic() - _CATCH_UP_RESERVE
@@ -1615,11 +1626,19 @@ class HolographicMemoryProvider(MemoryProvider):
                 if not todo:  # not even one fact fits in what is left: the next turn goes on
                     return
                 vectors = self._embedder.embed_facts([text for _, text, _ in todo], budget=left, decisive=fair)
+                if vectors is embeddings.REFUSED and len(todo) > 1:
+                    halves[:0] = [todo[:len(todo) // 2], todo[len(todo) // 2:]]
+                    continue
                 if vectors is None or not self._locked_until(deadline):
                     return
                 try:
                     if not self._open_here(store):
                         return
+                    if vectors is embeddings.REFUSED:  # an empty vector of its present text: not sent until it changes
+                        logger.warning("holographic: fact #%s gets no vector: %s", todo[0][0],
+                                       self._embedder.last_batch)
+                        store.put_vectors(tag, [(todo[0][0], todo[0][2], b"")])
+                        continue
                     written = store.put_vectors(tag, [(fact_id, digest, embeddings.to_blob(vector))
                                                       for (fact_id, _, digest), vector in zip(todo, vectors)])
                     if logger.isEnabledFor(logging.DEBUG):
@@ -1797,10 +1816,13 @@ class HolographicMemoryProvider(MemoryProvider):
         if tool_name not in self._TOOL_HANDLERS:
             return tool_error(f"Unknown tool: {tool_name}")
         if self._store is None:
-            reason = self._init_error or ("no user identity in this context (per-user memory)" if self._scope == "user"
+            reason = self._init_error or self._open_errors.get(self._scope_key) or ("no user identity in this context (per-user memory)" if self._scope == "user"
                                           else "no chat in this context (per-chat memory)" if self._scope in _CHAT_SCOPES
                                           else "not initialised")
             return tool_error(f"Holographic memory is unavailable: {reason}")
+        if args.get("action") is not None and not isinstance(args["action"], str):  # ["add"] raised TypeError (H17)
+            return tool_error(f"action must be a string such as \"add\" (got {type(args['action']).__name__}); "
+                              "nothing was changed.")
         if args.get("origin") not in (None, "", *ORIGINS):
             return tool_error("origin must be 'said' (the person said it), 'confirmed' (your conclusion, the person "
                               "agreed) or 'inferred' (your own conclusion).")
@@ -2120,14 +2142,18 @@ class HolographicMemoryProvider(MemoryProvider):
         entry is a change of its fact (history kept), a removed one is forgotten."""
         if not (self._writable and self._store and is_truthy_value(self._config.get("mirror_memory_writes", False))):
             return
-        if content and _write_problem(content):
+        refused = bool(content) and bool(_write_problem(content))
+        if refused and action != "replace":
             return
         category = "user_pref" if target == "user" else "general"
         previous = (metadata or {}).get("previous_content") or ""
         source = self._source("mirror")
         try:
             old = self._store.read("SELECT fact_id FROM facts WHERE content = ?", (previous.strip(),)) if previous.strip() else []
-            if action == "add" and content:
+            if refused:  # the entry was replaced by a text the screen keeps out: its old copy no longer mirrors it (H14)
+                if old:
+                    self._store.forget_fact(old[0]["fact_id"])
+            elif action == "add" and content:
                 self._store.add_fact_status(content, category=category, source=source)
             elif action == "replace" and content:
                 if old:  # the new text already being a fact ends the old one (change_fact)
@@ -2151,6 +2177,7 @@ class HolographicMemoryProvider(MemoryProvider):
                 logger.debug("Holographic shutdown close() failed: %s", e)
         self._stores.clear()
         self._store = self._retriever = None
+        self._closed = True  # a sync the core left running must not reopen the file and write after this (H15)
 
     # -- recall counting -----------------------------------------------------------------------------------------
 
@@ -2202,13 +2229,35 @@ class HolographicMemoryProvider(MemoryProvider):
         return [value] if isinstance(value, str) else [e for e in value if isinstance(e, str)]
 
     @staticmethod
-    def _keyword_problem(a: dict) -> str:
-        keywords = _keywords(a.get("keywords"))
-        problem = _fact_problem(", ".join(keywords)) if keywords else ""
-        return f"keywords: {problem}" if problem else ""
+    def _label_problem(a: dict) -> str:
+        """What goes with a fact's text is screened as the text is: keywords, tags and the category are stored,
+        indexed and shown by search and list as the text is (review 2026-11-17, H2: only the keywords were, so a
+        password in the tags was stored). A name in 'entities' is screened where names are checked (entity_names.
+        _valid_entity): the fact is stored and that name is not linked, said by its position (0.17.6)."""
+        for field, value in (("keywords", ", ".join(_keywords(a.get("keywords")))),
+                             ("tags", a.get("tags") if isinstance(a.get("tags"), str) else ""),
+                             ("category", a.get("category") if isinstance(a.get("category"), str) else "")):
+            problem = _fact_problem(value) if value else None
+            if problem:
+                return f"{field}: {problem}"
+        return ""
+
+    def _cron_forgotten(self, content: str | None, fact_id: int | None = None) -> str | None:
+        """A scheduled job writing a text the user asked to forget: the answer of a plain add, whichever write it is
+        (review 2026-11-17, H3: change, add with supersedes, update and correct brought the text back). *fact_id*:
+        the fact the write would have turned into it, which stays as it was."""
+        if self._writable or not (content or "").strip():
+            return None
+        gone = self._store.forgotten_match(content.strip())
+        if gone is None:
+            return None
+        return _dumps({"fact_id": gone["fact_id"] if fact_id is None else fact_id, "status": "forgotten",
+                       "stored": False, **({} if fact_id is None else {"forgotten_fact_id": gone["fact_id"]}),
+                       "hint": "The user asked to forget this; a scheduled job does not store it again."
+                               + ("" if fact_id is None else f" Fact #{fact_id} was left as it was.")})
 
     def _add(self, a: dict) -> str:
-        problem = _write_problem(a["content"], _said(a)) or self._keyword_problem(a)
+        problem = _write_problem(a["content"], _said(a)) or self._label_problem(a)
         if problem:
             return tool_error(f"Not stored: {problem}.")
         category, entities = a.get("category", "general"), self._entities(a)
@@ -2218,15 +2267,13 @@ class HolographicMemoryProvider(MemoryProvider):
             changed = self._change({**a, "fact_id": old_id}, missing=f"Not stored: fact #{old_id} (supersedes) does not "
                                                                          "exist; nothing was changed.")
             result = json.loads(changed)
-            if "error" not in result:
+            if "error" not in result and result.get("status") != "forgotten":
                 result["superseded"] = old_id
             return _dumps(result)
         content = a["content"].strip()
-        if not self._writable:  # a cron job re-reading old messages must not bring back what the user had forgotten
-            gone = self._store.forgotten_match(content)
-            if gone is not None:
-                return _dumps({"fact_id": gone["fact_id"], "status": "forgotten", "stored": False,
-                                   "hint": "The user asked to forget this; a scheduled job does not store it again."})
+        forgotten = self._cron_forgotten(content)  # a cron job re-reading old messages: not what the user had forgotten
+        if forgotten is not None:
+            return forgotten
         if not self._store.read("SELECT 1 FROM facts WHERE content = ?", (content,)):
             merged = self._store.merged_match(content)
             if merged is not None:  # the last text of a copy merged into a current fact: that fact says it (0.19.0)
@@ -2358,15 +2405,19 @@ class HolographicMemoryProvider(MemoryProvider):
         fact_id = int(a["fact_id"])
         try:
             return call(fact_id)
-        except NotFound:
+        except NotFound as exc:  # the fact that is missing: in a merge it may be one of 'from' (H12)
+            fact_id = getattr(exc, "fact_id", None) or fact_id
             return tool_error(missing or f"fact #{fact_id} does not exist (it may have been forgotten); nothing was changed.")
 
     def _change(self, a: dict, missing: str = "") -> str:
-        problem = _write_problem(a.get("content") or "", _said(a)) or self._keyword_problem(a)
+        problem = _write_problem(a.get("content") or "", _said(a)) or self._label_problem(a)
         if not (a.get("content") or "").strip():
             return tool_error("change needs the new text in 'content'.")
         if problem:
             return tool_error(f"Not changed: {problem}.")
+        forgotten = self._cron_forgotten(a["content"], int(a["fact_id"]))
+        if forgotten is not None:
+            return forgotten
         # The old text's keywords do not describe the new one: they go unless given again; user tags stay.
         stored = self._store.fact_tags(int(a["fact_id"]))
         user_tags = _split_tags(stored)[0]
@@ -2399,11 +2450,17 @@ class HolographicMemoryProvider(MemoryProvider):
 
     def _correct(self, a: dict) -> str:
         if a.get("content") is None and not a.get("valid_from"):
-            return tool_error("correct needs the right text in 'content' and/or the right start in 'valid_from'.")
+            new_keywords = (f" To set only the keywords: update {{fact_id: {a['fact_id']}, keywords}}."
+                            if a.get("keywords") is not None else "")  # H17: the error said nothing of update
+            return tool_error("correct needs the right text in 'content' and/or the right start in 'valid_from'."
+                              + new_keywords)
         problem = (_write_problem(a["content"], _said(a)) if a.get("content") is not None else "") \
-            or self._keyword_problem(a)
+            or self._label_problem(a)
         if problem:
             return tool_error(f"Not corrected: {problem}.")
+        forgotten = self._cron_forgotten(a.get("content"), int(a["fact_id"]))
+        if forgotten is not None:
+            return forgotten
         tags = None  # no keywords given: the corrected version keeps the fact's
         if a.get("keywords") is not None:  # given: they replace the fact's, as on update (issue #73: they were dropped)
             tags = _join_tags(_split_tags(self._store.fact_tags(int(a["fact_id"])))[0], _keywords(a["keywords"]))
@@ -2447,7 +2504,7 @@ class HolographicMemoryProvider(MemoryProvider):
         if not isinstance(ids, list) or not ids or not all(
                 isinstance(i, int) and not isinstance(i, bool) for i in ids):
             return tool_error("merge needs 'from': the ids (integers) of the facts that become part of fact_id.")
-        problem = self._keyword_problem(a)
+        problem = self._label_problem(a)
         if problem:
             return tool_error(f"Not merged: {problem}.")
         expect = a.get("expect")
@@ -2525,6 +2582,9 @@ class HolographicMemoryProvider(MemoryProvider):
         self._state_epoch += 1
 
     def _search(self, a: dict) -> str:
+        if len(a["query"]) > _PREFETCH_QUERY_CHARS:  # a search reads what recall reads; longer held the lock for seconds (H16)
+            return tool_error(f"Not searched: the query is {len(a['query'])} characters (at most "
+                              f"{_PREFETCH_QUERY_CHARS}); search for the words or names the answer would hold.")
         self._experience_stages = []
         if a.get("as_of"):
             day = self._as_of(a)
@@ -2668,9 +2728,13 @@ class HolographicMemoryProvider(MemoryProvider):
         return run()
 
     def _update(self, a: dict) -> str:
-        problem = (_write_problem(a["content"], _said(a)) if a.get("content") is not None else "") or             self._keyword_problem(a)
+        problem = (_write_problem(a["content"], _said(a)) if a.get("content") is not None else "") \
+            or self._label_problem(a)
         if problem:
             return tool_error(f"Not updated: {problem}.")
+        forgotten = self._cron_forgotten(a.get("content"), int(a["fact_id"]))
+        if forgotten is not None:
+            return forgotten
         tags = a.get("tags")
         if tags is not None or a.get("keywords") is not None:  # the other half of the tags column is kept
             user_tags, keywords = _split_tags(self._store.fact_tags(int(a["fact_id"])))
@@ -2684,6 +2748,13 @@ class HolographicMemoryProvider(MemoryProvider):
             int(a["fact_id"]), content=a.get("content"), trust_delta=float(a["trust_delta"]) if "trust_delta" in a else None,
             tags=tags, category=a.get("category"), entities=self._entities(a), touch=not only_keywords,
             source=self._source("tool", origin=a.get("origin") or None))
+        if not updated:  # no current fact: say whether it ended or is gone, as merge does (H17: a bare updated false)
+
+            def absent(fact_id):
+                if self._store.history_ready():
+                    self._store.refuse_absent(fact_id, "update")
+                raise NotFound(f"fact_id {fact_id} not found")
+            return self._fact_call(a, absent)
         return _dumps({"updated": updated, **(_keyword_report(a.get("keywords")) if updated else {})})
 
     def _enrich(self, a: dict) -> str:
@@ -2738,7 +2809,8 @@ class HolographicMemoryProvider(MemoryProvider):
                 "confirmations": sum((o or {}).get("confirmations", 0) for o in origins.values())}
 
     def _meaning_stats(self):
-        """"off", or the endpoint's state and how many facts have a vector, wait for one, or are never sent."""
+        """"off", or the endpoint's state and how many facts have a vector, wait for one, are never sent, or were
+        refused by the endpoint as input (set aside until their text changes; review 2026-11-17, H8)."""
         if self._embedder is None:
             return "off"
         counts = self._retriever.vector_index(self._embedding.tag).counts(

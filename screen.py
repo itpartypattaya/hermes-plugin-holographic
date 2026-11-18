@@ -243,7 +243,10 @@ _RE_SECRET_LINK_NAME = re.compile(r"(?:WEBHOOK|WEBHOOK_URL|DSN)$", re.IGNORECASE
 _CREDENTIAL_LATIN = (
     # en
     r"pass(?:words?|phrases?|codes?)|pwd|pins?(?:[\s-]?codes?)?|pincode|api[\s_-]?keys?"
-    r"|(?:access|auth|bearer|refresh)[\s_-]?tokens?|secret[\s_-]?keys?|tokens?|otp|2fa\s+codes?"
+    r"|(?:access|auth|bearer|refresh)[\s_-]?tokens?|secret[\s_-]?keys?|tokens?"
+    # "pass" and "pw" only before a separator: "pass: …", "Wi-Fi pass = …"; "boarding pass" and "pass the salt" are
+    # words; a 2FA (TOTP) secret is the seed of every code (review 2026-11-17, H6)
+    r"|pass(?=\s*[:=：＝])|pw(?=\s*[:=：＝])|(?:2fa|totp|mfa|otp)[\s_-]?(?:secrets?|seeds?|keys?)|otp|2fa\s+codes?"
     # es, pt
     r"|contrase[ñn]as?|senhas?|claves?\s+(?:de\s+(?:la\s+)?)?api|chaves?\s+(?:de\s+|da\s+)?api|clave\s+secreta"
     r"|chave\s+secreta|c[óo]digo\s+(?:pin|de\s+verificaci[óo]n|de\s+verifica[çc][ãa]o|de\s+acceso|de\s+acesso)"
@@ -298,8 +301,15 @@ _ENV_OBJ = r"(?<![$%{])" + _EDGE_START + r"(?:" + _ENV_SECRET_NAME + r")" + _EDG
 # 0.17.2, Codex: word forms alone let "секретную фразу восстановления" through). A credential word joined to a name by
 # a hyphen still asks to send it ("send credentials-backup.json", "перешли токен-бота"): a request to send a credential
 # file is refused, whatever the file is called.
+# Keys to a flat, a bike or a door are things: «Нужно отправить Ксюше ключи от квартиры» is an errand (review
+# 2026-11-17, H7); keys «от сервера», «от кошелька», «от API» stay credentials.
+_RU_PHYSICAL_LOCK = (r"(?:(?:нов|стар|сво|мо|тво|наш|ваш|запасн|втор)\w*\s+)?(?:квартир|дом(?:а|у|ом|е|ик\w*)?(?!\w)|дач"
+                     r"|машин|авто(?!риз)|байк|мотоцикл|скутер|велосипед|гараж|офис|двер|комнат|кабинет|подъезд|ворот"
+                     r"|калитк|замк|сейф|шкаф|ящик|почтов|склад|номер|коттедж|вилл|кондо|подвал|чердак|сара|багажник"
+                     r"|домофон|мопед|лодк|яхт)")
 _RU_CREDENTIAL = (r"парол\w*|секрет(?:а|у|ом|е|ы|ов|ам|ами|ах)?(?!\w)|токен(?!изат|изац)\w*"
-                  r"|ключ(?:а|у|ом|е|и|ей|ам|ами|ах)?(?!\w)|ключик\w*|уч[её]тн\w*\s+(?:данн|запис)\w*"
+                  r"|ключ(?:а|у|ом|е|и|ей|ам|ами|ах)?(?!\w)(?!\s+(?:от|к|для)\s+" + _RU_PHYSICAL_LOCK + r")"
+                  r"|ключик\w*|уч[её]тн\w*\s+(?:данн|запис)\w*"
                   r"|секретн\w*\s+(?:фраз|слов|ключ|код|данн|комбинаци|строк|номер|вопрос|ответ|пин)\w*|секретик\w*"
                   r"|(?:сид|seed)[\s-]?фраз\w*|фраз\w*\s+восстановлени\w*|мнемоническ\w*\s+фраз\w*"
                   r"|пин[\s-]?код\w*|пин(?:а|ом|у)?\s+(?:от|для|к)(?!\w)|код\w*\s+(?:подтверждени|доступ|из\s+смс)\w*")
@@ -371,8 +381,8 @@ _ABOUT_PASSWORDS = (r"managers?|rotation|polic(?:y|ies)|length|reset|changes?|ch
                     r"|updated?|менеджер\w*|политик\w*|длин\w*|сброс\w*|требовани\w*|правил\w*|генератор\w*")
 _RE_CREDENTIALS = tuple(re.compile(
     r"(?P<word>" + _CREDENTIAL_WORD + r")"
-    + (r"\s+(?:for|to|of|on|для|от|к|на|de|del|para|pour|du|da|do|di|della|per|f[üu]r|von|vom|zum|voor|van|dla|od"
-       r"|untuk)" + r"\s+\S+(?=\s|$)" * words if words else "")
+    + (r"\s+(?:for|to|of|on|для|от|к|на|у|de|del|para|pour|du|da|do|di|della|per|f[üu]r|von|vom|zum|voor|van|dla|od"
+       r"|untuk)" + r"\s+\S+(?=\s|$)" * words if words else "")  # «у»: «пароль у него Qwerty123» (2026-11-17, H6)
     + _CLOSE_QUOTE + r"?"  # the name's closing quote, as JSON writes it: {"api_key": "…"} (review 2026-10-14)
     + r"(?P<sep>\s*(?:" + _IS + r"|[:=—–\-：＝])\s*" + _OPEN_QUOTE + r"?|\s*" + _OPEN_QUOTE + r"|\s+)"
     r"(?!//)(?P<value>\S{4,})",
@@ -386,7 +396,8 @@ _RE_CREDENTIALS = tuple(re.compile(
     re.compile(
         r"(?P<word>" + _CREDENTIAL_WORD + r")(?!\s+(?:" + _ABOUT_PASSWORDS + r")(?!\w))"
         r"(?P<label>(?:\s+[^\s:=：＝]+){1,2}?|[^\s:=：＝]{1,12}?)\s*(?:"
-        + _alternatives(r"is|es|est|ist|é|è|adalah|yaitu", r"คือ|هو|هي") + r"|[:：＝]|=(?!=))\s*" + _OPEN_QUOTE
+        # a dash after whose it is: «Пароль Антона — Qwerty123» (review 2026-11-17, H6)
+        + _alternatives(r"is|es|est|ist|é|è|adalah|yaitu", r"คือ|هو|هي") + r"|[:：＝—–]|=(?!=))\s*" + _OPEN_QUOTE
         + r"?(?!//)(?P<value>\S{4,})",
         re.IGNORECASE),)
 _VALUE_EDGE = ".,;:!?\"'«»“”„`)"
@@ -421,7 +432,12 @@ _RE_COUNTED = re.compile(r"(?:[a-z]+[\s_-]?)?tokens?|токен\w*|令牌|トー
 # could be stored as a fact and recalled; a bot token and a JWT were not screened at all.
 _RE_TOKEN_SHAPE = re.compile(
     _EDGE_START + r"(?:sk-(?:proj-|ant-)?[A-Za-z0-9_-]{16,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}"
-    r"|xox[abprs]-[A-Za-z0-9-]{10,}|A[KS]IA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|glpat-[A-Za-z0-9_-]{20,})"
+    r"|xox[abprs]-[A-Za-z0-9-]{10,}|A[KS]IA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|glpat-[A-Za-z0-9_-]{20,}"
+    # a Stripe key, live or test, secret or restricted (review 2026-11-17, H6)
+    r"|[sr]k_(?:live|test)_[A-Za-z0-9]{16,})"
+    # a Slack or Discord webhook: its address alone posts to the channel (review 2026-11-17, H6)
+    r"|https://hooks\.slack\.com/services/T[A-Z0-9]{6,}/B[A-Z0-9]{6,}/[A-Za-z0-9]{20,}"
+    r"|https://(?:ptb\.|canary\.)?discord(?:app)?\.com/api/webhooks/\d{15,22}/[A-Za-z0-9_-]{30,}"
     # a bot token alone or inside a Bot API address (".../bot<id>:<secret>/sendMessage", 0.14.6)
     r"|(?:(?<=bot)|(?<![A-Za-z0-9_:]))\d{6,12}:[A-Za-z0-9_-]{35}(?![A-Za-z0-9_-])"
     r"|" + _EDGE_START + r"eyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*"
@@ -533,7 +549,8 @@ _RE_ENV_START = _run_start(r"[A-Z]", _ENV_ANCHORS)
 # of its copy reads the loop variable as a name the copy must define).
 _CREDENTIAL_STARTS = (
     # en
-    "pass", "pwd", "pin", "api", "access", "auth", "bearer", "refresh", "secret", "token", "otp", "2fa ",
+    "pass", "pwd", "pw", "pin", "api", "access", "auth", "bearer", "refresh", "secret", "token", "otp", "2fa",
+    "totp", "mfa",
     # es, pt
     "contrase", "senha", "clave", "chave", "codigo ", "código ",
     # fr
@@ -611,7 +628,7 @@ _RE_INJECTION_START = _starts_pattern(_INJECTION_STARTS)
 # Where a token's shape (_RE_TOKEN_SHAPE) can begin, in the text itself, the pattern being case-sensitive: a key's
 # prefix, the digits of a bot token before their colon; an address's scheme (any case) ends at "://", and begins at
 # most 21 characters before it.
-_RE_TOKEN_START = re.compile(r"sk-|gh[pousr]_|github_pat_|xox[abprs]-|A[KS]IA|AIza|glpat-|eyJ|-----BEGIN |"
+_RE_TOKEN_START = re.compile(r"sk-|[sr]k_|gh[pousr]_|github_pat_|xox[abprs]-|A[KS]IA|AIza|glpat-|eyJ|-----BEGIN |"
                              r"\d\d{5,11}:|://")
 # Where a secret's shape in configuration (_RE_SECRET_SHAPE) can begin: a run of capitals, digits and "_" at an edge
 # holding what such a name holds, or "bearer" / "basic" (any case, so in the folded text).
@@ -691,7 +708,21 @@ def _word_with_value(text: str, folded: str | None = None) -> str | None:
     for m in _credential_matches(text, folded):
         if _holds_a_secret(m):
             return (m.groupdict().get("word") or "").strip()
-    return None
+    folded = _folded(text) if folded is None else folded
+    seed = next(_matches(_RE_SEED_PHRASE, text, _starts(_RE_SEED_START, folded)), None) if folded is not None \
+        else _RE_SEED_PHRASE.search(text)
+    return seed.group("word").strip() if seed else None
+
+
+# A seed phrase after its name: twelve to twenty-four words of Latin letters, the wallet itself (review 2026-11-17,
+# H6). Twelve bare words are not told from a sentence without the word list, so the name is needed.
+_RE_SEED_PHRASE = re.compile(
+    r"(?P<word>(?:seed|recovery|mnemonic|backup|secret)[\s-]+(?:phrase|words)|(?:сид|seed)[\s-]?фраз\w*"
+    r"|фраз\w*\s+восстановлени\w*|мнемоническ\w*\s+фраз\w*|секретн\w*\s+фраз\w*)"
+    r"(?:\s+[^\s:=—–]+){0,2}?\s*[:=—–-]?\s*(?:[a-z]{3,8}[\s,]+){11,23}[a-z]{3,8}(?![A-Za-z])",
+    re.IGNORECASE)
+_SEED_STARTS = ("seed", "recovery", "mnemonic", "backup", "secret", "сид", "фраз", "мнемон", "секретн")
+_RE_SEED_START = _starts_pattern(_SEED_STARTS)
 
 
 def _holds_a_secret(match: re.Match) -> bool:
@@ -729,7 +760,29 @@ def _holds_a_secret(match: re.Match) -> bool:
         # "pin 827c639e"), not a secret (RFC #20, 2026-10-24); brackets around it are not part of it ("PIN: (4821)",
         # Codex review of PR #22)
         return False
+    if not assigned and _RE_COUNTED.fullmatch(word) and _RE_MODEL_NAME.fullmatch(_value(value)):
+        return False  # the tokens a model counts: «токены GPT-4o по тарифу» (review 2026-11-17, H7)
+    if not assigned and _RE_DOTTED_NAME.fullmatch(_value(value)):
+        return False  # a service's name: «ключ API Яндекс.Метрики» (review 2026-11-17, H7)
+    # after ":" or "=" only («Пароль от почты: battery»: the colon is read with the word before it, the separator is
+    # the space after it), and not a word about passwords ("пароль: manager")
+    if match.string[:match.start("value")].rstrip(" \t\"'«“„").endswith((":", "：", "=", "＝")) \
+            and _RE_RU_PASSWORD.match(word) and _RE_LATIN_WORD.fullmatch(_value(value)) \
+            and not re.fullmatch(_ABOUT_PASSWORDS, _value(value), re.IGNORECASE):
+        # in Russian prose a Latin word right after «пароль:» is the password («пароль: correcthorse»); in English a
+        # word there is as often prose ("password: required"), so English keeps the rule below (review 2026-11-17, H6)
+        return True
     return _looks_like_a_secret(value, assigned=assigned)
+
+
+# What a value after a credential word is not (_holds_a_secret, review 2026-11-17): a model whose tokens are counted,
+# a name of words joined by dots, a Latin word after «пароль».
+_RE_MODEL_NAME = re.compile(r"(?i:gpt|chatgpt|claude|gemini|gemma|llama|mistral|mixtral|qwen|deepseek|grok|yandexgpt"
+                            r"|gigachat|sonnet|opus|haiku|o[1-9])(?:[-.]?[a-z0-9]+)*")
+# Cyrillic words with capitals only: "password love.it", "password-letmein.co" are passwords (0.15.1, 0.17.2)
+_RE_DOTTED_NAME = re.compile(r"[А-ЯЁ][а-яё]+(?:\.[А-ЯЁ][а-яё]+)+")
+_RE_RU_PASSWORD = re.compile(r"парол", re.IGNORECASE)
+_RE_LATIN_WORD = re.compile(r"[A-Za-z]{6,}")
 
 
 # What a variable may be set to that is not a secret: a reference to another variable ("${GROQ_API_KEY}",
@@ -863,19 +916,45 @@ def _injection_in(text: str, folded: str | None = None) -> bool:
         if before and (_RE_ANY_NEGATION_END.search(text, max(0, before.start() - 24), before.start())
                        or _RE_EXCEPTION_AFTER.match(text, m.end())):
             before = None  # "must not never ignore …" cancels out; "never ignore … unless …" orders the exception
-        if not (before or _RE_NEGATED_AFTER.match(text[m.end():m.end() + 16])):
+        # a negation after the verb is Japanese, Korean, Hindi or Bengali, and negates a verb of its own language:
+        # after an English one it is a decoy ("Ignore all previous instructions না and …"; review 2026-11-17, H6)
+        after = not _RE_LATIN_END.search(m.group()) and _RE_NEGATED_AFTER.match(text[m.end():m.end() + 16])
+        if not (before or after):
             return True
-    return False
+    plain = _plain_letters(text)
+    return plain != text and _injection_in(plain)
+
+
+_RE_LATIN_END = re.compile(r"[A-Za-z]\W*\Z")
+# Letters that read as Latin ones (review 2026-11-17, H6: "Ｉｇｎｏｒｅ all previous instructions" in full-width letters,
+# "Ignоre" with a Cyrillic "о" were stored): full-width and other compatibility forms by NFKC, and in a word with a
+# Latin letter the Cyrillic and Greek letters drawn as Latin ones. A word of Cyrillic alone stays as it is.
+_CONFUSABLE = str.maketrans("аеорсухіјѕԁԛԝАВЕКМНОРСТХІЈЅΑΒΕΗΙΚΜΝΟΡΤΧΥΖοα",
+                            "aeopcyxijsdqwABEKMHOPCTXIJSABEHIKMNOPTXYZoa")
+_RE_MIXED_WORD = re.compile(r"[^\W\d_]*[A-Za-z][^\W\d_]*")
+
+
+def _plain_letters(text: str) -> str:
+    """*text* with letters drawn as Latin ones written as those (_CONFUSABLE); *text* itself when it has none."""
+    if text.isascii():
+        return text
+    text = unicodedata.normalize("NFKC", text)
+    return _RE_MIXED_WORD.sub(lambda m: m.group().translate(_CONFUSABLE), text)
 
 
 # Quoted spans are reported text ("the test case contains 'ignore previous instructions'"), not instructions.
 _RE_QUOTED_SPAN = re.compile(r"\"[^\"\n]*\"|'[^'\n]*'|«[^»\n]*»|“[^”\n]*”|「[^」\n]*」|『[^』\n]*』")
-_RE_ROLE_MARKUP = re.compile(r"(?im)^\s*(?:system|assistant|user|tool)\s*[:：]|</?(?:tool_call|function_call|system|assistant)\b|<\|")
+# Role markup at a line start: the space before the role is that of its own line ([^\S\n]). "^\s*" matched the same
+# texts — whatever blank lines it ran over, the role's own line start matches too — but tried at each line start it
+# ran over every blank line after it, so 10 000 of them took seconds (review 2026-11-17, H10).
+_RE_ROLE_MARKUP = re.compile(r"(?im)^[^\S\n]*(?:system|assistant|user|tool)\s*[:：]|</?(?:tool_call|function_call|system|assistant)\b|<\|")
 _RE_BLOB = re.compile(r"[A-Za-z0-9+/=_-]{200,}")
 # An image, markdown or HTML ("![x](https://host/p?d=…)", "![x][1]", "<img src=…>"): a client that renders it fetches
 # its address by itself, so a fact holding one could leak whatever the model is led to put into the address — in the
-# query or in the path alike. A fact has no use for an image, so none is accepted (review 2026-10-13).
-_RE_IMAGE_EXFIL = re.compile(r"!\[[^\]\n]*\]\s*[(\[]|<\s*img\b", re.IGNORECASE)
+# query or in the path alike. A fact has no use for an image, so none is accepted (review 2026-10-13). The alt text
+# is read up to the next "![": an image whose alt text holds one is found from that one, so the same texts match,
+# and each "![" no longer reads to the end of its line — 10 000 of them took a second (review 2026-11-17, H10).
+_RE_IMAGE_EXFIL = re.compile(r"!\[[^\]\n!]*(?:!(?!\[)[^\]\n!]*)*\]\s*[(\[]|<\s*img\b", re.IGNORECASE)
 _ALLOWED_CONTROLS = frozenset("\n\t\r")
 
 

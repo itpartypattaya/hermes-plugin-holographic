@@ -171,7 +171,11 @@ def test_another_name_does_not_fit(provider, query, text):
 
 def test_a_known_name_still_needs_its_entity(provider):
     """The fact names Eva in another case but is linked to no entity of hers: the known-entity part of names_fit still
-    asks for the link, as before."""
-    _add(provider, EVA[0], ["Ева"])
+    asks for the link, as before. The fact is written before anyone declared Eva: since a case form of a known name
+    links its fact (review 2026-11-17, H4), a fact written after that would be linked to her."""
     fact = _fact(provider, "Иру и Еву отвезти в школу к восьми.", ["Ира"])
+    eva = _add(provider, EVA[0], ["Ева"])
+    linked = {r[0] for r in provider._store.read("SELECT fact_id FROM fact_entities WHERE entity_id IN "
+                                                 "(SELECT entity_id FROM entities WHERE name = 'Ева')")}
+    assert linked == {eva}
     assert not provider._retriever.names_fit("Где Ева будет учиться?", fact)

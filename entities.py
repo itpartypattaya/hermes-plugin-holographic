@@ -10,11 +10,12 @@ import threading
 import unicodedata
 
 from .entity_names import (_AKA_MAX, _AKA_WINDOW, _ENTITY_MAX_CHARS, _QUOTED_MAX_CHARS, _QUOTED_MAX_WORDS, _RE_AKA,
-                           _RE_QUOTED, _aka_side, _capitalized_phrases, _cased_word_in, _clean_given, _entity_key_0160,
-                           _found_between_cuts, _inline_gap, _legacy_aliases, _mention_stretches, _mixed, _name_shaped,
-                           _outside_plain_quotes, _straight_quoted, _uncased, _valid_entity, _without_code, entity_key, fold)
+                           _RE_QUOTED, _RE_WORD, _aka_side, _capitalized_phrases, _cased_word_in, _clean_given,
+                           _entity_key_0160, _found_between_cuts, _inline_gap, _is_capitalized, _legacy_aliases,
+                           _mention_stretches, _mixed, _name_shaped, _outside_plain_quotes, _straight_quoted, _uncased,
+                           _valid_entity, _without_code, entity_key, fold)
 from .history import NotFound
-from .text import STOPWORDS, UNSEGMENTED, analyze, is_chinese, name_keys, zh_word_cuts
+from .text import STOPWORDS, UNSEGMENTED, analyze, is_chinese, name_keys, name_lemmas, zh_word_cuts
 from .text import fold as text_fold
 
 logger = logging.getLogger(__name__)
@@ -62,6 +63,21 @@ def _key_words(text: str) -> list[str]:
 def _in_a_row(words: list[str], name: list[str]) -> bool:
     n = len(name)
     return n > 0 and any(words[i:i + n] == name for i in range(len(words) - n + 1))
+
+
+def _first_forms(name: str) -> list[str]:
+    """The spellings a name taken from a text may have in its first form, *name* itself first: «Анне Петровой» may be
+    «Анна Петрова», «Петру Иванову» «Пётр Иванов» (text.name_lemmas, word by word). Review 2026-11-17, H5: such a case
+    form became a second entity beside the known one, and brought back a name delete_entity removed. A word ending in
+    «-а» or «-я» is read only as written: it may be a first form itself («Александра Петрова» is a woman as well as
+    «(у) Александра Петрова»), and a text must not fold one person into another. Up to three words, a person's full
+    name; a longer run is read as written."""
+    words = name.split()
+    if len(words) > 3:
+        return [name]
+    readings = [[w] if w.casefold().endswith(("а", "я")) else
+                [w, *sorted(name_lemmas(w.casefold()) - {w.casefold().replace("ё", "е")})] for w in words]
+    return [" ".join(reading) for reading in itertools.product(*readings)]
 
 
 class EntityMixin:
@@ -548,7 +564,8 @@ class EntityMixin:
     def _extract_entities(self, text: str) -> list[str]:
         """Entity candidates (see the pattern table) shaped like a name (_name_shaped) and not deleted (delete_entity),
         deduplicated by casefold in first-seen order. The text is read in NFC, so a letter written with a combining
-        accent is one letter ("José" either way), and with code spans and blocks blanked out (0.16.1)."""
+        accent is one letter ("José" either way), and with code spans and blocks blanked out (0.16.1). A Russian name in
+        another case is the known entity it is a form of, and a form of a deleted name is deleted too (_first_forms)."""
         text = _without_code(unicodedata.normalize("NFC", text or ""))
         quoted = _straight_quoted(text) + [m.group(1) for pattern in _RE_QUOTED for m in pattern.finditer(text)]
         found = [(n, False) for n in _capitalized_phrases(text)] + [
@@ -558,8 +575,12 @@ class EntityMixin:
         uniq: dict[str, str] = {}  # casefolded key -> first-seen spelling, insertion-ordered
         for raw, quoted in found:
             name = raw.strip(" ,;:!?").rstrip(".") if raw else ""  # a leading dot stays: ".NET" (0.16.1)
-            if name and fold(name) not in uniq and _name_shaped(name, quoted=quoted) and not self._tombstoned(name):
-                uniq[fold(name)] = name
+            if not name or fold(name) in uniq or not _name_shaped(name, quoted=quoted):
+                continue
+            forms = _first_forms(name)
+            if not any(self._tombstoned(form) for form in forms):
+                name = next((form for form in forms if self.entity_ids(form)), name)
+                uniq.setdefault(fold(name), name)
         return list(uniq.values())
 
     def _aka_pairs(self, text: str) -> list[tuple[str, str]]:
@@ -687,16 +708,17 @@ class EntityMixin:
                     self._bump()
                 self._write("INSERT OR IGNORE INTO fact_entities (fact_id, entity_id) VALUES (?, ?)", (fact_id, entity_id))
 
-    def _known_entities(self) -> dict[str, list[tuple[int, tuple]]]:
-        """{key of the first word: [(entity_id, key sets of a name's words)]} for entities safe to match in free text:
-        multi-word names, and one-word names only when declared (older stores hold one-word junk such as a quoted
-        "Done", which would otherwise attach itself to every fact saying "done"). Cached per connection and rebuilt
-        after any entity change here, a rollback, or a commit by another connection (PRAGMA data_version)."""
+    def _known_entities(self) -> dict[str, list[tuple]]:
+        """{key of the first word: [(entity_id, key sets of a name's words, the words as written, a one-word name
+        with a capital matched by its keys?)]} for entities safe to match in free text: multi-word names, and one-word
+        names only when declared (older stores hold one-word junk such as a quoted "Done", which would otherwise attach
+        itself to every fact saying "done"). Cached per connection and rebuilt after any entity change here, a
+        rollback, or a commit by another connection (PRAGMA data_version)."""
         with self._lock:
             version = (self._entry.get("generation", 0), self._one("PRAGMA data_version")[0])
             cached = self._entry.get("entities")
             if cached is None or cached[0] != version:
-                index: dict[str, list[tuple[int, tuple]]] = {}
+                index: dict[str, list[tuple]] = {}
                 names: dict[int, list[str]] = {}
                 forms: set[str] = set()
                 if self._keyed():
@@ -712,8 +734,13 @@ class EntityMixin:
                         key = name_keys(name)
                         forms.update(k for word_forms, exact in key if not exact for k in word_forms)
                         if len(key) > 1 or (key and row["entity_type"] == "declared"):
-                            for first in key[0][0]:
-                                index.setdefault(first, []).append((int(row["entity_id"]), key))
+                            # each word as written too, as text.name_lemmas spells a first form: «алена» of «Алёна»
+                            written = tuple(w.text.replace("ё", "е") for w in analyze(name).words)
+                            # a one-word name with a capital that matches by its keys (not a Latin one, matched
+                            # as written) is mentioned in lower case only as written: «марк», not «мире» of «Мира» (H9)
+                            capital = len(key) == 1 and not key[0][1] and _is_capitalized(name.strip())
+                            for first in key[0][0] | {written[0]}:
+                                index.setdefault(first, []).append((int(row["entity_id"]), key, written, capital))
                         glued = name.strip().lower()
                         if UNSEGMENTED.search(glued) and len(glued) >= 2 and (len(key) > 1 or row["entity_type"] == "declared"):
                             index.setdefault("", []).append((int(row["entity_id"]), glued))  # "" = substring names
@@ -736,18 +763,30 @@ class EntityMixin:
         "إيرما", while "jeans" does not mention "Jean" and "машина" not "Маша". Looked up by each word's keys, not by
         scanning names. The text is read in NFKC, as names are indexed, and stretch by stretch between separators
         (0.16.1): the words of one name stand together on one line, never across a line break, a comma or a bracket
-        ("Alice\nSmith" and "Alice, Smith" do not mention Alice Smith)."""
+        ("Alice\nSmith" and "Alice, Smith" do not mention Alice Smith).
+        A word written with a capital also mentions a name word that is its first form (text.name_lemmas, as recall
+        reads it): «Мии», «Анне», «Ильёй» mention «Мия», «Анна», «Илья», whose stems are too short to be keys of a plain
+        text (review 2026-11-17, H4: «Подарок для Мии» was not linked to «Мия»). Never a lower-case word: «в мае» is no
+        «Мая», «льва» no «Лев». Nor does a lower-case word mention a one-word name written with a capital through a
+        shared stem (H9: «в мире» is no «Мира», «варю» no «Варя», «гены» no «Гена»): in lower case only the name as
+        written does («что марк ест?»). A Latin name (matched as written), a name written in lower case («npm») and
+        one in a script without case are mentioned as before."""
         text = unicodedata.normalize("NFKC", text or "")
         index = self._known_entities()
         found = set()
         for stretch in _mention_stretches(text):
             sequence = analyze(stretch).words
+            capitals = {w.text for w in analyze(" ".join(
+                w for w in _RE_WORD.findall(stretch) if _is_capitalized(w))).words}
+            lemmas = [name_lemmas(w.text) if w.text in capitals and not w.stop and not w.identifier else frozenset()
+                      for w in sequence]
             for i, word in enumerate(sequence):
-                for first in word.keys:
-                    for entity_id, key in index.get(first, ()):
-                        if entity_id not in found and len(sequence) - i >= len(key) and all(
+                for first in word.keys | lemmas[i]:
+                    for entity_id, key, written, capital in index.get(first, ()):
+                        if entity_id not in found and len(sequence) - i >= len(key) and (
+                                not capital or word.text in capitals or word.text.replace("ё", "е") == written[0]) and all(
                                 sequence[i + j].text in forms if exact else not forms.isdisjoint(sequence[i + j].keys)
-                                for j, (forms, exact) in enumerate(key)):
+                                or written[j] in lemmas[i + j] for j, (forms, exact) in enumerate(key)):
                             found.add(entity_id)
         lowered_text = text.lower()
         for entity_id, name in index.get(".", ()):  # ".NET" with its dot, not the word "net" (0.16.1)

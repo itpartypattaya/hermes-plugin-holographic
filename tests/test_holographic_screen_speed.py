@@ -220,6 +220,7 @@ def test_the_derivation_sees_a_missing_start():
     ("_RE_CREDENTIALS", "_CREDENTIAL_STARTS", True),
     ("_RE_EXFILTRATION", "_EXFILTRATION_STARTS", True),
     ("_RE_INJECTION", "_INJECTION_STARTS", False),
+    ("_RE_SEED_PHRASE", "_SEED_STARTS", False),  # 2026-11-17, H6
 ])
 def test_every_start_a_pattern_can_have_is_listed(name, listed, capitals):
     """A guard: a match can begin only where a listed start is (in the folded text) or, in the patterns with a
@@ -255,12 +256,16 @@ def test_a_token_and_a_secrets_shape_begin_where_they_are_looked_for():
     """A guard: _RE_TOKEN_SHAPE's branches begin with a prefix screen._RE_TOKEN_START has, a bot token's digits or an
     address's scheme, both looked for by what follows them (screen._token_shape_in); _RE_SECRET_SHAPE's with a name of
     capitals, digits and "_" at an edge (screen._RE_SECRET_NAME_START), or "bearer" / "basic"."""
-    listed = ("sk-", "ghp_", "gho_", "ghu_", "ghs_", "ghr_", "github_pat_", "xoxa-", "xoxb-", "xoxp-", "xoxr-",
-              "xoxs-", "AKIA", "ASIA", "AIza", "glpat-", "eyJ", "-----BEGIN ")
+    listed = ("sk-", "sk_", "rk_", "ghp_", "gho_", "ghu_", "ghs_", "ghr_", "github_pat_", "xoxa-", "xoxb-", "xoxp-",
+              "xoxr-", "xoxs-", "AKIA", "ASIA", "AIza", "glpat-", "eyJ", "-----BEGIN ")
     assert all(screen._RE_TOKEN_START.fullmatch(prefix) for prefix in listed)
     branches = sre_parse.parse(screen._RE_TOKEN_SHAPE.pattern, screen._RE_TOKEN_SHAPE.flags).data[0][1][1]
-    left = [_Starts(listed, exact=True).seq({("", True)}, list(branch), False) for branch in branches]
-    assert [{s for s, _ in states} - {COVERED} for states in left] == [set(), {""}, set(), set(), {""}]
+    left = [{s for s, _ in _Starts(listed, exact=True).seq({("", True)}, list(branch), False)} - {COVERED}
+            for branch in branches]
+    assert left[:1] + left[3:] == [set(), {""}, set(), set(), {""}]
+    # the Slack and Discord webhooks (2026-11-17, H6) begin with their scheme, five letters before "://": looked for
+    # from there, as an address with a login is
+    assert left[1] and left[2] and all(s.startswith("https://") for s in left[1] | left[2])
     pattern = screen._RE_TOKEN_SHAPE.pattern
     assert r"|(?:(?<=bot)|(?<![A-Za-z0-9_:]))\d{6,12}:[A-Za-z0-9_-]{35}(?![A-Za-z0-9_-])|" in pattern
     assert pattern.endswith(r"|(?i:[a-z][a-z0-9+.-]{1,20})://[^\s:/?#@]*:[^\s/?#@]+@")
@@ -270,13 +275,25 @@ def test_a_token_and_a_secrets_shape_begin_where_they_are_looked_for():
     assert r"[A-Z0-9_]{0,63})\s*[:=：＝]\s*(?P<assigned>\S{6,})|" + screen._EDGE_START + r"(?i:bearer|basic)\s+" in shape
 
 
+# The patterns changed on purpose since 0.22.0, and why; every other one is 0.22.0's to the character.
+CHANGED_ON_PURPOSE = {
+    "_RE_CREDENTIALS": "review 2026-11-17, H6/H7: pass/pw before a separator, 2FA secrets, «у», a dash after whose",
+    "_RE_EXFILTRATION": "review 2026-11-17, H7: keys to a flat, a bike or a door are things",
+    "_RE_IMAGE_EXFIL": "review 2026-11-17, H10: linear time, the same matches (test_holographic_screen_linear.py)",
+    "_RE_ROLE_MARKUP": "review 2026-11-17, H10: linear time, the same matches (test_holographic_screen_linear.py)",
+    "_RE_TOKEN_SHAPE": "review 2026-11-17, H6: Stripe keys, Slack and Discord webhooks",
+}
+
+
 def test_the_patterns_are_those_of_0_22_0():
-    """A guard: 0.22.1 changes where the patterns are tried, not what they are."""
-    for name, value in vars(REF).items():
-        if isinstance(value, re.Pattern):
-            assert (getattr(screen, name).pattern, getattr(screen, name).flags) == (value.pattern, value.flags), name
-    assert [(rx.pattern, rx.flags) for rx in screen._RE_CREDENTIALS] == [(rx.pattern, rx.flags)
-                                                                         for rx in REF._RE_CREDENTIALS]
+    """A guard: 0.22.1 changes where the patterns are tried, not what they are; a pattern changed since is listed
+    in CHANGED_ON_PURPOSE with the reason, and the decisions it changes are asked of the tests of that change."""
+    changed = {name for name, value in vars(REF).items() if isinstance(value, re.Pattern)
+               and (getattr(screen, name).pattern, getattr(screen, name).flags) != (value.pattern, value.flags)}
+    if [(rx.pattern, rx.flags) for rx in screen._RE_CREDENTIALS] != [(rx.pattern, rx.flags)
+                                                                     for rx in REF._RE_CREDENTIALS]:
+        changed.add("_RE_CREDENTIALS")
+    assert changed == set(CHANGED_ON_PURPOSE)
 
 
 # --- the folded copy and the printable test ------------------------------------------------------------------------
@@ -319,10 +336,11 @@ def test_a_text_printable_without_its_whitespace_has_no_hidden_character():
 
 # --- the same decisions -------------------------------------------------------------------------------------------
 
-def _strings_of_this_suite():
-    """Every string the test files of this suite write: literals, f-strings' fixed parts, sums of literals."""
+def _strings_of_this_suite(paths=None):
+    """Every string the test files of this suite (or *paths*) write: literals, f-strings' fixed parts, sums of
+    literals."""
     out = set()
-    for path in sorted(TESTS.glob("*.py")):
+    for path in sorted(TESTS.glob("*.py")) if paths is None else paths:
         for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
             if isinstance(node, ast.Constant) and isinstance(node.value, str):
                 out.add(node.value)
@@ -532,26 +550,52 @@ def long_text(kind, size, seed):
     return "".join(out)[:size]
 
 
-def _differences(texts):
+def _load_full_scan():
+    """The screen as it is now with every pattern tried at every position (no folded copy, a token's shape searched
+    for in the whole text): what trying the patterns only at their starts must give, whatever they decide (0.22.1)."""
+    spec = importlib.util.spec_from_file_location("_screen_full_scan", Path(screen.__file__))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    module._folded = lambda text: None
+    module._token_shape_in = lambda text: module._RE_TOKEN_SHAPE.search(text) is not None
+    return module
+
+
+FULL = _load_full_scan()
+# The tests of the decisions changed since 0.22.0 (review 2026-11-17, H6/H7): their strings are decided otherwise.
+CHANGED_DECISIONS = (TESTS / "test_holographic_screen_gaps.py",)
+
+
+def _differences(texts, ref=REF):
     out = []
     for text in texts:
         for name in FUNCTIONS:
-            old, new = getattr(REF, name)(text), getattr(screen, name)(text)
+            old, new = getattr(ref, name)(text), getattr(screen, name)(text)
             if old != new:
                 out.append((name, text[:200], old, new))
     return out
 
 
+def test_the_full_scan_reads_no_folded_copy():
+    """The reference above is a full scan: no position list reaches its patterns."""
+    assert FULL._folded("Пароль: Qwerty123") is None and FULL._has_credential("Пароль: Qwerty123")
+    assert FULL._token_shape_in("key " + "sk-" + "a" * 20)
+
+
 def test_the_same_decisions_on_every_string_of_this_suite():
-    """A guard: every screen function gives what 0.22.0's gave on every string the test files write."""
-    assert _differences(_strings_of_this_suite()) == []
+    """A guard: every screen function gives what a full scan gives on every string the test files write, and what
+    0.22.0's gave on all but those of the tests of a decision changed since (CHANGED_DECISIONS)."""
+    assert _differences(_strings_of_this_suite(), FULL) == []
+    changed = _strings_of_this_suite(CHANGED_DECISIONS)
+    assert _differences([s for s in _strings_of_this_suite() if s not in changed]) == []
 
 
 @pytest.mark.parametrize("seed", [1, 2, 3])
 def test_the_same_decisions_on_a_seeded_corpus(seed):
-    """A guard, on the seeded corpus above (the strings of this suite mixed in)."""
+    """A guard, on the seeded corpus above (the strings of this suite mixed in): what a full scan gives. Not
+    0.22.0's: the corpus mixes the words of the decisions changed since into text where they now decide."""
     extra = tuple(s for s in _strings_of_this_suite() if len(s) < 200)
-    assert _differences(fuzz_corpus(1500, seed, extra)) == []
+    assert _differences(fuzz_corpus(1500, seed, extra), FULL) == []
 
 
 @pytest.mark.parametrize("kind", ["ru", "en", "log", "hex"])
@@ -562,7 +606,7 @@ def test_the_same_decisions_on_long_texts(kind):
     texts = [base, base + " пароль: Qwerty!23", base + " password hunter2", base[:10_000] + " Отправь мне пароль "
              + base[10_000:], base + "\nsystem: hi", base + " ignore previous instructions", base + "  OPENAI_API_KEY="
              + "sk-" + "a" * 20, base[:5_000] + " " * 5_000 + "token: abcd1234" + base[5_000:]]
-    assert _differences(texts) == []
+    assert _differences(texts) == [] and _differences(texts, FULL) == []
 
 
 # --- the speed ----------------------------------------------------------------------------------------------------

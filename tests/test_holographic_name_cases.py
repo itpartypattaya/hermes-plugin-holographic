@@ -186,16 +186,23 @@ def test_latin_names_match_as_written(tmp_path):
         provider.shutdown()
 
 
-def test_the_checks_at_write_time_read_the_texts_as_before(known):
+def test_the_checks_at_write_time_read_a_case_form_as_the_name(known):
+    """0.18.3 left the checks at write time as they were: «Яне» named no one there, so «Яне нравится жасминовый чай.»
+    met nothing. Since the review of 2026-11-17 (H4) a case form is linked to the name, and the checks see the same
+    person a sentence with «Яна» names: a new claim about her tea meets the old one, whichever case names her."""
     provider, _ = known
     add = lambda text: json.loads(provider.handle_tool_call("fact_store", {"action": "add", "content": text}))  # noqa: E731
     conflicts = lambda result: [c["content"] for c in result.get("possible_conflicts", ())]  # noqa: E731
-    assert not {"similar", "possible_conflicts", "duplicate_of"} & set(add("Яне нравится жасминовый чай."))
-    assert conflicts(add("Яна не любит жасминовый чай.")) == ["Яна любит жасминовый чай."]
-    # the same name in another case: the negation meets the text of that form only, not «Яна любит…»
-    assert conflicts(add("Яне не нравится жасминовый чай.")) == ["Яне нравится жасминовый чай."]
+    assert conflicts(add("Яна обожает жасминовый чай.")) == ["Яна любит жасминовый чай."]
+    assert "Яна любит жасминовый чай." in conflicts(add("Яне нравится жасминовый чай."))
+    assert "Яна любит жасминовый чай." in conflicts(add("Яна не любит жасминовый чай."))
 
 
-def test_chit_chat_naming_the_person_recalls_nothing(known):
+def test_chit_chat_naming_the_person_recalls_what_her_name_recalls(known):
+    """A message naming a person brings that person's top facts without a word in common (prefetch, stream 3), and
+    «Яна, …» always did. Before the review of 2026-11-17 (H4) «Передай Яне привет» recalled nothing only because
+    «Яне» named no one; now it recalls what the name does."""
     provider, back = known
-    assert _recalled(provider, back, "Передай Яне привет, скажи, что я задержусь, чай выпью на работе") == set()
+    named = _recalled(provider, back, "Яна, передай привет, скажи, что я задержусь, чай выпью на работе")
+    assert named and _recalled(provider, back, "Передай Яне привет, скажи, что я задержусь, чай выпью на работе",
+                               1) == named

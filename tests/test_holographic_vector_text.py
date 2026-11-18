@@ -175,7 +175,7 @@ def test_keywords_that_look_secret_leave_the_vector_to_the_content(provider, end
     assert _stored_hash(provider, fid) == embeddings.text_hash(DACHA)
     assert _pending_ids(provider) == []
     counts = provider._retriever.vector_index(provider._embedding.tag).counts(embeddings._sendable)
-    assert counts == {"facts_with_vector": 1, "waiting": 0, "never_sent": 0}
+    assert counts == {"facts_with_vector": 1, "waiting": 0, "never_sent": 0, "refused_by_endpoint": 0}
 
 
 def test_switched_on_the_store_keeps_a_vector_only_for_the_joined_text(provider, keywords_on):

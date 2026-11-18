@@ -336,7 +336,7 @@ def catch_up_vectors(p: HolographicMemoryProvider) -> dict:
     expected = counts["facts_with_vector"] + counts["waiting"]
     sizes = sorted(r[0] for r in p._store.read(
         "SELECT DISTINCT LENGTH(e.vector) FROM fact_embeddings e JOIN facts f ON f.fact_id = e.fact_id "
-        "WHERE e.model = ?", (tag,)))
+        "WHERE e.model = ? AND LENGTH(e.vector) > 0", (tag,)))  # zero bytes: a text the endpoint refused (H8)
     if counts["waiting"] or len(sizes) != 1:
         raise SystemExit(f"incomplete vector coverage: {counts['facts_with_vector']} of {expected} usable, vector "
                          f"sizes {sizes} — the run is discarded")

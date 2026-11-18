@@ -138,8 +138,11 @@ def _zone(tz) -> tuple[tzinfo, str]:
     if m:
         delta = timedelta(hours=int(m.group(2)), minutes=int(m.group(3)))
         return timezone(-delta if m.group(1) == "-" else delta), text
-    from zoneinfo import ZoneInfo
-    return ZoneInfo(text), text
+    from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+    try:
+        return ZoneInfo(text), text
+    except ZoneInfoNotFoundError:  # a KeyError: the caller's ValueError did not catch it, a traceback (H17)
+        raise ValueError(f"unknown time zone {text!r}: give an IANA name such as Asia/Bangkok, or +HH:MM") from None
 
 
 def _screen(text) -> str | None:
@@ -544,7 +547,8 @@ class _Snapshot:
         out = {}
         for vs in versions.values():
             for v in vs:
-                if v.get("src_user_id") and v.get("src_user_name"):
+                seen = out.get(v.get("src_user_id"))  # versions come by fact, not by time: keep the newest (H17)
+                if v.get("src_user_id") and v.get("src_user_name") and (seen is None or v["recorded_at"] >= seen[0]):
                     out[v["src_user_id"]] = (v["recorded_at"], v["src_user_name"])
         return {k: name for k, (_, name) in out.items()}
 

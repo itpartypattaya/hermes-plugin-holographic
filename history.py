@@ -799,7 +799,7 @@ class HistoryMixin:
                 raise ValueError(f"fact #{keep} was merged into #{target['into_fact_id']}; merge into that one")
             fact = self._one("SELECT * FROM facts WHERE fact_id = ?", (keep,))
             if fact is None:
-                self._refuse_absent(keep, "merge into")
+                self.refuse_absent(keep, "merge into")
             copies, done = [], []
             for fact_id in ids:
                 row = self._one("SELECT * FROM facts WHERE fact_id = ?", (fact_id,))
@@ -813,7 +813,7 @@ class HistoryMixin:
                 if target is not None:
                     raise ValueError(f"fact #{fact_id} was merged into #{target['into_fact_id']} already; forget it "
                                      "there, or merge that fact")
-                self._refuse_absent(fact_id, "merge")
+                self.refuse_absent(fact_id, "merge")
             if session_only is not None and copies:
                 sources = self.current_sources([r["fact_id"] for r in copies])
                 foreign = [int(r["fact_id"]) for r in copies
@@ -890,12 +890,14 @@ class HistoryMixin:
                     "counts_added": {"retrieval": retrieval, "helpful": helpful},
                     "merged_confirmations": self._merged_confirmations(keep)}
 
-    def _refuse_absent(self, fact_id: int, what: str) -> None:
-        """Why a fact cannot take part in a merge: it ended, or there is no such fact."""
+    def refuse_absent(self, fact_id: int, what: str) -> None:
+        """Why a fact is not there to merge or update: it ended (ValueError), or there is no such fact (NotFound)."""
         last = self._head_version(fact_id)
         if last is not None and last["status"] == "ended":
             raise ValueError(f"fact #{fact_id} has ended ({last['valid_to']}); revert the end first to {what} it")
-        raise NotFound(f"fact_id {fact_id} not found")
+        missing = NotFound(f"fact_id {fact_id} not found")
+        missing.fact_id = fact_id  # which of the merge's facts is missing: the keep or one of the copies (H12)
+        raise missing
 
     def _merged_confirmations(self, keep: int) -> int:
         """How many confirmations the copies merged into *keep* hold (they stay under the copies' ids)."""

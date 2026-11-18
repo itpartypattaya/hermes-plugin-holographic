@@ -37,6 +37,19 @@ def _isolated_hermes_home(tmp_path, monkeypatch):
     return home
 
 
+
+@pytest.fixture
+def old_release_hermes(monkeypatch):
+    """The Hermes an older release of this plugin ran on. Releases before 0.30.0 import hermes_state_wal, which Hermes main
+    removed on 2026-11-17 (be3d6affc) for sqlite_support.apply_wal_with_fallback, the same function; the current
+    store imports the new name first. A test that runs an old release on the same database gives it the module under
+    its old name, for that test only, as the Hermes of its day had it."""
+    try:
+        import hermes_state_wal  # noqa: F401 - a Hermes release: nothing to give
+    except ImportError:
+        import sqlite_support
+        monkeypatch.setitem(sys.modules, "hermes_state_wal", sqlite_support)
+
 # PRAGMA synchronous=OFF on every connection the suite opens: no test checks what survives a power cut. CI's Python
 # links SQLite 3.50.4, which core holds to the WAL-reset bug, so every store runs in DELETE journal mode and each
 # commit waits on two fsyncs; on the Windows runner's disk that made the suite 28 minutes against 2 on Linux. The

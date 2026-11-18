@@ -6,6 +6,7 @@ import bisect
 import re
 import unicodedata
 
+from .screen import _fact_problem
 from .text import UNSEGMENTED, _script, is_chinese, is_greeting, is_identifier, ja_ko_phrase, zh_count, zh_phrase
 
 # Entity extraction, applied in order: capitalized multi-word phrases in any cased script ("John Doe", "Мария
@@ -436,8 +437,9 @@ def _valid_entity(name: str, *, given: bool = False) -> bool:
             or (given and name[0] in ".'’$" and name[1:2].isalnum())):  # given: ".net", "'s-Hertogenbosch", "$GME"
         return False
     visible = [c for c in name if not c.isspace()]
-    if given:  # someone named it: "3M", "O2", "C++" are names; a letter is enough
-        return any(c.isalpha() for c in visible)
+    if given:  # someone named it: "3M", "O2", "C++" are names; a letter is enough, but not a credential or an
+        # instruction, which would be stored and shown as a name (review 2026-11-17, H2: a token in entities was)
+        return any(c.isalpha() for c in visible) and not _fact_problem(name)
     if name[0].isdigit() and is_chinese(name):
         # 0.16.2 (issue #4): a Han character is a word, so the share of letters below dropped half the Chinese names
         # that begin with a number (360安全卫士, 115网盘, 36氪) and kept some counts ("3个月" yes, "15分钟" no). A

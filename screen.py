@@ -44,7 +44,7 @@ def _alternatives(latin: str, other: str) -> str:
 # The screens below speak every language the plugin matches words in: English, Russian, Chinese, Japanese, Korean,
 # Thai, Spanish, French, Portuguese, Italian, German, Dutch, Polish, Turkish, Indonesian, Hindi, Arabic and Bengali
 # (0.15.1; English and Russian only before, Chinese from the first fix of 0.15.1).
-# Classic injection phrasing only: "ignore previous instructions", not "Anton asks me to ignore style rules in drafts".
+# Classic injection phrasing only: "ignore previous instructions", not "Oleg asks me to ignore style rules in drafts".
 _RE_INJECTION = re.compile(_alternatives(
     # en
     r"(?:ignore|disregard|forget|override)\s+(?:all\s+|any\s+)?(?:of\s+)?"
@@ -301,7 +301,7 @@ _ENV_OBJ = r"(?<![$%{])" + _EDGE_START + r"(?:" + _ENV_SECRET_NAME + r")" + _EDG
 # 0.17.2, Codex: word forms alone let "секретную фразу восстановления" through). A credential word joined to a name by
 # a hyphen still asks to send it ("send credentials-backup.json", "перешли токен-бота"): a request to send a credential
 # file is refused, whatever the file is called.
-# Keys to a flat, a bike or a door are things: «Нужно отправить Ксюше ключи от квартиры» is an errand (review
+# Keys to a flat, a bike or a door are things: «Нужно отправить Лене ключи от квартиры» is an errand (review
 # 2026-11-17, H7); keys «от сервера», «от кошелька», «от API» stay credentials.
 _RU_PHYSICAL_LOCK = (r"(?:(?:нов|стар|сво|мо|тво|наш|ваш|запасн|втор)\w*\s+)?(?:квартир|дом(?:а|у|ом|е|ик\w*)?(?!\w)|дач"
                      r"|машин|авто(?!риз)|байк|мотоцикл|скутер|велосипед|гараж|офис|двер|комнат|кабинет|подъезд|ворот"
@@ -396,7 +396,7 @@ _RE_CREDENTIALS = tuple(re.compile(
     re.compile(
         r"(?P<word>" + _CREDENTIAL_WORD + r")(?!\s+(?:" + _ABOUT_PASSWORDS + r")(?!\w))"
         r"(?P<label>(?:\s+[^\s:=：＝]+){1,2}?|[^\s:=：＝]{1,12}?)\s*(?:"
-        # a dash after whose it is: «Пароль Антона — Qwerty123» (review 2026-11-17, H6)
+        # a dash after whose it is: «Пароль Олега — Qwerty123» (review 2026-11-17, H6)
         + _alternatives(r"is|es|est|ist|é|è|adalah|yaitu", r"คือ|هو|هي") + r"|[:：＝—–]|=(?!=))\s*" + _OPEN_QUOTE
         + r"?(?!//)(?P<value>\S{4,})",
         re.IGNORECASE),)

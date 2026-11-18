@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.30.1 — 2026-11-18
+
+- Comments only: the examples in `screen.py`'s comments name invented people instead of the maintainer's family
+  (hermes-dreaming copies the file whole). No change to code, decisions, defaults, schema or network behaviour.
+
 ## 0.30.0 — 2026-11-18
 
 Fixes of the review of 2026-11-17 (H2–H17), and Hermes main after 2026-11-17.
@@ -79,7 +84,7 @@ Fixes of the review of 2026-11-17 (H2–H17), and Hermes main after 2026-11-17.
   name of whichever fact came last. Tests: `tests/test_holographic_small_answers.py`.
 
 ### Screen
-- **Secrets written as people write them are refused.** «Пароль Антона — Qwerty123» (a name and a dash), «пароль у
+- **Secrets written as people write them are refused.** «Пароль Олега — Qwerty123» (a name and a dash), «пароль у
   него Qwerty123», `pass: …` and `pw: …` before a separator, a password of Latin letters after a Russian «пароль:»
   («пароль: correcthorse»), a seed phrase of 12–24 words after its name, Stripe keys (`sk_live_…`, `rk_test_…`), a
   2FA / TOTP secret, and a Slack or Discord webhook by its address alone. An instruction to drop the rules in
@@ -87,7 +92,7 @@ Fixes of the review of 2026-11-17 (H2–H17), and Hermes main after 2026-11-17.
   negation particle of another language after an English instruction no longer turns it into a reminder.
   Not covered, by design: paraphrases outside the list of classic phrasings («Забудь всё, что тебе говорили») and a
   seed phrase of bare words with no name before it.
-- **Everyday facts are no longer refused.** Keys to a flat, a bike or a door («Нужно отправить Ксюше ключи от
+- **Everyday facts are no longer refused.** Keys to a flat, a bike or a door («Нужно отправить Лене ключи от
   квартиры в субботу»; keys «от сервера», «от кошелька» are still credentials), the tokens a model counts («токены
   GPT-4o по тарифу») and the API key of a service named after it («ключ API Яндекс.Метрики»).
   Tests: `tests/test_holographic_screen_gaps.py`. `tests/test_holographic_screen_speed.py` now holds the screen to a

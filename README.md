@@ -185,7 +185,7 @@ risk: [docs/two-topics.md](docs/two-topics.md).
   карты", `секретная фраза`, `фраза восстановления` are). Keys to a flat, a bike or a door are things («ключи от
   квартиры»; «от сервера» they are credentials), the tokens a model counts are a count («токены GPT-4o»), and a
   service named with dots is a name («ключ API Яндекс.Метрики»); refused besides: a password after a name and a dash
-  («Пароль Антона — …») or after «у него», `pass:` / `pw:`, a Latin word after «пароль:», a seed phrase after its
+  («Пароль Олега — …») or after «у него», `pass:` / `pw:`, a Latin word after «пароль:», a seed phrase after its
   name, Stripe keys, a 2FA secret, Slack and Discord webhooks, an instruction in full-width or lookalike letters.
   Tags and the category are screened as a fact's text is, and a name given in `entities` that holds a credential or
   an instruction is not linked (0.30.0). Recall

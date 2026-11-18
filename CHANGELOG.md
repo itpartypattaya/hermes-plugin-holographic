@@ -1,8 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.30.0 — 2026-11-18
 
-Fixes of the review of 2026-11-17 (H2–H17).
+Fixes of the review of 2026-11-17 (H2–H17), and Hermes main after 2026-11-17.
+
+### Hermes
+- **The store opens on Hermes main again.** Hermes main removed `hermes_state_wal` on 2026-11-17; the store now takes
+  `apply_wal_with_fallback` from `sqlite_support`, its public home, and from `hermes_state_wal` on Hermes releases
+  up to v0.23.x. Without this no store opened on a Hermes built after that day.
 
 ### Fixes
 - **Tags, the category and the names given with a fact are screened as its text is.** Only `content` and `keywords`

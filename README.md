@@ -160,7 +160,7 @@ risk: [docs/two-topics.md](docs/two-topics.md).
   the name itself (a refused name may be `KEY=secret`); the fact is stored all the same. `entities` given with a new
   text (change, correct, update) replace the names declared on the fact before; without them those stay, but for a
   name only the old text gave; revert brings back the names of the version it restores (see
-  [Who a new text is about](docs/history.md#who-a-new-text-is-about-unreleased)). Its answer lists `similar` facts,
+  [Who a new text is about](docs/history.md#who-a-new-text-is-about-0220)). Its answer lists `similar` facts,
   `possible_conflicts` (same subject, a different claim) and `past_versions`; the agent decides. Text that is not a
   fact (JSON, tool or chat-role markup, instruction-like phrasing, a credential with its value or a token whose shape
   alone says it is one — an API key prefix, a Telegram bot token (also inside a Bot API address), a JWT, a private key
@@ -188,7 +188,7 @@ risk: [docs/two-topics.md](docs/two-topics.md).
   («Пароль Антона — …») or after «у него», `pass:` / `pw:`, a Latin word after «пароль:», a seed phrase after its
   name, Stripe keys, a 2FA secret, Slack and Discord webhooks, an instruction in full-width or lookalike letters.
   Tags and the category are screened as a fact's text is, and a name given in `entities` that holds a credential or
-  an instruction is not linked (unreleased). Recall
+  an instruction is not linked (0.30.0). Recall
   checks a stored fact again before it goes into a prompt (0.13.0): one an older release, or another program, wrote
   past today's rules (markup, instructions, credentials, invisible characters, images) is left out of recall
   and logged once; `search`, `list` and `history` still show it, so it can be changed or forgotten. A quoted

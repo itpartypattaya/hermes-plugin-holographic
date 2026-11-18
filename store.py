@@ -162,6 +162,28 @@ def _restrict_permissions(db_path: Path) -> None:
                 logger.warning("holographic: could not make %s readable by its owner only (%s)", path, exc)
 
 
+def _is_absent_core_helper(error: ImportError) -> bool:
+    """Whether an import failure just means the helper is absent on this core.
+
+    Both helpers moved to the public ``sqlite_support`` API; older cores keep them in
+    ``hermes_state_wal`` / ``hermes_cli.sqlite_util``. Only an absent module or an absent
+    name may fall back: a missing dependency inside ``sqlite_support``, or a circular
+    import, means the core is broken and must surface rather than silently downgrade
+    the store to the legacy helpers.
+    """
+    if isinstance(error, ModuleNotFoundError):
+        # Match the whole condition, not just ``name``: an error raised *inside*
+        # ``sqlite_support`` can carry that name too, and must not be read as "module absent".
+        return error.name == "sqlite_support" and "No module named 'sqlite_support'" in str(error)
+    # ``from sqlite_support import name`` failing because that name is absent is the
+    # transitional-core case. A circular import reports "partially initialized" instead.
+    return (
+        getattr(error, "name", None) == "sqlite_support"
+        and "cannot import name" in str(error)
+        and "partially initialized" not in str(error)
+    )
+
+
 class MemoryStore(EntityMixin, GraphMixin, HistoryMixin, ExperienceMixin):
     """SQLite-backed fact store with entity resolution and trust scoring.
 
@@ -224,12 +246,22 @@ class MemoryStore(EntityMixin, GraphMixin, HistoryMixin, ExperienceMixin):
     def _init_db(self) -> None:
         """Create schema, enable WAL via the shared fallback helper (NFS/SMB/FUSE degrade gracefully), add hrr_vector
         to pre-HRR DBs, and narrow the FTS update trigger of DBs created by older versions."""
-        from hermes_state_wal import apply_wal_with_fallback
+        try:
+            from sqlite_support import apply_wal_with_fallback
+        except ImportError as e:
+            if not _is_absent_core_helper(e):
+                raise
+            from hermes_state_wal import apply_wal_with_fallback
         apply_wal_with_fallback(self._conn, db_label="memory_store.db (holographic)")
         self._conn.executescript(_SCHEMA)  # _init_db creates the base schema and the WAL setup, never the graph: a
                                            # writer's _migrate() alone creates entity_relations and its triggers
         if "hrr_vector" not in {row[1] for row in self._conn.execute("PRAGMA table_info(facts)").fetchall()}:
-            from hermes_cli.sqlite_util import add_column_if_missing
+            try:
+                from sqlite_support import add_column_if_missing
+            except ImportError as e:
+                if not _is_absent_core_helper(e):
+                    raise
+                from hermes_cli.sqlite_util import add_column_if_missing
             add_column_if_missing(self._conn, "facts", "hrr_vector", "hrr_vector BLOB")
         trigger = self._one("SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'facts_au'")
         if trigger is not None and "UPDATE OF" not in (trigger["sql"] or "").upper():

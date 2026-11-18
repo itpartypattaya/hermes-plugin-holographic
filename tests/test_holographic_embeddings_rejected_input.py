@@ -19,7 +19,7 @@ import pytest
 
 np = pytest.importorskip("numpy")
 
-from hermes_plugin_holographic import HolographicMemoryProvider, embeddings  # noqa: E402
+from hermes_plugin_holographic import HolographicMemoryProvider  # noqa: E402
 
 from test_holographic_v0140_embeddings import BACKUP, FILLERS, PARAPHRASE, fake_vector  # noqa: E402
 

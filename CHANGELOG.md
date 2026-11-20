@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- **`auto_extract` no longer stores the gateway's own scaffolding as facts.** Runtime-injected turns arrive as
+  `role="user"` and their prose matches the decision patterns (`we decided…`, `the project uses…`), so a fan-out
+  completion notice, a skill-invocation prompt, a `[System note: …]`, a planning-state carryover, a
+  `Cronjob Response:` wrapper or a `<memory-context>` block was harvested as a durable `user_pref` / `project` fact
+  about the person. Such a turn is skipped whole. A mid-turn `/steer` is the opposite case — the
+  `[OUT-OF-BAND USER MESSAGE …]` marker is the gateway's, the text inside it is the person's — so only the frame is
+  dropped and what they decided is kept; the same goes for a quoted reply, an attachment note and the cron hint in
+  front of a kept turn. Measured on 0.30.1: all six envelope shapes stored a fact without this check, none does with
+  it, and a real turn in the same batch still extracts.
+
 ## 0.30.2 — 2026-11-24
 
 - `auto_extract` (off by default) takes the compaction helpers it uses to tell a person's words from the compactor's

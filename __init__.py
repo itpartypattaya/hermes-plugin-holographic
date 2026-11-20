@@ -309,6 +309,40 @@ _RE_REACTION = re.compile(
     re.IGNORECASE)
 
 
+# Runtime-injected messages arrive as role="user" but are not the person's speech: fan-out/delegation
+# completion notices, skill-invocation prompts, system notes, planning-state carryovers, cron envelopes and
+# recalled-memory blocks. Their prose matches the decision patterns ("we decided…", "the project uses…"), so
+# harvesting them stored the gateway's own scaffolding as durable user_pref/project facts. Never extract them.
+_INTERNAL_MESSAGE_PREFIXES = (
+    "[ASYNC DELEGATION",
+    "[IMPORTANT:",
+    "[System note:",
+    "[Planning state preserved",
+    "Cronjob Response:",
+    "<memory-context>",
+)
+
+# A mid-turn steer is the opposite case: the marker is the gateway's, the text inside it is the person's own
+# words (agent/prompt_builder.STEER_MARKER_OPEN/CLOSE). Drop the frame, keep what they said.
+_RE_STEER_FRAME = re.compile(
+    r"\[\s*/?OUT-OF-BAND USER MESSAGE[^\]\n]*\]", re.IGNORECASE)
+
+
+def _person_speech(content: str) -> str:
+    """The person's own words in a role="user" turn, "" when the turn carries none.
+
+    Envelopes are not speech: a delegation notice, a skill prompt, a system note, a cron wrapper or a recalled
+    memory block says nothing about the person, though its prose reads like a decision. A steer is speech behind
+    a marker, so only its frame goes; the gateway's own text in front of a kept turn (a quoted reply, an
+    attachment note, the cron hint) has the shapes ``_own_words`` already strips for recall.
+    """
+    if not isinstance(content, str):
+        return ""
+    if content.lstrip().startswith(_INTERNAL_MESSAGE_PREFIXES):
+        return ""
+    return _own_words(_RE_STEER_FRAME.sub(" ", content).strip())
+
+
 def _reaction(sentence: str) -> bool:
     """A sentence that states no preference but a reply to the assistant (_RE_REACTION), with nothing left that
     would be extracted once the reply is taken out ("I like that, I always use tabs" keeps its second half). The
@@ -2912,6 +2946,9 @@ class HolographicMemoryProvider(MemoryProvider):
                 continue
             if not isinstance(content, str) or len(content) < _extract_floor(content) or _role_prompt(content):
                 continue  # a prompt pasted whole: its sentences pass one by one (Codex review), none is the user's
+            content = _person_speech(content)
+            if not content:
+                continue  # runtime-injected envelope, not the person: its prose is not a fact about them
             for sentence in (m.group(0).strip() for m in _RE_SENTENCE.finditer(content)):
                 if len(sentence) < _extract_floor(sentence) or len(sentence) > _EXTRACT_MAX_CHARS \
                         or _write_problem(sentence, person=True) or _RE_QUESTION.search(sentence) or _reaction(sentence):

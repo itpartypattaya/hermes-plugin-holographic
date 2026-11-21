@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Extraction
+- **Spanish joins `auto_extract`.** The patterns covers preferences ("prefiero", "me gusta", "me encanta", "suelo",
+  "uso", "siempre / nunca" with a first-person verb, "mi … favorito es", "no me gusta", "odio") and decisions ("hemos
+  decidido", "decidimos", "el proyecto usa", "la regla del proyecto es"). Spanish drops the subject, so the verb has
+  to open the sentence: a quote ("Paul dice que prefiere …"), a lead-in ("Yo, prefiero …"), a condition ("Si prefiero
+  …") and a question are not the person's. "prefiero que …" is an instruction to the assistant, not a preference, as
+  "je préfère que …" is in French, and "siempre es así" says nothing durable because the verb is missing. Replies
+  ("me gusta eso", "me gusta, gracias", "prefiero este") are taken out by the shared reaction rule. Spanish keeps the
+  French rule for a reply followed by a preference ("Me gusta eso, prefiero el té verde": kept).
+
 ## 0.30.1 — 2026-11-18
 
 - Comments only: the examples in `screen.py`'s comments name invented people instead of the maintainer's family

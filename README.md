@@ -94,7 +94,7 @@ In `config.yaml` under `plugins.hermes-memory-store`:
 | Key | Default | Description |
 |-----|---------|-------------|
 | `db_path` | `$HERMES_HOME/memory_store.db` | SQLite database path |
-| `auto_extract` | `false` | Store user sentences that state a preference or decision (English, Russian, Chinese, French) after each completed turn, and also before context compression and at session end (not in `scope: user`, where a whole transcript cannot be attributed), at trust 0.4; questions, replies to the assistant ("I like that, sounds good") and restatements of a stored fact are skipped |
+| `auto_extract` | `false` | Store user sentences that state a preference or decision (English, Russian, Chinese, French, Spanish) after each completed turn, and also before context compression and at session end (not in `scope: user`, where a whole transcript cannot be attributed), at trust 0.4; questions, replies to the assistant ("I like that, sounds good") and restatements of a stored fact are skipped |
 | `mirror_memory_writes` | `false` | Also store every built-in memory `add` (MEMORY.md / USER.md) as a fact |
 | `default_trust` | `0.5` | Trust score of a new fact |
 | `min_trust_threshold` | `0.3` | Facts below this trust are not recalled |

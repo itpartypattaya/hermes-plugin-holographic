@@ -248,6 +248,36 @@ _FR_EXTRACT = (
                + _FR_POINTER + _FR_REACTION_END + r")\S", re.IGNORECASE),
 )
 
+# Spanish (after Tormen28): the sentence has to open with the first-person statement, so a quote ("Paul dice que
+# prefiero …"), a lead-in ("Yo, prefiero …") or a condition ("Si prefiero …") is not the user's. Spanish drops the
+# subject, so the verb itself opens it. "prefiero que me hables" is an instruction, not a preference, and French's
+# rule holds here too: not a question word after the verb. "me gusta" needs an object: a bare "me gusta." says
+# nothing, and replies are taken out by the Spanish branch of _RE_REACTION.
+_ES_ADVERB = r'(?:mucho|muchísimo|bastante|también|realmente|de\s+verdad|un\s+poco|poco|más\s+bien|más|menos)'
+_ES_REACTION_END = (r'(?:\s+(?:mucho|muchísimo|bastante|también|más|menos|un\s+poco|más\s+bien|igual))*\s*'
+                    r'(?:[,;…)—–]|[.!](?!\w)|-(?=\s)|[☀-➿\U0001f300-\U0001faff]|$)')
+# A demonstrative with at most one noun ("este formato", "esa idea"), or "eso / esto / aquello" alone: it names
+# nothing, so it points at what the assistant just said. "este proyecto usa Supabase" goes on and is kept.
+_ES_POINTER = r'(?:eso|esto|aquello|(?:este|esta|estos|estas|ese|esa|esos|esas)(?:\s+[^\W\d_]+)?)'
+_ES_EXTRACT = (
+    # Preferences. "siempre" and "nunca" need a first-person verb after them ("siempre uso vim"); "Siempre es así"
+    # says nothing durable about the person. "no me gusta" / "odio" are lasting dislikes, as «не ем» in Russian.
+    re.compile(r"^(?:yo\s+)?(?:prefiero|me\s+gusta(?:n)?|me\s+encanta(?:n)?|suelo|acostumbro|utilizo|uso)\s+"
+               r"(?!(?:" + _ES_ADVERB + r"\s+)*(?:que|qué|quien|quién|cual|cuál|como|cómo|cuando|cuándo|"
+               r"donde|dónde|cuanto|cuánto|si)\b)\S", re.IGNORECASE),
+    re.compile(r"^(?:siempre|nunca|jamás|normalmente|por\s+lo\s+general|usualmente)\s+"
+               r"(?:uso|utilizo|trabajo|compro|hago|guardo|escribo|leo|pongo|prefiero|elijo)\s+\S",
+               re.IGNORECASE),
+    re.compile(r"^mi\s+\w+\s+favorit[oa]\s+(?:es|son)\s+\S", re.IGNORECASE),
+    re.compile(r"^(?:no\s+me\s+gusta(?:n)?|odio|detesto|no\s+soporto)\s+\S", re.IGNORECASE),
+    # Decisions: first person plural or the project as the subject, as "we decided" and "the project uses" are in
+    # English; "decidí preguntarte otra cosa" is a one-off and is not matched.
+    re.compile(r"^(?:ya\s+)?(?:hemos|decidimos|acordamos|elegimos|optamos|hemos\s+decidido)\s+\S",
+               re.IGNORECASE),
+    re.compile(r"^el\s+proyecto\s+(?:usa|utiliza|necesita|requiere)\s+\S", re.IGNORECASE),
+    re.compile(r"^la\s+regla\s+(?:del\s+proyecto\s+)?(?:es|dice)\s+\S", re.IGNORECASE),
+)
+
 # Auto-extraction: (patterns, category) — preferences -> user_pref, decisions -> project. Matched per sentence; the
 # sentence is stored, not the whole message.
 _EXTRACT_CATEGORIES = (
@@ -267,7 +297,8 @@ _EXTRACT_CATEGORIES = (
       # (HE likes spicy food) are not the user's; "不用" (no need) and "我覺得 / 以我來看" (passing opinions) are left out.
       re.compile(r'^(?:我|本人)?(?:也|還是|还是|一直|通常|比較|比较|較|较|更)?'
                  r'(?:偏好|習慣|习惯|喜歡|喜欢|愛用|爱用|傾向|倾向|會先?選用|会先?选用)[^。；！？?\n]{2,40}'),
-      re.compile(r'^(?:我|本人)(?:一律|向來|向来|總是|总是|從不|从不|不習慣|不习惯|不接受|不再)[^。；！？?\n]{2,40}')],
+      re.compile(r'^(?:我|本人)(?:一律|向來|向来|總是|总是|從不|从不|不習慣|不习惯|不接受|不再)[^。；！？?\n]{2,40}'),
+      _ES_EXTRACT[0], _ES_EXTRACT[1], _ES_EXTRACT[2], _ES_EXTRACT[3]],
      "user_pref"),
     ([re.compile(r'\bwe\s+(?:decided|agreed|chose)\s+\S', re.IGNORECASE),
       re.compile(r'\bthe\s+project\s+(?:uses|needs|requires)\s+\S', re.IGNORECASE),
@@ -281,7 +312,8 @@ _EXTRACT_CATEGORIES = (
       re.compile(r'^(?:這個|这个|本|我們的|我们的)?(?:專案|项目|項目)(?:裡|里|中)?'
                  r'(?:使用|採用|采用|需要|必須用|必须用|一律用|統一用|统一用)[^。；！？?\n]{2,40}'),
       re.compile(r'^(?:這個|这个|本|我們的|我们的)?(?:專案|项目|項目)?的?'
-                 r'(?:命名規則|命名规则|命名規範|命名规范|規範|规范|慣例|惯例)(?:是|為|为|採用|采用)[^。；！？?\n]{2,40}')],
+                 r'(?:命名規則|命名规则|命名規範|命名规范|規範|规范|慣例|惯例)(?:是|為|为|採用|采用)[^。；！？?\n]{2,40}'),
+      _ES_EXTRACT[4], _ES_EXTRACT[5], _ES_EXTRACT[6]],
      "project"),
 )
 # A reply to the assistant is not a preference (hermes-agent#22907): "I like that, sounds good", "ok, I love it", "I
@@ -305,7 +337,12 @@ _RE_REACTION = re.compile(
     r"|\b(?:je\s+(?:pr[ée]f[èe]re|n['’](?:aime|utilise))|j['’](?:aime|adore|utilise))(?:\s+" + _FR_ADVERB + r"\b)*"
     r"(?:(?:\s+(?:ça|cela|ceci|(?:ce|cet|cette|ces)(?:\s+[^\W\d_]+)?))?"
     r"|\s+(?:celui|celle|ceux|celles)(?:-ci|-là)?(?:\s+pour\s+(?:le\s+moment|l['’]instant|aujourd['’]hui|ce\s+soir))?)"
-    + _FR_REACTION_END,
+    + _FR_REACTION_END +
+    # Spanish: "me gusta eso", "me gusta este formato", or a bare "me gusta, gracias"; "prefiero esta" needs the
+    # demonstrative, so "prefiero el café" names its object and is kept.
+    r"|\bme\s+gusta(?:n)?(?:\s+" + _ES_ADVERB + r"\b)*"
+    r"(?:\s+" + _ES_POINTER + r")?" + _ES_REACTION_END +
+    r"|\bprefiero(?:\s+" + _ES_ADVERB + r"\b)*\s+" + _ES_POINTER + _ES_REACTION_END,
     re.IGNORECASE)
 
 
@@ -319,7 +356,7 @@ def _reaction(sentence: str) -> bool:
         return False
     rest = _RE_REACTION.sub(" ", sentence)
     return not (any(p.search(rest) for patterns, _ in _EXTRACT_CATEGORIES for p in patterns)
-                or any(p.search(rest.lstrip()) for p in _FR_EXTRACT))
+                or any(p.search(rest.lstrip()) for p in _FR_EXTRACT + _ES_EXTRACT))
 
 
 def _write_problem(content: str, person: bool = False) -> str | None:

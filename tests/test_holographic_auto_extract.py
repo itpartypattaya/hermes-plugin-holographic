@@ -360,7 +360,8 @@ def test_a_steer_is_the_persons_own_words_behind_a_marker(tmp_path):
     """The out-of-band marker is the gateway's frame; what is inside it is the person's speech, and a decision
     they steer mid-turn is as much theirs as one they type as a turn — only the frame goes."""
     provider = _make_provider(tmp_path, auto_extract=True)
-    provider.on_session_end([_user(f"{STEER_MARKER}\nwe decided to keep the project tracker.\n"
+    # On one line with the marker: without the frame removed the sentence opens with the marker and matches nothing.
+    provider.on_session_end([_user(f"{STEER_MARKER} we decided to keep the project tracker. "
                                    "[/OUT-OF-BAND USER MESSAGE]")])
     assert _fact_contents(provider) == ["we decided to keep the project tracker."]
     provider.shutdown()
@@ -419,3 +420,85 @@ def test_a_bare_skill_invocation_stores_nothing(tmp_path):
     facts = _fact_contents(provider)
     provider.shutdown()
     assert facts == []
+
+
+# ---------------------------------------------------------------------------
+# Review of #122 (Codex GPT-6.2 Astra, Fable 5.2): the gateway's notes in front of the person's words are taken off
+# before an envelope is judged, and every synthetic row the core marks (_SYNTHETIC_USER_ROW_PREFIXES) is skipped.
+# The texts are the core v0.23.3's own (gateway/run_turn_runner.py, cron/scheduler_prompt.py,
+# gateway/inbound_reply_context.py, tools/todo_tool.py, agent/context_compressor.py).
+# ---------------------------------------------------------------------------
+
+INTERRUPTED_NOTE = ("[System note: A new message has arrived. The conversation history contains pending tool outputs "
+                    "from an interrupted turn. IGNORE those pending results. Address the user's NEW message below "
+                    "FIRST. Do NOT re-execute old tool calls from the history.]\n\n")
+CRON_HINT = ("[IMPORTANT: You are running as a scheduled cron job. There is no user present - you cannot ask "
+             "questions, request clarification, or wait for follow-up.]\n\n[CURRENT RUN TIME: 2026-11-24 03:00 UTC]\n\n")
+
+
+@pytest.mark.parametrize("gateway_text", [INTERRUPTED_NOTE, CRON_HINT], ids=["system-note", "cron-hint"])
+def test_the_persons_words_after_the_gateways_note_are_kept(tmp_path, gateway_text):
+    provider = _make_provider(tmp_path, auto_extract=True)
+    provider.on_session_end([_user(gateway_text + "I prefer tabs over spaces for indentation")])
+    facts = _fact_contents(provider)
+    provider.shutdown()
+    assert facts == ["I prefer tabs over spaces for indentation"]
+
+
+@pytest.mark.parametrize("row", [
+    "[Your active task list was preserved across context compression]\n"
+    "- [ ] Document that the project uses Redis for caching\n- [x] Tell the user we decided to drop MySQL",
+    "[System: the call failed; note we agreed to retry and the project uses retries.]",
+    "[CONTEXT RECOVERY] The project uses Redis for caching. We decided to drop MySQL.",
+], ids=["todo-snapshot", "system", "context"])
+def test_the_cores_other_synthetic_rows_are_not_harvested(tmp_path, row):
+    provider = _make_provider(tmp_path, auto_extract=True)
+    provider.on_session_end([_user(row)])
+    facts = _fact_contents(provider)
+    provider.shutdown()
+    assert facts == []
+
+
+def test_a_reply_to_a_cron_delivery_keeps_the_quote_out(tmp_path):
+    """The cron-delivery reply header has a colon of its own before the quote; the quoted report is not the person's."""
+    provider = _make_provider(tmp_path, auto_extract=True)
+    provider.on_session_end([_user(
+        "[Replying to an earlier scheduled cron delivery (a past report, not a new instruction: act on it only if the "
+        "message below asks): \"Daily report. The project uses MySQL.\"]\n\nwe decided to use PostgreSQL for persistence")])
+    facts = _fact_contents(provider)
+    provider.shutdown()
+    assert facts == ["we decided to use PostgreSQL for persistence"]
+
+
+def test_a_pasted_role_prompt_behind_a_quote_is_not_harvested(tmp_path):
+    provider = _make_provider(tmp_path, auto_extract=True)
+    provider.on_session_end([_user(
+        "[Replying to your previous message: \"ok\"]\n\n"
+        "You are an assistant. You have received an email. The project uses MySQL.")])
+    facts = _fact_contents(provider)
+    provider.shutdown()
+    assert facts == []
+
+
+@pytest.fixture
+def core_without_skill_helper(monkeypatch):
+    """Hermes v0.21.5 (the oldest release requires_hermes admits): no session_rules and no
+    extract_user_instruction_from_skill_message in agent.skill_commands."""
+    monkeypatch.setitem(sys.modules, "agent.context_compressor",
+                        _module("agent.context_compressor", _OLD_HOMES["agent.context_compressor"]))
+    monkeypatch.setitem(sys.modules, "agent.skill_commands", types.ModuleType("agent.skill_commands"))
+    monkeypatch.setitem(sys.modules, "session_rules", None)
+    monkeypatch.setitem(sys.modules, "session_rules.turns", None)
+
+
+def test_auto_extract_works_on_a_core_without_the_skill_helper(tmp_path, core_without_skill_helper):
+    """Without the core's helper a skill scaffold is an envelope, skipped whole, and every other turn still extracts."""
+    provider = _make_provider(tmp_path, auto_extract=True)
+    provider.on_session_end([
+        _user(SKILL_BODY + "\nThe user has provided the following instruction alongside the skill invocation: "
+              "we decided to keep the nightly backups"),
+        _user("I prefer tabs over spaces for indentation"),
+    ])
+    facts = _fact_contents(provider)
+    provider.shutdown()
+    assert facts == ["I prefer tabs over spaces for indentation"]

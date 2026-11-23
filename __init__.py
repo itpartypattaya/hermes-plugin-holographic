@@ -258,26 +258,39 @@ _ES_REACTION_END = (r'(?:\s+(?:mucho|muchísimo|bastante|también|más|menos|un\
                     r'(?:[,;…)—–]|[.!](?!\w)|-(?=\s)|[☀-➿\U0001f300-\U0001faff]|$)')
 # A demonstrative with at most one noun ("este formato", "esa idea"), or "eso / esto / aquello" alone: it names
 # nothing, so it points at what the assistant just said. "este proyecto usa Supabase" goes on and is kept.
-_ES_POINTER = r'(?:eso|esto|aquello|(?:este|esta|estos|estas|ese|esa|esos|esas)(?:\s+[^\W\d_]+)?)'
-_ES_EXTRACT = (
+# "tu respuesta", "la idea", "lo que hiciste" point at the assistant's turn as a demonstrative does (review of #120).
+_ES_POINTER = (r'(?:eso|esto|aquello|(?:este|esta|estos|estas|ese|esa|esos|esas)(?:\s+[^\W\d_]+)?'
+               r'|(?:tu|tus|su|sus)\s+[^\W\d_]+|la\s+idea|lo\s+que\s+[^\W\d_]+)')
+# A question word after the verb: "prefiero que me hables" instructs, "no me gusta cómo quedó" replies.
+_ES_NOT_A_THING = (r"(?!(?:" + _ES_ADVERB + r"\s+)*(?:que|qué|quien|quién|cual|cuál|como|cómo|cuando|cuándo|"
+                   r"donde|dónde|cuanto|cuánto|si|lo\s+que)\b)")
+_ES_PREFERENCES = (
     # Preferences. "siempre" and "nunca" need a first-person verb after them ("siempre uso vim"); "Siempre es así"
     # says nothing durable about the person. "no me gusta" / "odio" are lasting dislikes, as «не ем» in Russian.
-    re.compile(r"^(?:yo\s+)?(?:prefiero|me\s+gusta(?:n)?|me\s+encanta(?:n)?|suelo|acostumbro|utilizo|uso)\s+"
-               r"(?!(?:" + _ES_ADVERB + r"\s+)*(?:que|qué|quien|quién|cual|cuál|como|cómo|cuando|cuándo|"
-               r"donde|dónde|cuanto|cuánto|si)\b)\S", re.IGNORECASE),
+    re.compile(r"^(?:yo\s+)?(?:prefiero|me\s+gusta(?:n)?|me\s+encanta(?:n)?|acostumbro)\s+" + _ES_NOT_A_THING + r"\S",
+               re.IGNORECASE),
+    # "uso" and "suelo" are nouns too ("Uso de memoria alto", "Suelo de madera"): "suelo" states a habit only before an
+    # infinitive ("suelo madrugar", "suelo levantarme"), "uso" / "utilizo" not before "de" or an adjective of a rule.
+    re.compile(r"^(?:yo\s+)?suelo\s+[^\W\d_]+(?:ar|er|ir|ír)(?:me|te|se|nos|lo|la|los|las|le|les)?\b", re.IGNORECASE),
+    re.compile(r"^(?:yo\s+)?(?:utilizo|uso)\s+(?!(?:de|del|obligatori[oa]s?|exclusiv[oa]s?|indebid[oa]s?|"
+               r"correct[oa]s?|responsable|personal)\b)" + _ES_NOT_A_THING + r"\S", re.IGNORECASE),
     re.compile(r"^(?:siempre|nunca|jamás|normalmente|por\s+lo\s+general|usualmente)\s+"
                r"(?:uso|utilizo|trabajo|compro|hago|guardo|escribo|leo|pongo|prefiero|elijo)\s+\S",
                re.IGNORECASE),
     re.compile(r"^mi\s+\w+\s+favorit[oa]\s+(?:es|son)\s+\S", re.IGNORECASE),
-    re.compile(r"^(?:no\s+me\s+gusta(?:n)?|odio|detesto|no\s+soporto)\s+\S", re.IGNORECASE),
+    re.compile(r"^(?:no\s+me\s+gusta(?:n)?|odio|detesto|no\s+soporto)\s+" + _ES_NOT_A_THING + r"\S", re.IGNORECASE),
+)
+_ES_DECISIONS = (
     # Decisions: first person plural or the project as the subject, as "we decided" and "the project uses" are in
     # English; "decidí preguntarte otra cosa" is a one-off and is not matched.
     # "hemos" alone is the auxiliary of any "we have done …" ("hemos comido pizza"): only a decision verb after it.
     re.compile(r"^(?:ya\s+)?(?:hemos\s+(?:decidido|acordado|elegido|optado)|decidimos|acordamos|elegimos|optamos)"
                r"\s+\S", re.IGNORECASE),
     re.compile(r"^el\s+proyecto\s+(?:usa|utiliza|necesita|requiere)\s+\S", re.IGNORECASE),
-    re.compile(r"^la\s+regla\s+(?:del\s+proyecto\s+)?(?:es|dice)\s+\S", re.IGNORECASE),
+    # "la regla es simple" names no rule: the project's rule only.
+    re.compile(r"^la\s+regla\s+del\s+proyecto\s+(?:es|dice)\s+\S", re.IGNORECASE),
 )
+_ES_EXTRACT = _ES_PREFERENCES + _ES_DECISIONS
 
 # Auto-extraction: (patterns, category) — preferences -> user_pref, decisions -> project. Matched per sentence; the
 # sentence is stored, not the whole message.
@@ -299,7 +312,7 @@ _EXTRACT_CATEGORIES = (
       re.compile(r'^(?:我|本人)?(?:也|還是|还是|一直|通常|比較|比较|較|较|更)?'
                  r'(?:偏好|習慣|习惯|喜歡|喜欢|愛用|爱用|傾向|倾向|會先?選用|会先?选用)[^。；！？?\n]{2,40}'),
       re.compile(r'^(?:我|本人)(?:一律|向來|向来|總是|总是|從不|从不|不習慣|不习惯|不接受|不再)[^。；！？?\n]{2,40}'),
-      _ES_EXTRACT[0], _ES_EXTRACT[1], _ES_EXTRACT[2], _ES_EXTRACT[3]],
+      *_ES_PREFERENCES],
      "user_pref"),
     ([re.compile(r'\bwe\s+(?:decided|agreed|chose)\s+\S', re.IGNORECASE),
       re.compile(r'\bthe\s+project\s+(?:uses|needs|requires)\s+\S', re.IGNORECASE),
@@ -314,7 +327,7 @@ _EXTRACT_CATEGORIES = (
                  r'(?:使用|採用|采用|需要|必須用|必须用|一律用|統一用|统一用)[^。；！？?\n]{2,40}'),
       re.compile(r'^(?:這個|这个|本|我們的|我们的)?(?:專案|项目|項目)?的?'
                  r'(?:命名規則|命名规则|命名規範|命名规范|規範|规范|慣例|惯例)(?:是|為|为|採用|采用)[^。；！？?\n]{2,40}'),
-      _ES_EXTRACT[4], _ES_EXTRACT[5], _ES_EXTRACT[6]],
+      *_ES_DECISIONS],
      "project"),
 )
 # A reply to the assistant is not a preference (hermes-agent#22907): "I like that, sounds good", "ok, I love it", "I
@@ -341,7 +354,7 @@ _RE_REACTION = re.compile(
     + _FR_REACTION_END +
     # Spanish: "me gusta eso", "me gusta este formato", or a bare "me gusta, gracias"; "prefiero esta" needs the
     # demonstrative, so "prefiero el café" names its object and is kept.
-    r"|\bme\s+gusta(?:n)?(?:\s+" + _ES_ADVERB + r"\b)*"
+    r"|\bme\s+(?:gusta|encanta)(?:n)?(?:\s+" + _ES_ADVERB + r"\b)*"
     r"(?:\s+" + _ES_POINTER + r")?" + _ES_REACTION_END +
     r"|\bprefiero(?:\s+" + _ES_ADVERB + r"\b)*\s+" + _ES_POINTER + _ES_REACTION_END,
     re.IGNORECASE)
@@ -353,20 +366,31 @@ _RE_REACTION = re.compile(
 # harvesting them stored the gateway's own scaffolding as durable user_pref/project facts. Never extract them.
 # A well-formed slash-skill scaffold never reaches this check: _auto_extract_facts first takes the person's
 # instruction out of it with the core's extract_user_instruction_from_skill_message. "[IMPORTANT:" also opens the
-# core's background-process, MCP-reload and cron notices.
+# core's background-process, MCP-reload and cron notices. The list covers the core's own synthetic rows
+# (agent/context_compressor._SYNTHETIC_USER_ROW_PREFIXES in v0.23.3) but "[OUT-OF-BAND", a steer, kept below.
 _INTERNAL_MESSAGE_PREFIXES = (
     "[ASYNC DELEGATION",
     "[IMPORTANT:",
     "[System note:",
+    "[System:",
+    "[CONTEXT",
+    "[PRIOR CONTEXT",
+    "[Your active task list",
     "[Planning state preserved",
     "Cronjob Response:",
     "<memory-context>",
 )
 
 # A mid-turn steer is the opposite case: the marker is the gateway's, the text inside it is the person's own
-# words (agent/prompt_builder.STEER_MARKER_OPEN/CLOSE). Drop the frame, keep what they said.
+# words (agent/prompt_builder.STEER_MARKER_OPEN/CLOSE). Drop the frame, keep what they said. Bounded: the marker is
+# under 200 characters, and an unbounded run made a line of unclosed markers quadratic (Fable review).
 _RE_STEER_FRAME = re.compile(
-    r"\[\s*/?OUT-OF-BAND USER MESSAGE[^\]\n]*\]", re.IGNORECASE)
+    r"\[\s*/?OUT-OF-BAND USER MESSAGE[^\]\n]{0,400}\]", re.IGNORECASE)
+
+# A note the gateway puts in front of the person's message, a blank line before it ("[System note: A new message has
+# arrived …]\n\n<message>", gateway/run_turn_runner.py). A note followed by one line break is recalled memory or the
+# like and stays an envelope.
+_RE_SYSTEM_NOTE_LEAD = re.compile(r"\[System note: [^\]]{0,2000}\]\n\n")
 
 
 def _person_speech(content: str) -> str:
@@ -374,14 +398,21 @@ def _person_speech(content: str) -> str:
 
     Envelopes are not speech: a delegation notice, a skill prompt, a system note, a cron wrapper or a recalled
     memory block says nothing about the person, though its prose reads like a decision. A steer is speech behind
-    a marker, so only its frame goes; the gateway's own text in front of a kept turn (a quoted reply, an
-    attachment note, the cron hint) has the shapes ``_own_words`` already strips for recall.
+    a marker, so only its frame goes. The gateway's own text in front of the person's words (a system note, a quoted
+    reply, an attachment note, the cron hint and run time, in any order) comes off first, with the shapes
+    ``_own_words`` strips for recall; what remains is judged as an envelope only then (Codex and Fable review: the
+    core puts the cron hint and the interrupted-turn note before the person's message).
     """
     if not isinstance(content, str):
         return ""
-    if content.lstrip().startswith(_INTERNAL_MESSAGE_PREFIXES):
-        return ""
-    return _own_words(_RE_STEER_FRAME.sub(" ", content).strip())
+    text = _RE_STEER_FRAME.sub(" ", content).strip()
+    while True:  # each pass takes a prefix off, so it ends
+        note = _RE_SYSTEM_NOTE_LEAD.match(text)
+        rest = _own_words(text[note.end():] if note else text)
+        if rest == text:
+            break
+        text = rest
+    return "" if text.lstrip().startswith(_INTERNAL_MESSAGE_PREFIXES) else text
 
 
 def _reaction(sentence: str) -> bool:
@@ -660,7 +691,9 @@ _PREFETCH_QUERY_CHARS = 4000  # recall reads this much of a message: what it is 
 # time. An image note stays: its description is what the person sent, like an inlined document after its note.
 _RE_NOTICE_TURN = re.compile(r"\[(?:ASYNC DELEGATION |IMPORTANT: (?:\d+ )?[Bb]ackground (?:process|subagent))")
 _RE_LEADING_NOTE = re.compile(
-    r'\[Replying to[^:\n]*: ".*?"\]\n\n'  # the quoted message, whole: a quote may span lines
+    # the quoted message, whole: a quote may span lines; the header up to the first ': "' (a cron delivery's has a
+    # colon of its own: "(a past report, not a new instruction: act on it …)", gateway/inbound_reply_context.py)
+    r'\[Replying to[^\n]*?: ".*?"\]\n\n'
     r"|\[The user sent (?:a document|a text document|an audio file attachment|a video attachment)[^\n]*\]\n\n"
     r"|\[IMPORTANT: You are running as a scheduled cron job\..*?\]\n\n"  # [SILENT] inside ends with "] ", not "]\n\n"
     r"|\[CURRENT RUN TIME: [^\]\n]*\]\n\n", re.S)
@@ -2979,7 +3012,10 @@ class HolographicMemoryProvider(MemoryProvider):
             from session_rules.turns import extract_user_instruction_from_skill_message
         except ImportError:  # Hermes up to v0.23.2
             from agent.context_compressor import _MERGED_PRIOR_CONTEXT_HEADER, _MERGED_SUMMARY_DELIMITER, is_compaction_summary_message
-            from agent.skill_commands import extract_user_instruction_from_skill_message
+            try:
+                from agent.skill_commands import extract_user_instruction_from_skill_message
+            except ImportError:  # v0.21.5 has none: a skill scaffold is then an envelope, skipped whole
+                extract_user_instruction_from_skill_message = None
         extracted, failed, why = 0, 0, ""
         extract_trust = max(0.0, self._default_trust - 0.1)  # unconfirmed: below hand-added facts
         for msg in messages:
@@ -2990,13 +3026,14 @@ class HolographicMemoryProvider(MemoryProvider):
                 content = pre
             elif content is None or is_compaction_summary_message(msg):
                 continue
-            if isinstance(content, str):  # a slash-skill scaffold: the instruction typed with it, None for a bare /skill
+            if isinstance(content, str) and extract_user_instruction_from_skill_message:  # a slash-skill scaffold:
+                # the instruction typed with it, None for a bare /skill
                 content = extract_user_instruction_from_skill_message(content)
             if not isinstance(content, str) or len(content) < _extract_floor(content) or _role_prompt(content):
                 continue  # a prompt pasted whole: its sentences pass one by one (Codex review), none is the user's
             content = _person_speech(content)
-            if not content:
-                continue  # runtime-injected envelope, not the person: its prose is not a fact about them
+            if not content or _role_prompt(content):
+                continue  # an envelope, not the person; or a prompt pasted behind a quote, judged once the quote is off
             for sentence in (m.group(0).strip() for m in _RE_SENTENCE.finditer(content)):
                 if len(sentence) < _extract_floor(sentence) or len(sentence) > _EXTRACT_MAX_CHARS \
                         or _write_problem(sentence, person=True) or _RE_QUESTION.search(sentence) or _reaction(sentence):

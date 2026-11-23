@@ -80,6 +80,15 @@ def test_spanish_sentence_is_stored_verbatim_with_its_category(provider, sentenc
     "Hemos comido pizza en la playa.",
     "Hemos visto la película dos veces.",
     "Ya hemos terminado el informe.",
+    # Review of #120: "uso" and "suelo" are nouns too ("use", "floor"); a dislike of how something turned out is a
+    # reply; "la regla es …" names no rule of the project.
+    "Uso de memoria alto en el servidor de producción.",
+    "Uso obligatorio de casco.",
+    "Suelo mojado en la cocina otra vez.",
+    "Suelo de madera en oferta.",
+    "No me gusta cómo quedó el informe de ayer.",
+    "Odio cuando el build falla así.",
+    "La regla es simple.",
 ])
 def test_spanish_question_quote_intent_or_conditional_is_not_stored(provider, sentence):
     provider.on_session_end([{"role": "user", "content": sentence}])
@@ -98,6 +107,12 @@ def test_spanish_question_quote_intent_or_conditional_is_not_stored(provider, se
     "Prefiero este.",
     "Prefiero esa.",
     "Prefiero más bien esto.",
+    # Review of #120: "me encanta" replies as "me gusta" does, and "your answer", "the idea", "what you did" point at
+    # the assistant's turn.
+    "Me encanta eso.",
+    "Me gusta tu respuesta.",
+    "Me gusta la idea.",
+    "Me gusta lo que hiciste.",
 ])
 def test_spanish_reply_to_the_assistant_is_not_stored(provider, sentence):
     provider.on_session_end([{"role": "user", "content": sentence}])

@@ -5,27 +5,33 @@
 ### Fixed
 - **`auto_extract` no longer stores the gateway's own scaffolding as facts.** Runtime-injected turns arrive as
   `role="user"` and their prose matches the decision patterns (`we decided…`, `the project uses…`), so a fan-out
-  completion notice, a skill-invocation prompt, a `[System note: …]`, a planning-state carryover, a
-  `Cronjob Response:` wrapper or a `<memory-context>` block was harvested as a durable `user_pref` / `project` fact
-  about the person. Such a turn is skipped whole, except a slash-skill invocation: of it only the instruction typed
-  with the command is kept (the core's `extract_user_instruction_from_skill_message`), never the skill body; a bare
-  `/skill` keeps nothing. A mid-turn `/steer` is the opposite case — the
-  `[OUT-OF-BAND USER MESSAGE …]` marker is the gateway's, the text inside it is the person's — so only the frame is
-  dropped and what they decided is kept; the same goes for a quoted reply, an attachment note and the cron hint in
-  front of a kept turn. Measured on 0.30.1: all six envelope shapes stored a fact without this check, none does with
-  it, and a real turn in the same batch still extracts. (#122 by abcapr; the skill instruction added in review.)
+  completion notice, a skill-invocation prompt, a `[System note: …]`, a planning-state carryover, a preserved task
+  list, a `[System: …]` or `[CONTEXT …]` row, a `Cronjob Response:` wrapper or a `<memory-context>` block was
+  harvested as a durable `user_pref` / `project` fact about the person. Such a turn is skipped whole (the prefixes
+  are the core's own synthetic rows). Of a slash-skill invocation only the instruction typed with the command is kept
+  (the core's `extract_user_instruction_from_skill_message`; on a core without it, v0.21.5, the scaffold is skipped
+  whole), never the skill body; a bare `/skill` keeps nothing. A mid-turn `/steer` is the opposite case: the
+  `[OUT-OF-BAND USER MESSAGE …]` marker is the gateway's, the text inside it is the person's, so only the frame is
+  dropped. The gateway's text in front of the person's words (an interrupted-turn system note, a quoted reply, an
+  attachment note, the cron hint and run time) comes off before a turn is judged, so the words behind it are kept.
+  A prompt pasted behind a quote is recognised once the quote is off. (#122 by abcapr; the skill instruction, the
+  leading notes, the core's other synthetic rows and the bounded steer pattern added in review.)
+- **A reply to a cron delivery keeps its quote out.** Its header has a colon of its own ("a past report, not a new
+  instruction: act on it …"), so the quoted report was read as the person's words, in recall before a turn too.
 
 ### Extraction
-- **Spanish joins `auto_extract`.** The patterns cover preferences ("prefiero", "me gusta", "me encanta", "suelo",
-  "uso", "siempre / nunca" with a first-person verb, "mi … favorito es", "no me gusta", "odio") and decisions ("hemos
-  decidido / acordado / elegido / optado", "decidimos", "el proyecto usa", "la regla del proyecto es"); a bare
-  "hemos" is the auxiliary of any "we have done …" ("hemos comido pizza") and decides nothing. Spanish drops the subject, so the verb has
-  to open the sentence: a quote ("Paul dice que prefiere …"), a lead-in ("Yo, prefiero …"), a condition ("Si prefiero
-  …") and a question are not the person's. "prefiero que …" is an instruction to the assistant, not a preference, as
-  "je préfère que …" is in French, and "siempre es así" says nothing durable because the verb is missing. Replies
-  ("me gusta eso", "me gusta, gracias", "prefiero este") are taken out by the shared reaction rule. Spanish keeps the
-  French rule for a reply followed by a preference ("Me gusta eso, prefiero el té verde": kept). (#120 by Tormen28;
-  the "hemos" fix added in review.)
+- **Spanish joins `auto_extract`.** The patterns cover preferences ("prefiero", "me gusta", "me encanta", "suelo"
+  before an infinitive, "uso", "siempre / nunca" with a first-person verb, "mi … favorito es", "no me gusta", "odio")
+  and decisions ("hemos decidido / acordado / elegido / optado", "decidimos", "el proyecto usa", "la regla del
+  proyecto es"). Spanish drops the subject, so the verb has to open the sentence: a quote ("Paul dice que prefiere …"),
+  a lead-in ("Yo, prefiero …"), a condition ("Si prefiero …") and a question are not the person's. "prefiero que …"
+  is an instruction to the assistant, not a preference, as "je préfère que …" is in French, and "siempre es así" says
+  nothing durable because the verb is missing. Replies ("me gusta eso", "me encanta eso", "me gusta tu respuesta",
+  "me gusta la idea", "prefiero este") are taken out by the shared reaction rule. Spanish keeps the French rule for a
+  reply followed by a preference ("Me gusta eso, prefiero el té verde": kept). Not stored: a bare "hemos" ("hemos
+  comido pizza"), "uso" and "suelo" as nouns ("Uso de memoria alto", "Suelo de madera"), a dislike of how something
+  went ("No me gusta cómo quedó …") and "la regla es …" without the project. (#120 by Tormen28; the last four added
+  in review.)
 
 ## 0.30.2 — 2026-11-24
 

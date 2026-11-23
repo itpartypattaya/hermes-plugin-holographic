@@ -40,6 +40,8 @@ def provider(tmp_path):
     ("PREFIERO LAS RESPUESTAS CORTAS Y DIRECTAS.", "user_pref"),
     ("Hemos decidido usar PostgreSQL para la persistencia.", "project"),
     ("Ya hemos acordado el reparto de tareas.", "project"),
+    ("Hemos elegido Godot para el prototipo.", "project"),
+    ("Hemos optado por SQLite en local.", "project"),
     ("Decidimos quedarnos con Godot.", "project"),
     ("El proyecto usa Supabase para el backend.", "project"),
     ("La regla del proyecto es no tocar raw/.", "project"),
@@ -74,6 +76,10 @@ def test_spanish_sentence_is_stored_verbatim_with_its_category(provider, sentenc
     # Spanish "I decided" is a one-off: only "we decided" is a project decision.
     "Decidí preguntarte otra cosa.",
     "Elegí la segunda opción.",
+    # "hemos" is the auxiliary of every "we have done …": only a decision verb after it decides anything.
+    "Hemos comido pizza en la playa.",
+    "Hemos visto la película dos veces.",
+    "Ya hemos terminado el informe.",
 ])
 def test_spanish_question_quote_intent_or_conditional_is_not_stored(provider, sentence):
     provider.on_session_end([{"role": "user", "content": sentence}])

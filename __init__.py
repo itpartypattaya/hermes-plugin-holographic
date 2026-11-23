@@ -272,8 +272,9 @@ _ES_EXTRACT = (
     re.compile(r"^(?:no\s+me\s+gusta(?:n)?|odio|detesto|no\s+soporto)\s+\S", re.IGNORECASE),
     # Decisions: first person plural or the project as the subject, as "we decided" and "the project uses" are in
     # English; "decidí preguntarte otra cosa" is a one-off and is not matched.
-    re.compile(r"^(?:ya\s+)?(?:hemos|decidimos|acordamos|elegimos|optamos|hemos\s+decidido)\s+\S",
-               re.IGNORECASE),
+    # "hemos" alone is the auxiliary of any "we have done …" ("hemos comido pizza"): only a decision verb after it.
+    re.compile(r"^(?:ya\s+)?(?:hemos\s+(?:decidido|acordado|elegido|optado)|decidimos|acordamos|elegimos|optamos)"
+               r"\s+\S", re.IGNORECASE),
     re.compile(r"^el\s+proyecto\s+(?:usa|utiliza|necesita|requiere)\s+\S", re.IGNORECASE),
     re.compile(r"^la\s+regla\s+(?:del\s+proyecto\s+)?(?:es|dice)\s+\S", re.IGNORECASE),
 )

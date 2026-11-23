@@ -146,40 +146,55 @@ def test_helper_detects_prefix_metadata_and_merged_forms():
 
 
 # ---------------------------------------------------------------------------
-# Where the core keeps the compaction helpers. auto_extract needs the merged-summary header and delimiter and
-# is_compaction_summary_message: Hermes up to v0.23.2 has them only in agent.context_compressor, v0.23.3 moved them to
-# session_rules.turns and keeps agent.context_compressor re-exporting them, a later core may drop that re-export.
+# Where the core keeps the helpers auto_extract takes from it: the merged-summary header and delimiter and
+# is_compaction_summary_message (old home agent.context_compressor), and extract_user_instruction_from_skill_message
+# (old home agent.skill_commands). Hermes v0.23.3 moved all four to session_rules.turns and keeps the old modules
+# re-exporting them; a later core may drop the re-exports.
 # ---------------------------------------------------------------------------
 
-_HELPERS = ("_MERGED_PRIOR_CONTEXT_HEADER", "_MERGED_SUMMARY_DELIMITER", "is_compaction_summary_message")
+try:
+    from session_rules.turns import extract_user_instruction_from_skill_message as _skill_instruction
+except ImportError:  # Hermes up to v0.23.2
+    from agent.skill_commands import extract_user_instruction_from_skill_message as _skill_instruction
+
+# Each helper, the running core's own function or value, under the module that held it up to v0.23.2.
+_OLD_HOMES = {
+    "agent.context_compressor": {name: getattr(_compaction, name) for name in (
+        "_MERGED_PRIOR_CONTEXT_HEADER", "_MERGED_SUMMARY_DELIMITER", "is_compaction_summary_message")},
+    "agent.skill_commands": {"extract_user_instruction_from_skill_message": _skill_instruction},
+}
+
+
+def _module(name, attributes):
+    module = types.ModuleType(name)
+    for attribute, value in attributes.items():
+        setattr(module, attribute, value)
+    return module
 
 
 @pytest.fixture
 def core_without_compressor_reexport(monkeypatch):
-    """A core that keeps the helpers only in session_rules.turns. The helpers are the running core's own; only their old
-    address goes (on a core before v0.23.3 they are also given the new one, as v0.23.3 has it)."""
+    """A core that keeps the helpers only in session_rules.turns: their old modules re-export nothing (on a core before
+    v0.23.3 the helpers are also given the new address, as v0.23.3 has it)."""
     try:
         import session_rules.turns  # noqa: F401 - v0.23.3 and later: the new address is real
     except ImportError:
-        package, turns = types.ModuleType("session_rules"), types.ModuleType("session_rules.turns")
+        turns = _module("session_rules.turns", {k: v for home in _OLD_HOMES.values() for k, v in home.items()})
+        package = _module("session_rules", {"turns": turns})
         package.__path__ = []
-        for name in _HELPERS:
-            setattr(turns, name, getattr(_compaction, name))
-        package.turns = turns
         monkeypatch.setitem(sys.modules, "session_rules", package)
         monkeypatch.setitem(sys.modules, "session_rules.turns", turns)
-    monkeypatch.setitem(sys.modules, "agent.context_compressor", types.ModuleType("agent.context_compressor"))
+    for home in _OLD_HOMES:
+        monkeypatch.setitem(sys.modules, home, types.ModuleType(home))
 
 
 @pytest.fixture
 def core_before_session_rules(monkeypatch):
-    """Hermes up to v0.23.2 (what Mia ran when this was written): no session_rules, the helpers only in
-    agent.context_compressor. The helpers are the running core's own, given the old address whether or not the running
-    core still re-exports them there."""
-    compressor = types.ModuleType("agent.context_compressor")
-    for name in _HELPERS:
-        setattr(compressor, name, getattr(_compaction, name))
-    monkeypatch.setitem(sys.modules, "agent.context_compressor", compressor)
+    """Hermes up to v0.23.2 (what Mia ran when this was written): no session_rules, each helper only in its old module.
+    The helpers are the running core's own, given their old address whether or not the running core still re-exports
+    them there."""
+    for home, attributes in _OLD_HOMES.items():
+        monkeypatch.setitem(sys.modules, home, _module(home, attributes))
     monkeypatch.setitem(sys.modules, "session_rules", None)
     monkeypatch.setitem(sys.modules, "session_rules.turns", None)
 
@@ -188,18 +203,21 @@ def core_before_session_rules(monkeypatch):
 def test_auto_extract_finds_the_compaction_helpers_where_the_core_keeps_them(tmp_path, request, core):
     """At session end a person's own words are stored and the compactor's are not, wherever the core keeps the
     helpers that tell them apart: the user text before a merged summary's delimiter is kept, the summary after it and
-    a summary message are not."""
+    a summary message are not, and of a slash-skill invocation only the instruction typed with it is kept."""
     request.getfixturevalue(core)
     provider = _make_provider(tmp_path, auto_extract=True)
     provider.on_session_end([
         _user(f"{_MERGED_PRIOR_CONTEXT_HEADER}\n{DECISION_MSG}\n{_MERGED_SUMMARY_DELIMITER}\n{SUMMARY_MSG}"),
         _user(SUMMARY_MSG),
         _user("I prefer tabs over spaces for indentation"),
+        _user(SKILL_BODY + "\nThe user has provided the following instruction alongside the skill invocation: "
+              "we decided to keep the nightly backups"),
     ])
     facts = _fact_contents(provider)
     provider.shutdown()
-    assert len(facts) == 2, facts
+    assert len(facts) == 3, facts
     assert any("PostgreSQL" in f for f in facts) and any("tabs over spaces" in f for f in facts), facts
+    assert "we decided to keep the nightly backups" in facts, facts
 
 
 # ---------------------------------------------------------------------------
@@ -375,3 +393,29 @@ def test_envelope_skip_does_not_suppress_real_turns(tmp_path):
     assert len(facts) == 1
     assert "PostgreSQL" in facts[0]
     provider.shutdown()
+
+
+# A slash-skill invocation is the gateway's scaffold around the person's own instruction: the skill body (whose prose
+# can read like a decision) is not theirs, the instruction typed with the command is. The markers are the core's
+# (session_rules.turns / agent.skill_commands: _SINGLE_SKILL_MARKER, _SINGLE_SKILL_INSTRUCTION, _RUNTIME_NOTE).
+SKILL_BODY = ("[IMPORTANT: The user has invoked the \"db-helper\" skill, indicating they want you to follow its "
+              "instructions. The full skill content is loaded below.]\n\n# DB helper\n"
+              "The project uses MySQL for every service. We decided to shard by tenant.\n")
+
+
+def test_a_skill_invocation_keeps_the_persons_instruction_not_the_skill_body(tmp_path):
+    provider = _make_provider(tmp_path, auto_extract=True)
+    provider.on_session_end([_user(
+        SKILL_BODY + "\nThe user has provided the following instruction alongside the skill invocation: "
+        "we decided to use PostgreSQL for persistence\n\n[Runtime note: the skill directory is ~/skills/db-helper]")])
+    facts = _fact_contents(provider)
+    provider.shutdown()
+    assert facts == ["we decided to use PostgreSQL for persistence"]
+
+
+def test_a_bare_skill_invocation_stores_nothing(tmp_path):
+    provider = _make_provider(tmp_path, auto_extract=True)
+    provider.on_session_end([_user(SKILL_BODY)])
+    facts = _fact_contents(provider)
+    provider.shutdown()
+    assert facts == []

@@ -351,6 +351,9 @@ _RE_REACTION = re.compile(
 # completion notices, skill-invocation prompts, system notes, planning-state carryovers, cron envelopes and
 # recalled-memory blocks. Their prose matches the decision patterns ("we decided…", "the project uses…"), so
 # harvesting them stored the gateway's own scaffolding as durable user_pref/project facts. Never extract them.
+# A well-formed slash-skill scaffold never reaches this check: _auto_extract_facts first takes the person's
+# instruction out of it with the core's extract_user_instruction_from_skill_message. "[IMPORTANT:" also opens the
+# core's background-process, MCP-reload and cron notices.
 _INTERNAL_MESSAGE_PREFIXES = (
     "[ASYNC DELEGATION",
     "[IMPORTANT:",
@@ -2973,8 +2976,10 @@ class HolographicMemoryProvider(MemoryProvider):
         # _MERGED_SUMMARY_DELIMITER (after the header) and the summary AFTER it — harvest only that segment.
         try:  # heavy; lazy. Hermes v0.23.3 moved them here; agent.context_compressor re-exports them for now
             from session_rules.turns import _MERGED_PRIOR_CONTEXT_HEADER, _MERGED_SUMMARY_DELIMITER, is_compaction_summary_message
+            from session_rules.turns import extract_user_instruction_from_skill_message
         except ImportError:  # Hermes up to v0.23.2
             from agent.context_compressor import _MERGED_PRIOR_CONTEXT_HEADER, _MERGED_SUMMARY_DELIMITER, is_compaction_summary_message
+            from agent.skill_commands import extract_user_instruction_from_skill_message
         extracted, failed, why = 0, 0, ""
         extract_trust = max(0.0, self._default_trust - 0.1)  # unconfirmed: below hand-added facts
         for msg in messages:
@@ -2985,6 +2990,8 @@ class HolographicMemoryProvider(MemoryProvider):
                 content = pre
             elif content is None or is_compaction_summary_message(msg):
                 continue
+            if isinstance(content, str):  # a slash-skill scaffold: the instruction typed with it, None for a bare /skill
+                content = extract_user_instruction_from_skill_message(content)
             if not isinstance(content, str) or len(content) < _extract_floor(content) or _role_prompt(content):
                 continue  # a prompt pasted whole: its sentences pass one by one (Codex review), none is the user's
             content = _person_speech(content)

@@ -7,21 +7,25 @@
   `role="user"` and their prose matches the decision patterns (`we decided…`, `the project uses…`), so a fan-out
   completion notice, a skill-invocation prompt, a `[System note: …]`, a planning-state carryover, a
   `Cronjob Response:` wrapper or a `<memory-context>` block was harvested as a durable `user_pref` / `project` fact
-  about the person. Such a turn is skipped whole. A mid-turn `/steer` is the opposite case — the
+  about the person. Such a turn is skipped whole, except a slash-skill invocation: of it only the instruction typed
+  with the command is kept (the core's `extract_user_instruction_from_skill_message`), never the skill body; a bare
+  `/skill` keeps nothing. A mid-turn `/steer` is the opposite case — the
   `[OUT-OF-BAND USER MESSAGE …]` marker is the gateway's, the text inside it is the person's — so only the frame is
   dropped and what they decided is kept; the same goes for a quoted reply, an attachment note and the cron hint in
   front of a kept turn. Measured on 0.30.1: all six envelope shapes stored a fact without this check, none does with
-  it, and a real turn in the same batch still extracts.
+  it, and a real turn in the same batch still extracts. (#122 by abcapr; the skill instruction added in review.)
 
 ### Extraction
-- **Spanish joins `auto_extract`.** The patterns covers preferences ("prefiero", "me gusta", "me encanta", "suelo",
+- **Spanish joins `auto_extract`.** The patterns cover preferences ("prefiero", "me gusta", "me encanta", "suelo",
   "uso", "siempre / nunca" with a first-person verb, "mi … favorito es", "no me gusta", "odio") and decisions ("hemos
-  decidido", "decidimos", "el proyecto usa", "la regla del proyecto es"). Spanish drops the subject, so the verb has
+  decidido / acordado / elegido / optado", "decidimos", "el proyecto usa", "la regla del proyecto es"); a bare
+  "hemos" is the auxiliary of any "we have done …" ("hemos comido pizza") and decides nothing. Spanish drops the subject, so the verb has
   to open the sentence: a quote ("Paul dice que prefiere …"), a lead-in ("Yo, prefiero …"), a condition ("Si prefiero
   …") and a question are not the person's. "prefiero que …" is an instruction to the assistant, not a preference, as
   "je préfère que …" is in French, and "siempre es así" says nothing durable because the verb is missing. Replies
   ("me gusta eso", "me gusta, gracias", "prefiero este") are taken out by the shared reaction rule. Spanish keeps the
-  French rule for a reply followed by a preference ("Me gusta eso, prefiero el té verde": kept).
+  French rule for a reply followed by a preference ("Me gusta eso, prefiero el té verde": kept). (#120 by Tormen28;
+  the "hemos" fix added in review.)
 
 ## 0.30.2 — 2026-11-24
 

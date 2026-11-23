@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- **A write takes only the four categories the tool declares** (#123 by HouMinXi). `fact_store` told the model
+  `user_pref`, `project`, `tool` and `general`, but add, change, correct, update and merge stored any string, so a
+  schema-validating client refused what the handler accepted. Another value, or one that is no string, is now
+  refused with the four named and nothing written (a list used to fail with a database error). Search and list still
+  filter by any category a store holds, so facts an older release stored under another one stay reachable. No change
+  to defaults, schema shape or network behaviour.
+
 ## 0.31.0 — 2026-11-24
 
 ### Fixed

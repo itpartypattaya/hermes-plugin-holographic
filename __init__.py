@@ -55,6 +55,9 @@ logger = logging.getLogger(__name__)
 # and outlives a rename, so it keeps naming the old profile's DB.
 _DEFAULT_DB_PATH = "$HERMES_HOME/memory_store.db"
 
+# The categories a write takes, as the fact_store schema declares them (issue #123: any string was stored).
+CATEGORIES = ("user_pref", "project", "tool", "general")
+
 
 FACT_STORE_SCHEMA = {
     "name": "fact_store",
@@ -144,7 +147,9 @@ FACT_STORE_SCHEMA = {
             "expect": {"type": "object", "additionalProperties": {"type": "integer"},
                        "description": "'merge', optional: {\"<fact_id>\": <version_id>} as 'history' shows them; the "
                                       "merge happens only while each named fact is still at that version."},
-            "category": {"type": "string", "enum": ["user_pref", "project", "tool", "general"]},
+            "category": {"type": "string", "enum": list(CATEGORIES),
+                         "description": "What the fact is about. A write takes only these; search and list also "
+                                        "filter by a category an older release stored."},
             "tags": {"type": "string", "description": "Comma-separated tags."},
             "trust_delta": {"type": "number", "description": "Trust adjustment for 'update'."},
             "min_trust": {"type": "number", "description": "Minimum trust filter. Default: the min_trust_threshold "
@@ -2341,7 +2346,11 @@ class HolographicMemoryProvider(MemoryProvider):
         """What goes with a fact's text is screened as the text is: keywords, tags and the category are stored,
         indexed and shown by search and list as the text is (review 2026-11-17, H2: only the keywords were, so a
         password in the tags was stored). A name in 'entities' is screened where names are checked (entity_names.
-        _valid_entity): the fact is stored and that name is not linked, said by its position (0.17.6)."""
+        _valid_entity): the fact is stored and that name is not linked, said by its position (0.17.6). A category
+        is one of CATEGORIES (issue #123); the value itself is not repeated, it may be what the screen refuses."""
+        category = a.get("category")
+        if category not in (None, "") and category not in CATEGORIES:
+            return f"category: not one of {', '.join(CATEGORIES)}"
         for field, value in (("keywords", ", ".join(_keywords(a.get("keywords")))),
                              ("tags", a.get("tags") if isinstance(a.get("tags"), str) else ""),
                              ("category", a.get("category") if isinstance(a.get("category"), str) else "")):

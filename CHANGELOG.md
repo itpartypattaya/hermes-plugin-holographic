@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.31.1 — 2026-11-24
 
 ### Fixed
 - **A write takes only the four categories the tool declares** (#123 by HouMinXi). `fact_store` told the model

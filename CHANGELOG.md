@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- `auto_extract` (off by default) takes the compaction helpers it uses to tell a person's words from the compactor's
+  (`_MERGED_PRIOR_CONTEXT_HEADER`, `_MERGED_SUMMARY_DELIMITER`, `is_compaction_summary_message`) from
+  `session_rules.turns`, where Hermes v0.23.3 moved them, and from `agent.context_compressor` on older cores. v0.23.3
+  still re-exports them from `agent.context_compressor`, so nothing is broken today; on a core that drops the
+  re-export every extraction would raise an ImportError and store nothing. No change to defaults, schema or network
+  behaviour.
+
 ## 0.30.1 — 2026-11-18
 
 - Comments only: the examples in `screen.py`'s comments name invented people instead of the maintainer's family

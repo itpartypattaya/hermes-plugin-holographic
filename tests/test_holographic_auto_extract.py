@@ -17,16 +17,22 @@ Two compounding defects:
    session rollover that followed a compaction.
 """
 
+import sys
+import types
+
 import pytest
 
-from agent.context_compressor import (
-    COMPRESSED_SUMMARY_METADATA_KEY,
-    SUMMARY_PREFIX,
-    _MERGED_PRIOR_CONTEXT_HEADER,
-    _MERGED_SUMMARY_DELIMITER,
-    is_compaction_summary_message,
-)
+try:  # Hermes v0.23.3 moved the compaction helpers here; agent.context_compressor re-exports them for now
+    from session_rules import turns as _compaction
+except ImportError:  # Hermes up to v0.23.2
+    from agent import context_compressor as _compaction
 from hermes_plugin_holographic import HolographicMemoryProvider
+
+COMPRESSED_SUMMARY_METADATA_KEY = _compaction.COMPRESSED_SUMMARY_METADATA_KEY
+SUMMARY_PREFIX = _compaction.SUMMARY_PREFIX
+_MERGED_PRIOR_CONTEXT_HEADER = _compaction._MERGED_PRIOR_CONTEXT_HEADER
+_MERGED_SUMMARY_DELIMITER = _compaction._MERGED_SUMMARY_DELIMITER
+is_compaction_summary_message = _compaction.is_compaction_summary_message
 
 
 def _make_provider(tmp_path, **config):
@@ -137,6 +143,63 @@ def test_helper_detects_prefix_metadata_and_merged_forms():
     )
     assert not is_compaction_summary_message(_user(DECISION_MSG))
     assert not is_compaction_summary_message(_user(""))
+
+
+# ---------------------------------------------------------------------------
+# Where the core keeps the compaction helpers. auto_extract needs the merged-summary header and delimiter and
+# is_compaction_summary_message: Hermes up to v0.23.2 has them only in agent.context_compressor, v0.23.3 moved them to
+# session_rules.turns and keeps agent.context_compressor re-exporting them, a later core may drop that re-export.
+# ---------------------------------------------------------------------------
+
+_HELPERS = ("_MERGED_PRIOR_CONTEXT_HEADER", "_MERGED_SUMMARY_DELIMITER", "is_compaction_summary_message")
+
+
+@pytest.fixture
+def core_without_compressor_reexport(monkeypatch):
+    """A core that keeps the helpers only in session_rules.turns. The helpers are the running core's own; only their old
+    address goes (on a core before v0.23.3 they are also given the new one, as v0.23.3 has it)."""
+    try:
+        import session_rules.turns  # noqa: F401 - v0.23.3 and later: the new address is real
+    except ImportError:
+        package, turns = types.ModuleType("session_rules"), types.ModuleType("session_rules.turns")
+        package.__path__ = []
+        for name in _HELPERS:
+            setattr(turns, name, getattr(_compaction, name))
+        package.turns = turns
+        monkeypatch.setitem(sys.modules, "session_rules", package)
+        monkeypatch.setitem(sys.modules, "session_rules.turns", turns)
+    monkeypatch.setitem(sys.modules, "agent.context_compressor", types.ModuleType("agent.context_compressor"))
+
+
+@pytest.fixture
+def core_before_session_rules(monkeypatch):
+    """Hermes up to v0.23.2 (what Mia ran when this was written): no session_rules, the helpers only in
+    agent.context_compressor. The helpers are the running core's own, given the old address whether or not the running
+    core still re-exports them there."""
+    compressor = types.ModuleType("agent.context_compressor")
+    for name in _HELPERS:
+        setattr(compressor, name, getattr(_compaction, name))
+    monkeypatch.setitem(sys.modules, "agent.context_compressor", compressor)
+    monkeypatch.setitem(sys.modules, "session_rules", None)
+    monkeypatch.setitem(sys.modules, "session_rules.turns", None)
+
+
+@pytest.mark.parametrize("core", ["core_without_compressor_reexport", "core_before_session_rules"])
+def test_auto_extract_finds_the_compaction_helpers_where_the_core_keeps_them(tmp_path, request, core):
+    """At session end a person's own words are stored and the compactor's are not, wherever the core keeps the
+    helpers that tell them apart: the user text before a merged summary's delimiter is kept, the summary after it and
+    a summary message are not."""
+    request.getfixturevalue(core)
+    provider = _make_provider(tmp_path, auto_extract=True)
+    provider.on_session_end([
+        _user(f"{_MERGED_PRIOR_CONTEXT_HEADER}\n{DECISION_MSG}\n{_MERGED_SUMMARY_DELIMITER}\n{SUMMARY_MSG}"),
+        _user(SUMMARY_MSG),
+        _user("I prefer tabs over spaces for indentation"),
+    ])
+    facts = _fact_contents(provider)
+    provider.shutdown()
+    assert len(facts) == 2, facts
+    assert any("PostgreSQL" in f for f in facts) and any("tabs over spaces" in f for f in facts), facts
 
 
 # ---------------------------------------------------------------------------

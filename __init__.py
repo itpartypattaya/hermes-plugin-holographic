@@ -2899,7 +2899,10 @@ class HolographicMemoryProvider(MemoryProvider):
         # Compaction handoff summaries arrive as role="user" and match the decision patterns; never store the
         # compactor's own output as a fact. A merge-into-tail row holds genuine prior user text BEFORE
         # _MERGED_SUMMARY_DELIMITER (after the header) and the summary AFTER it — harvest only that segment.
-        from agent.context_compressor import _MERGED_PRIOR_CONTEXT_HEADER, _MERGED_SUMMARY_DELIMITER, is_compaction_summary_message  # heavy; lazy
+        try:  # heavy; lazy. Hermes v0.23.3 moved them here; agent.context_compressor re-exports them for now
+            from session_rules.turns import _MERGED_PRIOR_CONTEXT_HEADER, _MERGED_SUMMARY_DELIMITER, is_compaction_summary_message
+        except ImportError:  # Hermes up to v0.23.2
+            from agent.context_compressor import _MERGED_PRIOR_CONTEXT_HEADER, _MERGED_SUMMARY_DELIMITER, is_compaction_summary_message
         extracted, failed, why = 0, 0, ""
         extract_trust = max(0.0, self._default_trust - 0.1)  # unconfirmed: below hand-added facts
         for msg in messages:

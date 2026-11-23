@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.31.0 — 2026-11-24
 
 ### Fixed
 - **`auto_extract` no longer stores the gateway's own scaffolding as facts.** Runtime-injected turns arrive as

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.30.2 — 2026-11-24
 
 - `auto_extract` (off by default) takes the compaction helpers it uses to tell a person's words from the compactor's
   (`_MERGED_PRIOR_CONTEXT_HEADER`, `_MERGED_SUMMARY_DELIMITER`, `is_compaction_summary_message`) from

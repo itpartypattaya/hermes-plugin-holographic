@@ -83,7 +83,7 @@ RECALL_MARGIN = 1.0  # before a turn
 SEARCH_MARGIN = 0.5  # fact_store search: the agent asked, and judges what it gets
 # fact_store search beyond the words (Retriever.beyond_words): of the SEARCH_TOP_K facts closest in meaning, one is
 # shown when it is closer than the best the words found by SEARCH_BEAT_WORDS and stands out at least SEARCH_Z_FLOOR.
-# Measured 2026-10-14 (issue #3): on Mia's store, questions sharing no word but a name 13/27 -> 18/27 and none
+# Measured 2026-10-14 (issue #3): on a production store, questions sharing no word but a name 13/27 -> 18/27 and none
 # at all 3/12 -> 6/12 with the same noise on 30 questions that must find nothing (1); synthetic 59 -> 60 of 67
 # (text-embedding-3-small) and 63 -> 66 (gemini-embedding-001). Rank alone (top 3 into the pool) found as much but
 # put a fact by meaning into 20 of those 30 questions.

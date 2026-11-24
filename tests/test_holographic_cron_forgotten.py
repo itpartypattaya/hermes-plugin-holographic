@@ -18,8 +18,8 @@ pytest.importorskip("numpy")
 
 from hermes_plugin_holographic import HolographicMemoryProvider
 
-FORGOTTEN = "Zoe Quinn owes Anton 500 baht"
-OTHER = "Zoe Quinn owes Anton 300 baht"
+FORGOTTEN = "Zoe Quinn owes Leon 500 baht"
+OTHER = "Zoe Quinn owes Leon 300 baht"
 
 
 def _provider(db, **init):
@@ -74,8 +74,8 @@ def test_the_plain_add_answers_as_before(setup):
 
 def test_a_cron_job_still_changes_a_fact_to_any_other_text(setup):
     cron, _, other, _ = setup
-    assert _call(cron, action="change", fact_id=other, content="Zoe Quinn owes Anton 200 baht")["status"] == "changed"
-    assert _content(cron, other) == "Zoe Quinn owes Anton 200 baht"
+    assert _call(cron, action="change", fact_id=other, content="Zoe Quinn owes Leon 200 baht")["status"] == "changed"
+    assert _content(cron, other) == "Zoe Quinn owes Leon 200 baht"
 
 
 def test_the_person_in_a_chat_may_say_it_again(setup):

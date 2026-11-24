@@ -106,7 +106,7 @@ In `config.yaml` under `plugins.hermes-memory-store`:
 | `graph_expansion` | `off` | `on`: search adds facts one co-occurrence edge out of the entities the message names, as discoveries in the tail of the result list. Off by default until it is measured on a real store; not in the setup wizard, and a value it does not recognise reads as off. See [docs/memory-graph.md](docs/memory-graph.md) |
 | `prefetch_repeat_turns` | `6` | A fact recalled before a turn is not injected again for this many turns of the session |
 | `prefetch_max_tokens` | `0` | Approximate tokens the block recalled before a turn may take, header and every line included (0.21.0). The budget never shortens a line: a fact whose line does not fit is left out whole; the rest keep their order. The older 300-character cap on each prefetch line still applies with or without a budget, so a longer fact's line ends in "…"; `stats` counts what was left out. `0` = off: up to five facts as before. See [docs/context-budget.md](docs/context-budget.md) |
-| `recall_source` | `off` | `short`: each fact recalled before a turn also says where it was written (`recorded 2026-10-12 · Anton · this chat`; no ids). Off by default: it costs tokens and tells the room which chat a fact came from. `list`, `history` and `export` always show the source in full |
+| `recall_source` | `off` | `short`: each fact recalled before a turn also says where it was written (`recorded 2026-10-12 · Leon · this chat`; no ids). Off by default: it costs tokens and tells the room which chat a fact came from. `list`, `history` and `export` always show the source in full |
 | `cron_writes` | `true` | A cron job's explicit `fact_store` / `fact_feedback` calls may write (nightly memory jobs such as hermes-dreaming's extraction and keywords exist to make them). Automatic writes (auto-extraction, mirroring, recall counts) stay off in cron, subagents and flush contexts; with `embeddings` on, a cron job that may write also makes missing fact vectors; `false` makes cron read-only too |
 | `recall_indicator` | `true` | Report recalled facts to the core's recall indicator ("🧠 Holographic — recalled 2 memories"). On Telegram and other messaging platforms that line arrives as a separate message before the reply; `false` turns it off, recall itself is unchanged. Like every key here it is read when the gateway starts: a change takes effect after a restart |
 | `embeddings` | `off` | `on`: search by meaning through an embeddings API you name (`embedding_url`, `embedding_model`, `embedding_key_env`, …) — ONLINE: fact texts and messages are sent there. See [Search by meaning](#search-by-meaning-optional-online) |
@@ -412,7 +412,7 @@ A word matches another when they share its plain form or its stem in the languag
   dropped only where that language alone fits the other words: "Ana come carne" stays Spanish, "Kim Lane lives in Oslo"
   keeps `kim`. Italian `mia` (my) is not on the list: it is a common name.
 - **Folding**: Latin accents and ligatures (`esta` finds `está`, `coeur` finds `cœur`), Arabic vowel marks and letter
-  variants, the Indic nukta, and native digits (`2027` finds `২০২৭`, `HR24` finds `HR২৪`). Folding also merges what
+  variants, the Indic nukta, and native digits (`2027` finds `২০২৭`, `QX24` finds `QX২৪`). Folding also merges what
   only an accent tells apart (Spanish `año` / `ano`), as the FTS5 index already did. Turkish `ı` and Polish `ł` compare
   as `i` and `l` (`İstanbul`, `ISTANBUL` and `istanbul` meet, `KIZIM` meets `kızım`, `szkola` meets `szkoła`); since the
   FTS5 index keeps those two letters, such a word is also searched as written.
@@ -429,13 +429,13 @@ A word matches another when they share its plain form or its stem in the languag
   keywords are for.
 - **Hyphens**: French elision and inversion (`d'Irma`, `prend-il`, `est-ce`) and Portuguese enclisis (`chama-se`) are
   taken apart in text of that language, reduplication (`anak-anak`) in any; a hyphen between scripts splits
-  (`hr-vps-এর`). A letters-only hyphenated token is an identifier in English text or text of no determined language
-  (`hr-vps`, `carry-on`): a message naming it is about that one, and a fact about `hr-other` is not recalled for it.
+  (`qx-vps-এর`). A letters-only hyphenated token is an identifier in English text or text of no determined language
+  (`qx-vps`, `carry-on`): a message naming it is about that one, and a fact about `qx-other` is not recalled for it.
   In Spanish, French, Portuguese, Indonesian and German text it is a compound word (`week-end`, `sexta-feira`,
   `IT-Treffen`), so a host name in a question in those languages is matched like any word, not enforced.
 - **Apostrophes**: Italian elision as French (`dell'anno`, `l'ospedale`, `quest'anno`, `dov'è`, `anch'io`; not before
   a lone `s`, so English `dev's` stays). A Turkish case ending after a name comes off in text that may be Turkish
-  (`Ankara'da`, `Ayşe'nin`, `HR24'ün`, `hr-vps'de` are Ankara, Ayşe, HR24, hr-vps), so the name is mentioned and an
+  (`Ankara'da`, `Ayşe'nin`, `QX24'ün`, `qx-vps'de` are Ankara, Ayşe, QX24, qx-vps), so the name is mentioned and an
   identifier stays required; only Turkish endings, so `Irma's`, `o'clock` and `rock'n'roll` are left alone. In Dutch
   text the plural and possessive `'s` comes off (`pinda's`).
 - **German compounds** (0.11.0): in text determined as German, a compound is split by a dictionary of German lexemes
@@ -607,7 +607,7 @@ How the numbers were obtained, honestly:
   mornings), and the quiet column includes that fix. Spanish to Indonesian: first run before the review fixes below,
   with the same found and recalled numbers. Japanese, Korean, Thai, German: run once; nothing changed after.
 - **An independent review (Codex CLI) of 0.4.2 and 0.5.0** found regressions the sets did not: a lone "son" dropped as
-  a Spanish function word, `hr-vps` no longer enforced, `ação` / `ações` apart, "with" / "without" sugar no longer a
+  a Spanish function word, `qx-vps` no longer enforced, `ação` / `ações` apart, "with" / "without" sugar no longer a
   conflict, `Jean` mentioned by `jeans`, and others. Each is fixed with a test, and every set was run again. One of
   those fixes made French `est-ce` a required identifier, which the unseen set showed (French recalled 88 %); the
   remedy (compound words in Romance-language text, a hyphenated word votes for a language with its first part) was
@@ -693,7 +693,7 @@ How the numbers were obtained, honestly:
     sets are unchanged.
 - **Review of 0.11.0 (Codex CLI)**, each fixed with a test (`tests/test_holographic_v0110_review.py`): Polish stems in
   text of no determined language joined English words (`army` / `arm`; now only with Polish letters); a host name in a
-  Turkish, Italian or Dutch question was no longer required (`hr-vps'de`); a hiragana variant was replaced inside
+  Turkish, Italian or Dutch question was no longer required (`qx-vps'de`); a hiragana variant was replaced inside
   another word (`かいちょう`); English links of a rare sense were applied to the common one (`butter` / `butt`, `tower`
   / `tow`, `pear` / `pearl`); a Chinese one-character word recalled an idiom (`猫` / `猫腻`; now it needs a pair of the
   question or a second character); a kanji-only Japanese question missed a fact whose kana folded its spelling (a
@@ -701,7 +701,7 @@ How the numbers were obtained, honestly:
   "Günaydın canlarım!" recalled facts about Can; a damaged data file broke recall instead of being skipped. A second
   review (of German and Spanish, and of these fixes) found verb forms recalling facts alone (`tuviese` / `contiene`,
   `gelegt` / `liegt`, `Lucía` / `luce`, `fue` / `va`: now 0.6, never alone), a three-letter compound head doing the
-  same (`Alltag` / `Tag`), a host name lost in a Dutch tie with Spanish (`De server hr-vps`: compounds only when every
+  same (`Alltag` / `Tag`), a host name lost in a Dutch tie with Spanish (`De server qx-vps`: compounds only when every
   tied language writes them), and a malformed compound row raising instead of being skipped; each has a test. The
   German set gives the same numbers after these fixes, quiet 8 of 10 again; every other set is unchanged.
 - **Not measured**: other languages (exact words, no stems, no function-word list): among them Vietnamese, Ukrainian
@@ -743,7 +743,7 @@ first batch was thrown away because the description's example then was the store
 | German | 25 % / 38 % | 62 % / 75 % |
 | **All 112** | **42 / 33** | **94 / 88** |
 
-Without keywords, what is found comes through the name in three of the eight questions (Irma, Anton). With them, the
+Without keywords, what is found comes through the name in three of the eight questions (Irma, Leon). With them, the
 main sets lose nothing (280 / 280 found and recalled), one more extra fact comes per ten questions, and one chit-chat
 line of 70 recalls a fact ("Apa ibu kota Australia?" shares "kota", city, with a keyword "ganti kota"). The misses
 left are words the keywords did not include ("перебираемся" against "переселение", "morar" against "moradia"):
@@ -928,7 +928,7 @@ questions that share no word with their fact but a name; 45 that must recall not
 | Questions about someone or something not stored | — | 2 / 10 | 2 / 10 |
 | Facts recalled on meaning alone that were the right ones | — | 29 of 32 (91 %) | 35 of 41 (85 %) |
 
-The off-topic ones sit next to a stored topic ("Сделай план тренировки на неделю" → "Антон занимается в спортзале
+The off-topic ones sit next to a stored topic ("Сделай план тренировки на неделю" → "Леон занимается в спортзале
 три раза в неделю"). The others are names the rule cannot see — Chinese has no capitals (小王 / 小李), German
 capitalizes every noun, so the rule is off there — and a related thing in another language ("Какой пароль от роутера?"
 → "Der Router steht im Flur."). With 50 facts text-embedding-3-small recalls 25 of 35 against 12 by words. Keywords

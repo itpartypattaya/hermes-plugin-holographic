@@ -1,6 +1,6 @@
 {
  "de": {
-  "anton_bike": [
+  "leon_bike": [
    "Motorroller",
    "Fortbewegung",
    "Motorrad",
@@ -8,7 +8,7 @@
    "摩托车",
    "Verkehrsmittel"
   ],
-  "anton_coffee": [
+  "leon_coffee": [
    "Kaffeevorliebe",
    "Getränk",
    "ungesüßt",
@@ -104,7 +104,7 @@
    "游泳",
    "Sonntag"
   ],
-  "ksenia_job": [
+  "natasha_job": [
    "Beruf",
    "Recruiting",
    "Headhunter",
@@ -112,7 +112,7 @@
    "猎头",
    "Personalvermittlung"
   ],
-  "ksenia_search": [
+  "natasha_search": [
    "Stellenangebot",
    "offene Stelle",
    "Einstellung",
@@ -162,7 +162,7 @@
   ]
  },
  "en": {
-  "anton_bike": [
+  "leon_bike": [
    "motorbike",
    "transport",
    "motorcycle",
@@ -170,7 +170,7 @@
    "摩托车",
    "commute"
   ],
-  "anton_coffee": [
+  "leon_coffee": [
    "coffee preference",
    "drink",
    "unsweetened",
@@ -266,7 +266,7 @@
    "游泳",
    "Sunday schedule"
   ],
-  "ksenia_job": [
+  "natasha_job": [
    "occupation",
    "recruitment company",
    "headhunting",
@@ -274,7 +274,7 @@
    "猎头",
    "staffing agency"
   ],
-  "ksenia_search": [
+  "natasha_search": [
    "vacancy",
    "open position",
    "hiring",
@@ -324,7 +324,7 @@
   ]
  },
  "it": {
-  "anton_bike": [
+  "leon_bike": [
    "motocicletta",
    "trasporto",
    "mezzo di spostamento",
@@ -332,7 +332,7 @@
    "摩托车",
    "motorino"
   ],
-  "anton_coffee": [
+  "leon_coffee": [
    "preferenza caffè",
    "bevanda",
    "amaro",
@@ -428,7 +428,7 @@
    "游泳",
    "domenica"
   ],
-  "ksenia_job": [
+  "natasha_job": [
    "lavoro",
    "selezione del personale",
    "cacciatore di teste",
@@ -436,7 +436,7 @@
    "猎头",
    "headhunting"
   ],
-  "ksenia_search": [
+  "natasha_search": [
    "posto vacante",
    "assunzione",
    "ricerca personale",
@@ -486,7 +486,7 @@
   ]
  },
  "ja": {
-  "anton_bike": [
+  "leon_bike": [
    "バイク",
    "スクーター",
    "移動手段",
@@ -494,7 +494,7 @@
    "motorbike",
    "乗り物"
   ],
-  "anton_coffee": [
+  "leon_coffee": [
    "コーヒーの好み",
    "飲み物",
    "無糖",
@@ -590,7 +590,7 @@
    "swimming",
    "日曜の予定"
   ],
-  "ksenia_job": [
+  "natasha_job": [
    "職業",
    "人材紹介",
    "ヘッドハンティング",
@@ -598,7 +598,7 @@
    "recruiting",
    "仕事"
   ],
-  "ksenia_search": [
+  "natasha_search": [
    "求人",
    "採用",
    "人探し",
@@ -648,7 +648,7 @@
   ]
  },
  "nl": {
-  "anton_bike": [
+  "leon_bike": [
    "motor",
    "scooter",
    "vervoer",
@@ -656,7 +656,7 @@
    "摩托车",
    "vervoermiddel"
   ],
-  "anton_coffee": [
+  "leon_coffee": [
    "koffievoorkeur",
    "drankje",
    "ongezoet",
@@ -752,7 +752,7 @@
    "游泳",
    "zondag"
   ],
-  "ksenia_job": [
+  "natasha_job": [
    "beroep",
    "werving",
    "headhunter",
@@ -760,7 +760,7 @@
    "猎头",
    "recruitment"
   ],
-  "ksenia_search": [
+  "natasha_search": [
    "vacature",
    "aanname",
    "personeel zoeken",
@@ -810,7 +810,7 @@
   ]
  },
  "ru": {
-  "anton_bike": [
+  "leon_bike": [
    "мотоцикл",
    "скутер",
    "транспорт",
@@ -818,7 +818,7 @@
    "摩托车",
    "на чём ездит"
   ],
-  "anton_coffee": [
+  "leon_coffee": [
    "предпочтения в кофе",
    "напиток",
    "без добавок",
@@ -914,7 +914,7 @@
    "游泳",
    "расписание в воскресенье"
   ],
-  "ksenia_job": [
+  "natasha_job": [
    "профессия",
    "кадровое агентство",
    "хедхантинг",
@@ -922,7 +922,7 @@
    "猎头",
    "чем занимается"
   ],
-  "ksenia_search": [
+  "natasha_search": [
    "вакансия",
    "поиск сотрудника",
    "найм",
@@ -972,7 +972,7 @@
   ]
  },
  "th": {
-  "anton_bike": [
+  "leon_bike": [
    "มอเตอร์ไซค์",
    "พาหนะ",
    "การเดินทาง",
@@ -980,7 +980,7 @@
    "摩托车",
    "รถสกู๊ตเตอร์"
   ],
-  "anton_coffee": [
+  "leon_coffee": [
    "กาแฟที่ชอบ",
    "เครื่องดื่ม",
    "ไม่หวาน",
@@ -1076,7 +1076,7 @@
    "swimming",
    "วันอาทิตย์"
   ],
-  "ksenia_job": [
+  "natasha_job": [
    "อาชีพ",
    "สรรหาบุคลากร",
    "เฮดฮันเตอร์",
@@ -1084,7 +1084,7 @@
    "猎头",
    "recruiting"
   ],
-  "ksenia_search": [
+  "natasha_search": [
    "ตำแหน่งงานว่าง",
    "รับสมัครงาน",
    "หาพนักงาน",
@@ -1134,7 +1134,7 @@
   ]
  },
  "zh": {
-  "anton_bike": [
+  "leon_bike": [
    "交通工具",
    "摩托",
    "出行",
@@ -1142,7 +1142,7 @@
    "мотоцикл",
    "踏板车"
   ],
-  "anton_coffee": [
+  "leon_coffee": [
    "咖啡偏好",
    "饮品",
    "无糖",
@@ -1238,7 +1238,7 @@
    "swimming",
    "周日安排"
   ],
-  "ksenia_job": [
+  "natasha_job": [
    "职业",
    "人才招聘",
    "猎头",
@@ -1246,7 +1246,7 @@
    "recruiting agency",
    "人力资源公司"
   ],
-  "ksenia_search": [
+  "natasha_search": [
    "职位空缺",
    "找人",
    "招人",

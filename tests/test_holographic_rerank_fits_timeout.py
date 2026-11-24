@@ -1,7 +1,7 @@
 """A rerank call asks no more of the endpoint than it answers within rerank_timeout (2026-10-29).
 
 Requirement: a cross-encoder on a CPU scores the pairs at a steady speed, so its time grows with everything it is
-sent. Mia's llama-server (jina-reranker-v2, 2 threads) answers 5 short facts in 0.4 s, 15 in 1.2 s and 40 in 3.3 s —
+sent. A llama-server (jina-reranker-v2, 2 threads) answers 5 short facts in 0.4 s, 15 in 1.2 s and 40 in 3.3 s —
 over the default rerank_timeout of 3.0 s. The call failed, recall went on without the reranker and the endpoint was
 paused for 60 s and longer, on exactly the large pools a big store gives. Once the endpoint's speed is known, a call
 sends only as many of the first candidates as it scores in half the timeout; the rest keep their order behind the
@@ -79,7 +79,7 @@ class SlowByText:
 
 @pytest.fixture
 def slow(monkeypatch):
-    fake = SlowByText(0.001)  # Mia's speed scaled down: 2 short facts ~0.13 s, 40 ~2.7 s
+    fake = SlowByText(0.001)  # that server's speed scaled down: 2 short facts ~0.13 s, 40 ~2.7 s
     monkeypatch.setattr(rerank, "_OPENER", fake)
     yield fake
     fake.release.set()

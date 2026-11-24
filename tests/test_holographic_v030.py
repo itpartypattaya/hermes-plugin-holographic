@@ -41,7 +41,7 @@ def _call(provider, **args):
 
 @pytest.mark.parametrize("fact,query", [
     ("Маша любит кофе по утрам", "что любит Маши"),
-    ("Антон ездит на байке Honda Forza", "какой у Антона байк"),
+    ("Леон ездит на байке Honda Vario", "какой у Леона байк"),
     ("Созвоны лучше ставить после обеда", "когда ставить созвон"),
     ("We deploy the site with GitHub Actions", "how are deploys done"),
 ])
@@ -61,7 +61,7 @@ def test_queries_without_informative_words_search_nothing(query):
 def _seed(provider):
     return {text: _call(provider, action="add", content=text)["fact_id"] for text in (
         "Это проект для семьи", "В пятницу встреча IT-тусовки в 22:00", "Backups run on pve-01 every night",
-        "Ксюша ищет менеджера по продажам в Дубай")}
+        "Наташа ищет менеджера по продажам в Дубай")}
 
 
 @pytest.mark.parametrize("message", ["да, это так", "что ты думаешь про это?", "ок, спасибо"])
@@ -84,7 +84,7 @@ def test_prefetch_recalls_what_the_message_is_about(tmp_path):
 def test_prefetch_does_not_repeat_a_fact_within_the_window(tmp_path):
     provider = _provider(tmp_path, prefetch_repeat_turns=2)
     _seed(provider)
-    message = "кого ищет Ксюша в Дубай?"
+    message = "кого ищет Наташа в Дубай?"
     assert provider.prefetch(message) != ""
     assert provider.prefetch(message) == ""  # still in the context window
     provider.prefetch("unrelated words only")
@@ -145,8 +145,8 @@ def test_add_lists_near_duplicates_and_entityless_conflicts(tmp_path):
     provider = _provider(tmp_path)
     ip = _call(provider, action="add", content="Server IP is 10.0.0.1")["fact_id"]
     assert [c["fact_id"] for c in _call(provider, action="add", content="Server IP is 10.0.0.2")["possible_conflicts"]] == [ip]
-    tea = _call(provider, action="add", content="Anton drinks green tea every morning")["fact_id"]
-    similar = _call(provider, action="add", content="Anton drinks green tea every single morning")
+    tea = _call(provider, action="add", content="Leon drinks green tea every morning")["fact_id"]
+    similar = _call(provider, action="add", content="Leon drinks green tea every single morning")
     assert [s["fact_id"] for s in similar["similar"]] == [tea]
     provider.shutdown()
 
@@ -175,8 +175,8 @@ def test_writes_that_are_not_facts_are_refused_with_a_reason(tmp_path, content):
     provider.shutdown()
 
 
-@pytest.mark.parametrize("content", ["Anton asks me to ignore style rules in drafts",
-                                     "Антон просит игнорировать правила оформления в черновиках"])
+@pytest.mark.parametrize("content", ["Leon asks me to ignore style rules in drafts",
+                                     "Леон просит игнорировать правила оформления в черновиках"])
 def test_ordinary_sentences_about_rules_are_stored(tmp_path, content):
     provider = _provider(tmp_path)
     assert _call(provider, action="add", content=content)["status"] == "added"

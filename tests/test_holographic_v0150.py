@@ -35,8 +35,8 @@ def _trust(p, fact_id):
 
 
 def test_the_origin_sets_the_starting_trust_and_is_kept_with_the_version(p):
-    said = _add(p, "Anton prefers green tea", "said")["fact_id"]
-    mine = _add(p, "Anton probably drinks tea every morning", "inferred")["fact_id"]
+    said = _add(p, "Leon prefers green tea", "said")["fact_id"]
+    mine = _add(p, "Leon probably drinks tea every morning", "inferred")["fact_id"]
     plain = _add(p, "The office is on the third floor")["fact_id"]
     assert (_trust(p, said), _trust(p, mine), _trust(p, plain)) == pytest.approx((0.6, 0.4, 0.5))
     history = _call(p, action="history", fact_id=said)
@@ -123,7 +123,7 @@ def test_a_writer_opened_later_drops_confirmations_an_older_forget_left(tmp_path
 def test_the_starting_trust_stays_within_bounds(tmp_path):
     p = _provider(tmp_path, default_trust=0.95)
     try:
-        assert _trust(p, _add(p, "Anton lives in Jomtien", "said")["fact_id"]) == pytest.approx(1.0)
+        assert _trust(p, _add(p, "Leon lives in Pratumnak", "said")["fact_id"]) == pytest.approx(1.0)
     finally:
         p.shutdown()
 
@@ -141,16 +141,16 @@ def test_a_confirmed_inference_reads_as_confirmed(p):
 
 
 def test_forget_takes_the_confirmations_with_it(p):
-    fact = _add(p, "Anton's bike is a Honda Forza", "said")["fact_id"]
+    fact = _add(p, "Leon's bike is a Honda Vario", "said")["fact_id"]
     _call(p, "fact_feedback", action="confirmed", fact_id=fact)
     _call(p, action="forget", fact_id=fact)
     assert p._store.read("SELECT COUNT(*) FROM fact_confirmations")[0][0] == 0
 
 
 def test_review_lists_an_old_unconfirmed_inference(p):
-    old = _add(p, "Ksenia likes jazz concerts", "inferred")["fact_id"]
-    fresh = _add(p, "Ksenia likes the sea", "inferred")["fact_id"]
-    said = _add(p, "Ksenia speaks English at work", "said")["fact_id"]
+    old = _add(p, "Natasha likes jazz concerts", "inferred")["fact_id"]
+    fresh = _add(p, "Natasha likes the sea", "inferred")["fact_id"]
+    said = _add(p, "Natasha speaks English at work", "said")["fact_id"]
     p._store._write("UPDATE facts SET created_at = datetime('now', '-90 days'), retrieval_count = 1 WHERE fact_id IN (?, ?)",
                     (old, said))
     p._store._write("UPDATE fact_versions SET recorded_at = datetime('now', '-90 days') WHERE fact_id IN (?, ?)",
@@ -179,8 +179,8 @@ def test_leaving_origin_out_does_what_the_tool_says(p):
     said = _add(p, "The office is on the third floor", "said")
     assert said["confirmations"] == 1
     # the same text without an origin is not a new fact: the stored one keeps its origin and trust
-    tea = _add(p, "Anton prefers green tea", "said")["fact_id"]
-    assert _add(p, "Anton prefers green tea")["fact_id"] == tea
+    tea = _add(p, "Leon prefers green tea", "said")["fact_id"]
+    assert _add(p, "Leon prefers green tea")["fact_id"] == tea
     assert p._store.origins([tea])[tea]["origin"] == "said" and _trust(p, tea) == pytest.approx(0.6)
 
 

@@ -108,7 +108,7 @@ def test_turkish_words_typed_with_or_without_their_letters_meet(store):
 
 
 def test_turkish_apostrophe_takes_the_ending_off_a_name():
-    assert words("Ankara'da Ayşe'nin HR24'ün hr-vps'de 03:00'te") == ["ankara", "ayse", "hr24", "hr-vps", "03:00"]
+    assert words("Ankara'da Ayşe'nin QX24'ün qx-vps'de 03:00'te") == ["ankara", "ayse", "qx24", "qx-vps", "03:00"]
     assert "ankara'da" in analyze("Ankara'da yaşıyor").bag  # the whole stays for containment
     # not in English text, nor for an ending Turkish does not have
     assert words("Irma's dentist at 9 o'clock") == ["irma's", "dentist", "at", "9", "o'clock"]
@@ -123,10 +123,10 @@ def test_a_turkish_name_with_an_ending_is_mentioned(provider):
 
 
 def test_turkish_identifier_with_an_ending_is_still_required(provider):
-    _call(provider, action="add", content="hr-other her gece yedek alıyor")
-    _call(provider, action="add", content="HR24 Copilot mülakatları yazıya döküyor")
-    assert provider.prefetch("HR24'ün işi ne?")  # "HR24'ün" is HR24
-    assert "hr-other" not in provider.prefetch("hr-vps'de ne kadar RAM var?")
+    _call(provider, action="add", content="qx-other her gece yedek alıyor")
+    _call(provider, action="add", content="QX24 Copilot mülakatları yazıya döküyor")
+    assert provider.prefetch("QX24'ün işi ne?")  # "QX24'ün" is QX24
+    assert "qx-other" not in provider.prefetch("qx-vps'de ne kadar RAM var?")
 
 
 # -- Italian -----------------------------------------------------------------------------------------------------------
@@ -200,7 +200,7 @@ def test_dutch_plural_and_diminutive_meet_their_noun():
     ("Onde está a gata da Ana?", ("pt",)),
     ("Waar is de kat van Ana?", ("nl",)), ("Wo ist die Katze von Ana?", ("de",)), ("Where is the cat?", ("en",)),
     ("Ana'nın kedisi nerede?", ("tr",)), ("Di mana kucing yang hilang itu?", ("id",)), ("Gdzie jest kot Ani?", ("pl",)),
-    ("Kim jest Anton?", ("pl",)), ("Anton kimi arıyor?", ("tr",))])
+    ("Kim jest Leon?", ("pl",)), ("Leon kimi arıyor?", ("tr",))])
 def test_each_language_by_its_function_words(text, langs):
     assert analyze(text).langs == langs
 
@@ -208,7 +208,7 @@ def test_each_language_by_its_function_words(text, langs):
 @pytest.mark.parametrize("text,kept", [
     ("Ana come carne todos los días", ["ana", "come", "carne", "todos", "dias"]),  # Spanish "come", not Italian "how"
     ("Ana no come carne", ["ana", "come", "carne"]),
-    ("Anton met Irma at the door", ["anton", "met", "irma", "door"]),  # English, not Dutch "met", "door"
+    ("Leon met Irma at the door", ["leon", "met", "irma", "door"]),  # English, not Dutch "met", "door"
     ("Mia Moss lives in Rome", ["mia", "moss", "lives", "rome"]),  # a name, not Italian "mia"
     ("Kim Lane lives in Oslo", ["kim", "lane", "lives", "oslo"]),  # not Turkish "kim" (who)
     ("Bo Lin lives in Hue", ["bo", "lin", "lives", "hue"]),  # not Polish "bo" (because)
@@ -225,7 +225,7 @@ def test_weak_words_are_function_words_of_their_language():
     # dropped where Italian alone is best supported, kept where the other words fit French as well ("il")
     terms = [t.word for t in query_terms("Come sono le lezioni di Irma e dove si tengono?")]
     assert terms == ["lezioni", "irma", "tengono"]
-    assert [t.word for t in query_terms("Come prende il caffè Anton?")] == ["come", "prende", "caffe", "anton"]
+    assert [t.word for t in query_terms("Come prende il caffè Leon?")] == ["come", "prende", "caffe", "leon"]
 
 
 # -- courtesy and function words recall nothing ------------------------------------------------------------------------
@@ -246,7 +246,7 @@ def test_a_question_after_a_greeting_is_a_question(message):
 
 
 @pytest.mark.parametrize("facts,message", [
-    (["Il giorno della riunione è il lunedì alle nove", "La sera Anton va in palestra"], "Buongiorno, buona serata!"),
+    (["Il giorno della riunione è il lunedì alle nove", "La sera Leon va in palestra"], "Buongiorno, buona serata!"),
     (["Toplantı her gün sabah dokuzda", "Akşam yemeği saat yedide"], "Günaydın, iyi akşamlar!"),
     (["Spotkanie jest w każdy dzień roboczy", "Wieczór filmowy w piątek"], "Dzień dobry, dobry wieczór!"),
     (["De vergadering is elke dag om negen uur", "Morgen gaat Irma naar de tandarts"], "Goedemorgen, tot morgen!"),

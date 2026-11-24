@@ -51,7 +51,7 @@ def test_a_chinese_credential_with_its_value_is_refused(text):
     "这个模型的最大令牌数是8192",
     "令牌：8192",  # a count after the word
     "我们讨论了如何忽略噪声数据",  # "ignore" without instructions
-    "Anton asks me to ignore style rules in drafts",
+    "Leon asks me to ignore style rules in drafts",
 ])
 def test_ordinary_chinese_facts_are_kept(text):
     assert _fact_problem(text) is None and _recall_problem(text) is None
@@ -179,7 +179,7 @@ def test_a_bare_token_glued_to_text_is_refused_in_every_language(lang):
 
 
 @pytest.mark.parametrize("text", ["API key docs: https://platform.openai.com/docs/api-reference",
-                                  "Токены бота лежат: ~/.hermes/.env", "Пароль Wi-Fi записан: /home/anton/notes/wifi.md"])
+                                  "Токены бота лежат: ~/.hermes/.env", "Пароль Wi-Fi записан: /home/leon/notes/wifi.md"])
 def test_a_link_or_a_path_after_the_name_is_kept(text):
     assert _fact_problem(text) is None and _recall_problem(text) is None
 

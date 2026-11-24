@@ -121,7 +121,7 @@ KEPT = [
     ("en", "the board in 'kanban.db'", "kanban.db"),
     ("en", "use 'gpt-4o' for drafts", "gpt-4o"),
     ("en", "the model 'gpt-3.5-turbo'", "gpt-3.5-turbo"),
-    ("en", "ssh into 'hr-vps'", "hr-vps"),
+    ("en", "ssh into 'qx-vps'", "qx-vps"),
     ("en", 'He bought "iPhone 15 Pro"', "iPhone 15 Pro"),
     ("en", 'It runs on "Windows 11"', "Windows 11"),
     # a version beside a word that names a thing (review 0.16.0, Antigravity)
@@ -132,7 +132,7 @@ KEPT = [
     ("en", "Alice Smith works at Bank Of America", "Bank Of America"),
     ("ru", "Счёт в «Сбер Бизнес»", "Сбер Бизнес"),
     ("ru", "Вчера Мария Иванова звонила", "Мария Иванова"),
-    ("ru", "Сервер «hr-vps» перезагружен", "hr-vps"),
+    ("ru", "Сервер «qx-vps» перезагружен", "qx-vps"),
     ("ru", "Кафе «Дом у Дороги» закрыто", "Дом у Дороги"),
     ("ru", "Бухгалтерия в «1С:Предприятие 8.3»", "1С:Предприятие 8.3"),
 ]

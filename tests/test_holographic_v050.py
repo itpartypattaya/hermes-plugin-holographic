@@ -74,17 +74,17 @@ def test_folding():
 def test_elision_inversion_and_hyphens():
     assert words("le rendez-vous d'Irma") == ["le", "rendez-vous", "irma"]  # a noun, not an inverted verb
     assert {"rendez", "vous"} <= analyze("le rendez-vous d'Irma").bag
-    assert words("Comment Anton prend-il son café ?") == ["comment", "anton", "prend", "son", "cafe"]
+    assert words("Comment Leon prend-il son café ?") == ["comment", "leon", "prend", "son", "cafe"]
     assert words("Quand Irma a-t-elle natation") == ["quand", "irma", "a", "natation"]
     assert words("anak-anak bermain") == ["anak", "bermain"]
-    assert words("hr-vps-এর ব্যাকআপ") == ["hr-vps", "এর", "ব্যাকআপ"]
+    assert words("qx-vps-এর ব্যাকআপ") == ["qx-vps", "এর", "ব্যাকআপ"]
     assert words("IT-тусовка в пятницу") == ["it", "тусовка", "в", "пятницу"]
     assert "sextas" in analyze("nas sextas-feiras").bag
     assert is_identifier("pve-01") and is_identifier("v0.21.6") and not is_identifier("кто-то")
 
 
 def test_unicode_punctuation_is_stripped():
-    assert words("¿Qué hace HR24؟") == ["que", "hace", "hr24"]
+    assert words("¿Qué hace QX24؟") == ["que", "hace", "qx24"]
     assert words("यह क्या है।") == ["यह", "क्या", "है"]
 
 
@@ -104,9 +104,9 @@ def test_spanish_word_forms_and_accents(store):
 
 
 def test_french_inversion_is_not_a_required_identifier(provider):
-    _call(provider, action="add", content="Anton boit son café noir, sans sucre", entities=["Anton"])
-    _call(provider, action="add", content="Anton roule en scooter à Pattaya", entities=["Anton"])
-    assert "café noir" in provider.prefetch("Comment Anton prend-il son café ?")
+    _call(provider, action="add", content="Leon boit son café noir, sans sucre", entities=["Leon"])
+    _call(provider, action="add", content="Leon roule en scooter à Pattaya", entities=["Leon"])
+    assert "café noir" in provider.prefetch("Comment Leon prend-il son café ?")
 
 
 def test_arabic_clitics(store):
@@ -124,7 +124,7 @@ def test_arabic_entity_mentioned_with_a_preposition(provider):
 def test_arabic_and_indic_queries_never_reach_fts():
     assert FactRetriever._sanitize_fts_query("ما اسم القطة") == ""
     assert FactRetriever._sanitize_fts_query("बिल्ली किस नस्ल की है") == ""
-    assert FactRetriever._sanitize_fts_query("HR24 क्या करती है").startswith('("hr24" OR')  # the identifier still does
+    assert FactRetriever._sanitize_fts_query("QX24 क्या करती है").startswith('("qx24" OR')  # the identifier still does
 
 
 def test_hindi_in_a_store_where_letters_are_everywhere(store):
@@ -133,8 +133,8 @@ def test_hindi_in_a_store_where_letters_are_everywhere(store):
         store.add_fact(f"पटाया में शुक्रवार की पार्टी नंबर {i} रात को होती है")
     target = store.add_fact("परिवार की बिल्ली ब्रिटिश शॉर्टहेयर नस्ल की है")
     assert _r(store).search("बिल्ली किस नस्ल की है?", min_trust=0, limit=3)[0]["fact_id"] == target
-    coffee = store.add_fact("एंटोन ब्लैक कॉफ़ी पीते हैं")
-    assert _r(store).search("एंटोन कॉफी", min_trust=0, limit=1)[0]["fact_id"] == coffee  # written without the nukta
+    coffee = store.add_fact("लियोन ब्लैक कॉफ़ी पीते हैं")
+    assert _r(store).search("लियोन कॉफी", min_trust=0, limit=1)[0]["fact_id"] == coffee  # written without the nukta
 
 
 def test_bengali_case_endings_and_digits(store):
@@ -169,7 +169,7 @@ def test_function_words_do_not_make_a_message_relevant(provider):
 
 @pytest.mark.parametrize("old,new", [
     ("Ana come carne todos los días", "Ana no come carne"),
-    ("أنطون يشرب القهوة", "أنطون لا يشرب القهوة"),
+    ("ليون يشرب القهوة", "ليون لا يشرب القهوة"),
     ("Ana makan daging", "Ana tidak makan daging"),
 ])
 def test_negation_is_a_possible_conflict(provider, old, new):
@@ -196,15 +196,15 @@ def test_a_function_word_is_told_by_the_other_words():
 
 
 def test_ascii_hyphenated_tokens_are_identifiers(provider):
-    assert is_identifier("hr-vps") and is_identifier("carry-on") and not is_identifier("кто-то")
+    assert is_identifier("qx-vps") and is_identifier("carry-on") and not is_identifier("кто-то")
     assert words("carry-on luggage") == ["carry-on", "luggage"]  # French inversion only in French text
-    _call(provider, action="add", content="hr-other deploys software nightly")
-    assert provider.prefetch("how does hr-vps deploy") == ""
+    _call(provider, action="add", content="qx-other deploys software nightly")
+    assert provider.prefetch("how does qx-vps deploy") == ""
 
 
 def test_a_host_inside_chinese_text_is_required(provider):
-    _call(provider, action="add", content="服务器hr-other部署软件")
-    assert provider.prefetch("hr-vps服务器部署") == ""
+    _call(provider, action="add", content="服务器qx-other部署软件")
+    assert provider.prefetch("qx-vps服务器部署") == ""
 
 
 @pytest.mark.parametrize("fact,query", [
@@ -231,7 +231,7 @@ def test_latin_names_are_matched_as_written(store):
 @pytest.mark.parametrize("old,new", [
     ("Ana mange sans sucre", "Ana mange avec sucre"),
     ("Ana bebe café sem açúcar", "Ana bebe café com açúcar"),
-    ("Anton drinks coffee without sugar", "Anton drinks coffee with sugar")])
+    ("Leon drinks coffee without sugar", "Leon drinks coffee with sugar")])
 def test_with_and_without_conflict(provider, old, new):
     who = old.split()[0]
     first = _call(provider, action="add", content=old, entities=[who])["fact_id"]
@@ -265,8 +265,8 @@ def test_reason_applies_every_constraint_before_the_cap(store):
 
 
 def test_native_digits_inside_an_identifier(store):
-    store.add_fact("HR২৪ has a new server")
-    assert _found(store, "HR24")
+    store.add_fact("QX২৪ has a new server")
+    assert _found(store, "QX24")
 
 
 def test_control_characters_never_reach_fts(store, caplog):

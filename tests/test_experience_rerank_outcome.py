@@ -1,6 +1,6 @@
 """The journal says why the reranker did or did not order a recall (0.28.1).
 
-A measured deployment (Mia, 28.10-16.11.2026): 78 of 109 traced recalls took the rerank-off order, and the journal
+A measured deployment (28.10-16.11.2026): 78 of 109 traced recalls took the rerank-off order, and the journal
 could not say why: 52 were messages over RERANK_MAX_QUERY_CHARS, about 23 short ones stayed unexplained, because the
 outcome of the call (Rescorer.last_status) lived only in a DEBUG log line. With experience_trace on, each prefetch
 receipt now carries one ``rerank`` stage: no facts, and a status without free text (answered, skipped_single,

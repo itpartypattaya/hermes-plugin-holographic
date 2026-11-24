@@ -313,13 +313,13 @@ def test_negation_is_a_possible_conflict(tmp_path):
 def test_a_reworded_fact_is_recalled_again(tmp_path):
     provider = _provider(tmp_path)
     provider.initialize(session_id="s")
-    fact = _call(provider, action="add", content="Ksenia looks for a sales manager in Dubai")["fact_id"]
-    assert provider.prefetch("who does Ksenia look for in Dubai?") != ""
-    _call(provider, action="update", fact_id=fact, content="Ksenia looks for a sales director in Dubai")
-    assert "director" in provider.prefetch("who does Ksenia look for in Dubai?")
-    assert provider.prefetch("who does Ksenia look for in Dubai?") == ""
+    fact = _call(provider, action="add", content="Natasha looks for a sales manager in Dubai")["fact_id"]
+    assert provider.prefetch("who does Natasha look for in Dubai?") != ""
+    _call(provider, action="update", fact_id=fact, content="Natasha looks for a sales director in Dubai")
+    assert "director" in provider.prefetch("who does Natasha look for in Dubai?")
+    assert provider.prefetch("who does Natasha look for in Dubai?") == ""
     provider.on_pre_compress([])
-    assert provider.prefetch("who does Ksenia look for in Dubai?") != ""
+    assert provider.prefetch("who does Natasha look for in Dubai?") != ""
     provider.shutdown()
 
 

@@ -160,7 +160,7 @@ session, the person's id, and through what (`feedback`, `tool`), never text. A c
 
 - `list`, `history` and `export` show the source in full.
 - Prefetch does not show it by default (`recall_source: off`). `recall_source: short` appends
-  "recorded 2026-10-12 · Anton · this chat / another chat" to each recalled fact, without ids.
+  "recorded 2026-10-12 · Leon · this chat / another chat" to each recalled fact, without ids.
 - `forget` deletes the source with the fact.
 
 ## Forget means gone

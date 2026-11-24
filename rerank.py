@@ -39,7 +39,7 @@ PAUSE_FIRST, PAUSE_MAX = 60.0, 900.0  # seconds the endpoint is left alone after
 MAX_RESPONSE = 64 << 20
 # What one query-document pair may hold (2026-10-26): jina-reranker-v2 and bge-reranker-v2-m3 take 1024 tokens per
 # pair, and llama-server refuses the whole request when one pair runs over (500 past its batch, 400 past the
-# context), which paused the endpoint on Mia's long night-job prompts. Both use XLM-RoBERTa's SentencePiece without
+# context), which paused the endpoint on a production install's long night-job prompts. Both use XLM-RoBERTa's SentencePiece without
 # byte fallback: every token covers at least one character, the word-start mark stands for a space of the text or
 # one added at the start, and an unknown character is one token — so a pair of RERANK_PAIR_CHARS characters is at
 # most that many tokens plus the start marks and the 4 special tokens, under 1024 for CJK, emoji and dense text
@@ -50,7 +50,7 @@ RERANK_MAX_QUERY_CHARS = 500
 DEFAULT_TOP_K = 40  # depth of the pool the cross-encoder sees; the first stage's limit is widened to match
 DEFAULT_TIMEOUT = 3.0  # seconds; 3.0, not 2.0: a slow local endpoint is the normal case (issue #5)
 # What one call may take of rerank_timeout (2026-10-29). A cross-encoder on a CPU scores the pairs at a steady speed,
-# so its time grows with every character it is sent: Mia's llama-server (jina-reranker-v2 Q4_K_M, 2 threads, ~485
+# so its time grows with every character it is sent: a production llama-server (jina-reranker-v2 Q4_K_M, 2 threads, ~485
 # tokens/s) answered 5 short facts in 0.4 s, 15 in 1.2 s and 40 in 3.3 s — over the default timeout, so the large
 # pools of a big store failed and paused the endpoint. A call sends as many of the first documents as the endpoint,
 # at the slowest of its last _SPEED_SAMPLES speeds, scores in this share of the timeout; the rest keep their order

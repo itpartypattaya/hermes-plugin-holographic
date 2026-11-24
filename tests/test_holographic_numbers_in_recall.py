@@ -2,7 +2,7 @@
 
 A bare count or year ("3", "2026"), a time ("15:30", "9.30", "5pm") or a date ("17.11", "2026-11-17") says when or how
 many, not what the message is about. It counts as one of the message's words, but it is neither required of a fact
-(the message "Сегодня 17.11, на каком байке ездит Антон?" is about Anton's bike, and recalled nothing) nor enough on
+(the message "Сегодня 17.11, на каком байке ездит Леон?" is about Leon's bike, and recalled nothing) nor enough on
 its own (the message "Wake me up at 15:30" is not about a ballet class at 15:30). Identifiers with letters or of
 another shape ("pve-01", "v0.21.6", an IP address) stay what they were: required and decisive."""
 
@@ -19,8 +19,8 @@ from hermes_plugin_holographic import HolographicMemoryProvider
 
 FACTS = [
     "The backup server is located in Pattaya",
-    "Anton rides a Honda Forza scooter",
-    "Антон ездит на байке Honda Forza",
+    "Leon rides a Honda Vario scooter",
+    "Леон ездит на байке Honda Vario",
     "Резервный сервер находится в Паттайе",
     "Nora's ballet class starts at 15:30 on Thursdays",
     "The office printer has 3 paper trays",
@@ -54,16 +54,16 @@ def recalled(provider, message: str) -> list[str]:
 WITH_NUMBERS = [
     ("Where is the backup server located in 2026?", "Where is the backup server located?",
      "The backup server is located in Pattaya"),
-    ("It is 15:30 now. Which scooter does Anton ride?", "Which scooter does Anton ride?",
-     "Anton rides a Honda Forza scooter"),
-    ("Which scooter does Anton ride, 2 words please", "Which scooter does Anton ride, in short please",
-     "Anton rides a Honda Forza scooter"),
-    ("Meeting at 5pm: which scooter does Anton ride?", "Meeting soon: which scooter does Anton ride?",
-     "Anton rides a Honda Forza scooter"),
-    ("Сегодня 17.11, на каком байке ездит Антон?", "Сегодня, на каком байке ездит Антон?",
-     "Антон ездит на байке Honda Forza"),
-    ("Встреча 2026-11-20: на каком байке ездит Антон?", "Встреча скоро: на каком байке ездит Антон?",
-     "Антон ездит на байке Honda Forza"),
+    ("It is 15:30 now. Which scooter does Leon ride?", "Which scooter does Leon ride?",
+     "Leon rides a Honda Vario scooter"),
+    ("Which scooter does Leon ride, 2 words please", "Which scooter does Leon ride, in short please",
+     "Leon rides a Honda Vario scooter"),
+    ("Meeting at 5pm: which scooter does Leon ride?", "Meeting soon: which scooter does Leon ride?",
+     "Leon rides a Honda Vario scooter"),
+    ("Сегодня 17.11, на каком байке ездит Леон?", "Сегодня, на каком байке ездит Леон?",
+     "Леон ездит на байке Honda Vario"),
+    ("Встреча 2026-11-20: на каком байке ездит Леон?", "Встреча скоро: на каком байке ездит Леон?",
+     "Леон ездит на байке Honda Vario"),
     ("Где находится резервный сервер? Нужно до 18:00", "Где находится резервный сервер? Нужно срочно",
      "Резервный сервер находится в Паттайе"),
     ("Созвон в 9.30, где находится резервный сервер?", "Созвон утром, где находится резервный сервер?",

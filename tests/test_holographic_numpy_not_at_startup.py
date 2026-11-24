@@ -34,8 +34,8 @@ p = mod.HolographicMemoryProvider(config={{"db_path": sys.argv[2]{extra}}})
 
 WRITE = textwrap.dedent(_LOAD.format(block="", extra="") + '''
 p.initialize(session_id="writer")
-for text in ("Ksenia looks for a sales manager in Dubai.", "The nightly backup runs from the OES box at 2 am.",
-             "Anton rides a Honda Forza around Jomtien."):
+for text in ("Natasha looks for a sales manager in Dubai.", "The nightly backup runs from the OES box at 2 am.",
+             "Leon rides a Honda Vario around Pratumnak."):
     p.handle_tool_call("fact_store", {"action": "add", "content": text, "origin": "said"})
 p.shutdown()
 print(json.dumps({"numpy": "numpy" in sys.modules}))

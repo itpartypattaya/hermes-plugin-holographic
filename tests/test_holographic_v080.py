@@ -314,7 +314,7 @@ def test_a_failure_midway_changes_nothing(provider, clock, monkeypatch):
 
 def test_source_is_recorded_shown_in_list_and_kept_out_of_recall_by_default(tmp_path, clock):
     ctx = dict(platform="telegram", chat_id="-1001", chat_type="group", thread_id="7", user_id="111",
-               user_name="Anton", chat_name="Secret Club Chat")
+               user_name="Leon", chat_name="Secret Club Chat")
     provider = _provider(tmp_path, **ctx)
     provider.on_turn_start(1, "hi", author_id="222", author_name="Kostya")
     fid = _call(provider, action="add", content="Olga Park runs the Pattaya meetup")["fact_id"]
@@ -335,7 +335,7 @@ def test_source_is_recorded_shown_in_list_and_kept_out_of_recall_by_default(tmp_
 
 
 def test_an_anonymous_turn_in_a_shared_chat_is_nobody(tmp_path, clock):
-    provider = _provider(tmp_path, platform="telegram", chat_id="-1001", user_id="111", user_name="Anton")
+    provider = _provider(tmp_path, platform="telegram", chat_id="-1001", user_id="111", user_name="Leon")
     provider.on_turn_start(1, "hi", author_id="222", author_name="Kostya")
     provider.on_turn_start(2, "hi")  # no author: not the session's first user
     _call(provider, action="add", content="Pavel Gray plays chess on Fridays")
@@ -465,11 +465,11 @@ def test_a_cron_job_writes_through_its_explicit_tool_calls_only(tmp_path, clock)
     store.close()
     # a forgotten sentence found again in old messages is not stored by a scheduled job
     main = _provider(tmp_path)
-    gone = _call(main, action="add", content="Zoe Quinn owes Anton 500 baht")["fact_id"]
+    gone = _call(main, action="add", content="Zoe Quinn owes Leon 500 baht")["fact_id"]
     _call(main, action="forget", fact_id=gone)
     main.shutdown()
     cron = _provider(tmp_path, agent_context="cron", platform="cron")
-    again = _call(cron, action="add", content="Zoe Quinn owes Anton 500 baht")
+    again = _call(cron, action="add", content="Zoe Quinn owes Leon 500 baht")
     assert again["status"] == "forgotten" and again["stored"] is False and again["fact_id"] == gone
     cron.shutdown()
     off = _provider(tmp_path, agent_context="cron", config={"cron_writes": "false"})

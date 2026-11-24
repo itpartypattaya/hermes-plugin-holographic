@@ -44,7 +44,7 @@ def _alternatives(latin: str, other: str) -> str:
 # The screens below speak every language the plugin matches words in: English, Russian, Chinese, Japanese, Korean,
 # Thai, Spanish, French, Portuguese, Italian, German, Dutch, Polish, Turkish, Indonesian, Hindi, Arabic and Bengali
 # (0.15.1; English and Russian only before, Chinese from the first fix of 0.15.1).
-# Classic injection phrasing only: "ignore previous instructions", not "Anton asks me to ignore style rules in drafts".
+# Classic injection phrasing only: "ignore previous instructions", not "Leon asks me to ignore style rules in drafts".
 _RE_INJECTION = re.compile(_alternatives(
     # en
     r"(?:ignore|disregard|forget|override)\s+(?:all\s+|any\s+)?(?:of\s+)?"

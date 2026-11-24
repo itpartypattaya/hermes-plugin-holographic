@@ -749,9 +749,10 @@ def test_failed_call_shows_exactly_the_off_block(tmp_path, endpoint):
     down.shutdown()
 
 
-# -- a query or a fact too long for the model (Mia 2026-10-26) ---------------------------------------------------
+# -- a query or a fact too long for the model (2026-10-26) --------------------------------------------------------
 # llama-server answered 500 for the whole request when a query-document pair ran past its batch (643-732 tokens at 512)
-# and 400 past the model's 1024-token context: 36 failed calls in a week on Mia's night jobs, whose prompts are long.
+# and 400 past the model's 1024-token context: 36 failed calls in a week on a production install's night jobs,
+# whose prompts are long.
 # A message over RERANK_MAX_QUERY_CHARS is not rescored (its order stays the rerank-off order, not a failure) and each
 # document is cut to what the message leaves of RERANK_PAIR_CHARS, a bound that holds in tokens (rerank.py).
 

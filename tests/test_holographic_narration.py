@@ -28,15 +28,15 @@ FACTS = [
     "I moved to Bangkok in 2025.",
     "I switched to Postgres last week.",
     "I updated my passport in March.",
-    "I sent the contract to Ksenia as she asked.",
+    "I sent the contract to Natasha as she asked.",
     "I fixed the bike as you suggested.",
-    "Anton deployed the site as requested by Ksenia.",
+    "Leon deployed the site as requested by Natasha.",
     "I installed Python 3.12 as requested by the course.",
     "I read The Pragmatic Programmer last year and loved it.",
-    "I created a Telegram channel for the Bang Saray chat.",
-    "I changed jobs in 2024 and now work at HR24.",
+    "I created a Telegram channel for the Naklua chat.",
+    "I changed jobs in 2024 and now work at QX24.",
     "As you know, I moved to Bangkok in 2025.",
-    "I asked Ksenia to update the config as requested by the client.",
+    "I asked Natasha to update the config as requested by the client.",
 ]
 
 

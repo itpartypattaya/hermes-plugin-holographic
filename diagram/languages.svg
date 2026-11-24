@@ -45,8 +45,8 @@
   <text x="133" y="173" class="sub" text-anchor="middle">Ankara'da → ankara (tr)</text>
   <text x="133" y="187" class="sub" text-anchor="middle">amandelen → pinda (nl)</text>
   <text x="133" y="201" class="sub" text-anchor="middle">anak-anak → anak</text>
-  <text x="133" y="215" class="sub" text-anchor="middle">hr-vps-এর → hr-vps + এর</text>
-  <text x="133" y="229" class="sub" text-anchor="middle">hr-vps: an identifier,</text>
+  <text x="133" y="215" class="sub" text-anchor="middle">qx-vps-এর → qx-vps + এর</text>
+  <text x="133" y="229" class="sub" text-anchor="middle">qx-vps: an identifier,</text>
   <text x="133" y="243" class="sub" text-anchor="middle">matched exactly</text>
 
   <!-- 2 Language -->
@@ -142,7 +142,7 @@
   <text x="1010" y="320" class="col">WHY</text>
   <line x1="820" y1="327" x2="1150" y2="327" stroke="#1e293b" stroke-width="1"/>
 
-  <text x="820" y="344" class="fact">hr-other</text><text x="915" y="344" class="fact">hr-vps</text><text x="1010" y="344" class="why">identifier: exact</text>
+  <text x="820" y="344" class="fact">qx-other</text><text x="915" y="344" class="fact">qx-vps</text><text x="1010" y="344" class="why">identifier: exact</text>
   <text x="820" y="362" class="fact">contrast</text><text x="915" y="362" class="fact">contract</text><text x="1010" y="362" class="why">whole stem only</text>
   <text x="820" y="380" class="fact">মাটি (soil)</text><text x="915" y="380" class="fact">মা (mother)</text><text x="1010" y="380" class="why">3 letters kept</text>
   <text x="820" y="398" class="fact">كتاب (book)</text><text x="915" y="398" class="fact">تاب</text><text x="1010" y="398" class="why">ك here is no clitic</text>
@@ -156,5 +156,5 @@
   <text x="820" y="538" class="note">stores a fact; a paraphrase, through the</text>
   <text x="820" y="552" class="note">optional search by meaning.</text>
 
-  <text x="30" y="732" class="note">Every pair was run against the code (0.17.3): the question finds the fact by search; in a no-match pair the two words share no key, and the fact about hr-other is not recalled for hr-vps.</text>
+  <text x="30" y="732" class="note">Every pair was run against the code (0.17.3): the question finds the fact by search; in a no-match pair the two words share no key, and the fact about qx-other is not recalled for qx-vps.</text>
 </svg>

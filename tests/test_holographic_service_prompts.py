@@ -31,8 +31,8 @@ FACTS = {
     "spelling": ("Sight words for Mark's reading test: cold, does, fast, first, five, found, gave, goes, green, its, "
                  "made, many, off, or, pull, read, right, sing, sit, tell, their, these, those, upon, us, use, very, "
                  "wash, which, why, wish, work, would, write, your", ["Mark"]),
-    "dentist": ("Lena's dentist appointment is on Tuesday at ten at the Jomtien clinic", ["Lena"]),
-    "maintainer": ("Anton maintains the holographic memory provider for Hermes Agent", ["Anton", "Hermes Agent"]),
+    "dentist": ("Lena's dentist appointment is on Tuesday at ten at the Pratumnak clinic", ["Lena"]),
+    "maintainer": ("Leon maintains the holographic memory provider for Hermes Agent", ["Leon", "Hermes Agent"]),
     "cron_cache": ("The weekly cron job that cleans the photo cache is scheduled every Monday", []),
     "weather": ("The weather forecast for Pattaya comes from the Thai Meteorological Department", []),
 }
@@ -119,7 +119,7 @@ def test_a_cron_job_recalls_by_its_own_prompt(store):
     assert _recalled(store, CRON_HINT + "Check the weather forecast for Pattaya and summarise it") == {"weather"}
 
 def test_a_quoted_message_does_not_select_facts(store):
-    """Mia's own English message, quoted by the gateway, matched the spelling list on its common words."""
+    """The agent's own English message, quoted by the gateway, matched the spelling list on its common words."""
     message = ('[Replying to your previous message: "I found the first draft, made the changes and read it again"]'
                "\n\nWhen is Lena's dentist appointment?")
     assert "spelling" not in _recalled(store, message)
@@ -160,9 +160,9 @@ def test_reply_and_attachment_notes_together_leave_only_the_persons_question(sto
 
 @pytest.mark.parametrize("notice", [
     "[ASYNC DELEGATION BATCH COMPLETE — deleg_7c1]\n\nTask 1/1 (completed): Lena's dentist appointment at the "
-    "Jomtien clinic was moved to Tuesday at ten.",
+    "Pratumnak clinic was moved to Tuesday at ten.",
     "[IMPORTANT: Background process proc_42 completed (exit code 0).\nCommand: python check.py\n"
-    "Output: Lena's dentist appointment at the Jomtien clinic is confirmed]",
+    "Output: Lena's dentist appointment at the Pratumnak clinic is confirmed]",
     "[IMPORTANT: 2 background processes completed. Treat these results as one batch and give one consolidated "
     "response; preserve failures and actionable results.]\n\n[IMPORTANT: Background process proc_1 completed "
     "(exit code 0).\nOutput: Lena's dentist appointment is on Tuesday]",
@@ -175,11 +175,11 @@ def test_a_notice_turn_recalls_nothing(store, notice):
 
 
 def test_the_authors_name_the_gateway_puts_in_front_does_not_select_their_facts(store):
-    """In a shared chat every message of Anton's started with "[Anton] ": his maintainer fact came with each one."""
+    """In a shared chat every message of Leon's started with "[Leon] ": his maintainer fact came with each one."""
     provider, _ = store
-    provider.on_turn_start(1, "", author_id="101", author_name="Anton")
+    provider.on_turn_start(1, "", author_id="101", author_name="Leon")
     message = ('[Replying to: "Weekly notes about the garden and the pool"]\n\n'
-               "[Anton] When is Lena's dentist appointment?")
+               "[Leon] When is Lena's dentist appointment?")
     assert _recalled(store, message) == {"dentist"}
 
 
@@ -187,7 +187,7 @@ def test_a_name_that_is_not_the_authors_stays_in_the_words(store):
     """Only the gateway's own prefix goes: a bracketed name someone else writes is what they asked about."""
     provider, _ = store
     provider.on_turn_start(1, "", author_id="102", author_name="Lena")
-    assert "maintainer" in _recalled(store, "[Anton] maintains the holographic provider for Hermes Agent, right?")
+    assert "maintainer" in _recalled(store, "[Leon] maintains the holographic provider for Hermes Agent, right?")
 
 
 def test_a_long_quote_does_not_push_the_persons_words_out_of_the_window(store):

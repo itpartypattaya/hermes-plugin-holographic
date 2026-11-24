@@ -565,7 +565,9 @@ FULL = _load_full_scan()
 # The tests of the decisions changed since 0.22.0 (review 2026-11-17, H6/H7): their strings are decided otherwise.
 CHANGED_DECISIONS = (TESTS / "test_holographic_screen_gaps.py",
                      # the H6 letters drawn as Latin ones, as cases of the faster rewrite (0.31.2)
-                     TESTS / "test_holographic_screen_backtracking.py")
+                     TESTS / "test_holographic_screen_backtracking.py",
+                     # prompt extraction phrasing added in the AndaLabX fork
+                     TESTS / "test_holographic_prompt_extraction.py")
 
 
 def _differences(texts, ref=REF):

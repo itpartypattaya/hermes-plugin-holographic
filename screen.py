@@ -126,6 +126,22 @@ _RE_INJECTION = re.compile(_alternatives(
     r"|systeemprompt|prompt\s+systemowy|sistem\s+istemi|prompt\s+sistem)\s*[:：]",
     re.IGNORECASE)
 
+# Prompt extraction that the classic injection regex misses: an override of prior context combined with a request to
+# print hidden instructions. The two families need not be adjacent. Caution: a benign fact may mention prompts, and a
+# quoted discussion of an injection may mention override language, so neither family alone is enough to refuse.
+_RE_OVERRIDE_CONTEXT = re.compile(
+    r"\b(?:ignore|disregard|forget|override)\b[\s\S]{0,120}\b(?:above|previous|prior|earlier|context|instructions?|rules?)\b",
+    re.IGNORECASE)
+_RE_PROMPT_EXFILTRATION = re.compile(
+    r"\b(?:print|show|reveal|output|dump|repeat|quote)\b[\s\S]{0,120}\b(?:system\s+prompt|hidden\s+instructions?|developer\s+message|initial\s+instructions?)\b",
+    re.IGNORECASE)
+
+
+def _prompt_extraction_in(text: str) -> bool:
+    """Whether text combines context override with hidden prompt extraction."""
+    return bool(_RE_OVERRIDE_CONTEXT.search(text) and _RE_PROMPT_EXFILTRATION.search(text))
+
+
 # Environment variables that hold a key, a token or a password: "OPENAI_API_KEY=sk-…", "配置OPENAI_API_KEY=…",
 # "TELEGRAM_BOT_TOKEN: 123…". The name is a credential word like "password" (0.15.2, issue #3): before, "API_KEY" after
 # "OPENAI_" had no edge ("_" is a letter to a word), and an assignment was only kept from the endpoint, not refused —
@@ -1007,7 +1023,7 @@ def _fact_problem(content: str) -> str | None:
         return "contains chat-role or tool-call markup"
     unquoted = _RE_QUOTED_SPAN.sub(" ", text)
     folded = _folded(unquoted)
-    if _injection_in(unquoted, folded):
+    if _injection_in(unquoted, folded) or _prompt_extraction_in(unquoted):
         return "reads like an instruction to the assistant, not a fact"
     if _asks_to_send(unquoted, folded):
         return "asks to send credentials somewhere: an instruction, not a fact"
@@ -1038,7 +1054,7 @@ def _recall_problem(content: str) -> str | None:
     if _RE_ROLE_MARKUP.search(text):
         return "chat-role or tool-call markup"
     folded = _folded(text)
-    if _injection_in(text, folded) or _asks_to_send(text, folded):
+    if _injection_in(text, folded) or _prompt_extraction_in(text) or _asks_to_send(text, folded):
         return "an instruction to the assistant (quoted or not)"
     if _has_credential(text, folded):
         return "a credential with its value"

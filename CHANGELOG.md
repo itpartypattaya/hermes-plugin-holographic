@@ -82,7 +82,7 @@
 
 ## 0.30.1 — 2026-11-18
 
-- Comments only: the examples in `screen.py`'s comments name invented people instead of the maintainer's family
+- Comments only: the examples in `screen.py`'s comments use invented names
   (hermes-dreaming copies the file whole). No change to code, decisions, defaults, schema or network behaviour.
 
 ## 0.30.0 — 2026-11-18

@@ -100,7 +100,7 @@ def test_turkish_dotted_and_dotless_i_fold_as_one():
 def test_turkish_words_typed_with_or_without_their_letters_meet(store):
     store.add_fact("Toplantı saat üçte başlıyor")
     store.add_fact("Kitabı masanın üstünde bıraktım")
-    store.add_fact("Ailenin kedisi Mia adında bir British Shorthair")
+    store.add_fact("Ailenin kedisi Zelda adında bir British Shorthair")
     for query in ("toplantı ne zaman?", "toplanti ne zaman?", "TOPLANTI NE ZAMAN?"):
         assert _found(store, query)[0].startswith("Toplantı"), query
     assert _found(store, "Kitap nerede?")[0].startswith("Kitabı")  # kitap / kitabı: the scan sees it

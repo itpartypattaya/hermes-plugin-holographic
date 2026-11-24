@@ -22,7 +22,7 @@ FACTS = [
     "Anton rides a Honda Forza scooter",
     "Антон ездит на байке Honda Forza",
     "Резервный сервер находится в Паттайе",
-    "Mia's ballet class starts at 15:30 on Thursdays",
+    "Nora's ballet class starts at 15:30 on Thursdays",
     "The office printer has 3 paper trays",
     "The rent contract was signed in 2026",
     "pve-01 runs the family photo backup",
@@ -82,7 +82,7 @@ def test_a_number_in_the_message_does_not_stop_recall(provider, message, plain, 
 # (message, a fact that shares nothing with it but the number)
 NUMBER_ONLY = [
     ("Give me 3 reasons to learn Thai", "The office printer has 3 paper trays"),
-    ("Wake me up at 15:30 tomorrow please", "Mia's ballet class starts at 15:30 on Thursdays"),
+    ("Wake me up at 15:30 tomorrow please", "Nora's ballet class starts at 15:30 on Thursdays"),
     ("What are the best phones of 2026?", "The rent contract was signed in 2026"),
 ]
 

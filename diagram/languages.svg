@@ -114,7 +114,7 @@
   <line x1="30" y1="327" x2="790" y2="327" stroke="#1e293b" stroke-width="1"/>
 
   <text x="30" y="344" class="cell">Russian</text><text x="120" y="344" class="fact">Маша любит кофе</text><text x="330" y="344" class="fact">Что любит Маши?</text><text x="560" y="344" class="key">маш</text>
-  <text x="30" y="362" class="cell">Spanish</text><text x="120" y="362" class="fact">La gata se llama Mia</text><text x="330" y="362" class="fact">¿Cómo se llama el gato?</text><text x="560" y="362" class="key">gat</text>
+  <text x="30" y="362" class="cell">Spanish</text><text x="120" y="362" class="fact">La gata se llama Zelda</text><text x="330" y="362" class="fact">¿Cómo se llama el gato?</text><text x="560" y="362" class="key">gat</text>
   <text x="30" y="380" class="cell">Portuguese</text><text x="120" y="380" class="fact">a ação foi rápida</text><text x="330" y="380" class="fact">Como foram as ações?</text><text x="560" y="380" class="key">aca</text><text x="610" y="380" class="note">(-ões as -ão)</text>
   <text x="30" y="398" class="cell">Indonesian</text><text x="120" y="398" class="fact">Skrip dijalankan setiap malam</text><text x="330" y="398" class="fact">Kapan skrip ini jalankan?</text><text x="560" y="398" class="key">jalan</text><text x="610" y="398" class="note">(word scan)</text>
   <text x="30" y="416" class="cell">Arabic</text><text x="120" y="416" class="fact">تدرس إيرما هنا</text><text x="330" y="416" class="fact">أين تدرس لإيرما؟</text><text x="560" y="416" class="key">ايرما</text><text x="610" y="416" class="note">(for Irma: ل off)</text>

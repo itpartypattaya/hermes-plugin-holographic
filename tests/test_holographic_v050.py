@@ -97,9 +97,9 @@ def test_greetings_in_every_language(text):
 # -- search --------------------------------------------------------------------------------------------------------
 
 def test_spanish_word_forms_and_accents(store):
-    store.add_fact("La gata de la familia se llama Mia")
+    store.add_fact("La gata de la familia se llama Zelda")
     store.add_fact("El vuelo sale mañana")
-    assert _found(store, "¿Cómo se llama el gato?")[0] == "La gata de la familia se llama Mia"
+    assert _found(store, "¿Cómo se llama el gato?")[0] == "La gata de la familia se llama Zelda"
     assert _found(store, "manana vuelo")[0] == "El vuelo sale mañana"  # typed without the tilde
 
 
@@ -147,7 +147,7 @@ def test_bengali_case_endings_and_digits(store):
 
 def test_indonesian_prefixes(store):
     store.add_fact("Skrip yang tidak terkait Hermes dijalankan dengan Python 3.12")
-    store.add_fact("Kucing keluarga bernama Mia")
+    store.add_fact("Kucing keluarga bernama Zelda")
     assert _found(store, "bisa jalankan skrip apa?")[0].startswith("Skrip")
     assert _found(store, "kucingnya siapa namanya?")[0].startswith("Kucing")
 

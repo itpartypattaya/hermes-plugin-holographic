@@ -95,8 +95,8 @@ def test_a_bare_token_is_never_stored_recalled_or_sent(text):
     assert _fact_problem(text) and _recall_problem(text) and _secret_in(text)  # bot token and JWT: none of them before
 
 
-@pytest.mark.parametrize("text", ["The meeting moved to 12:30 on Friday", "Mia's bot id is 7123456789",
-                                  "Mia runs with MAX_TOKENS=128000", "Order 123456:7 shipped",
+@pytest.mark.parametrize("text", ["The meeting moved to 12:30 on Friday", "Robin's bot id is 7123456789",
+                                  "Robin runs with MAX_TOKENS=128000", "Order 123456:7 shipped",
                                   "The token expires in 30 days", "eyJ is how a JWT begins"])
 def test_ordinary_text_is_still_a_fact(text):
     assert _fact_problem(text) is None and _recall_problem(text) is None
@@ -107,7 +107,7 @@ def test_a_stored_token_is_left_out_of_recall(tmp_path):
     p.initialize(session_id="s1")
     try:
         written_before = p._store.add_fact(f"The family bot token is kept as {BOT_TOKEN}")  # bypasses the write check
-        clean = p._store.add_fact("The family bot is called Mia")
+        clean = p._store.add_fact("The family bot is called Robin")
         block = p.prefetch("what about the family bot", session_id="q")
         assert f"#{clean} " in block and f"#{written_before} " not in block
     finally:

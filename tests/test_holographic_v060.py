@@ -90,7 +90,7 @@ def test_keywords_alone_keep_the_fact_age(provider):
 
 
 def test_enrich_lists_facts_without_keywords(provider):
-    bare = _call(provider, action="add", content="The cat is called Mia")["fact_id"]
+    bare = _call(provider, action="add", content="The cat is called Zelda")["fact_id"]
     _call(provider, action="add", content="Irma swims on Sundays", keywords=["swimming", "pool"])
     enrich = _call(provider, action="enrich")
     assert [f["fact_id"] for f in enrich["facts"]] == [bare] and "update" in enrich["hint"]
@@ -119,7 +119,7 @@ def test_recall_indicator_can_be_switched_off(tmp_path, monkeypatch, setting, sh
 # -- German, Japanese, Korean, Thai ----------------------------------------------------------------------------------
 
 def test_german_compounds_end_in_the_word_they_name(provider):
-    _call(provider, action="add", content="Die Familienkatze ist eine Britisch Kurzhaar namens Mia")
+    _call(provider, action="add", content="Die Familienkatze ist eine Britisch Kurzhaar namens Zelda")
     _call(provider, action="add", content="The passport is in the drawer")
     assert _found(provider, "Welche Rasse ist die Katze?")[0].startswith("Die Familienkatze")
     assert not any(t.found_in(analyze("The passport is in the drawer")) for t in query_terms("port"))  # English: no

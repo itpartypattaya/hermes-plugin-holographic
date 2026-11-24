@@ -47,7 +47,7 @@ def test_the_origin_sets_the_starting_trust_and_is_kept_with_the_version(p):
 
 
 def test_an_unknown_origin_is_refused(p):
-    assert "origin must be" in _call(p, action="add", content="Mia is a cat", origin="guessed")["error"]
+    assert "origin must be" in _call(p, action="add", content="Zelda is a cat", origin="guessed")["error"]
 
 
 def test_said_again_in_a_later_session_is_a_confirmation_once_per_session(tmp_path):
@@ -91,10 +91,10 @@ def test_change_starts_over_with_the_new_origin(p):
 
 
 def test_correct_keeps_the_origin_it_does_not_name(p):
-    fact = _add(p, "Mia was born in March 2026", "said")["fact_id"]
-    _call(p, action="correct", fact_id=fact, content="Mia was born in April 2026")
+    fact = _add(p, "Zelda was born in March 2026", "said")["fact_id"]
+    _call(p, action="correct", fact_id=fact, content="Zelda was born in April 2026")
     assert p._store.origins([fact])[fact]["origin"] == "said"
-    _call(p, action="update", fact_id=fact, content="Mia was born on April 2, 2026")  # update content= is correct
+    _call(p, action="update", fact_id=fact, content="Zelda was born on April 2, 2026")  # update content= is correct
     assert p._store.origins([fact])[fact]["origin"] == "said"
 
 
@@ -185,9 +185,9 @@ def test_leaving_origin_out_does_what_the_tool_says(p):
 
 
 def test_stats_count_the_origins(p):
-    _add(p, "Mia is a British cat", "said")
-    _add(p, "Mia likes the sofa", "inferred")
-    _add(p, "Mia was born in 2026")
+    _add(p, "Zelda is a British cat", "said")
+    _add(p, "Zelda likes the sofa", "inferred")
+    _add(p, "Zelda was born in 2026")
     assert _call(p, action="stats")["origin"] == {"said": 1, "confirmed": 0, "inferred": 1, "unknown": 1,
                                                   "confirmations": 0}
 

@@ -1,10 +1,10 @@
 """A Russian name in another case is the entity the store knows (review 2026-11-17, H4 and H5).
 
 H4. A fact that names a known person in an oblique case was not linked to them unless the agent passed `entities`:
-«Подарок для Мии» did not come up in probe / related / reason for «Мия». Entity linking (mentioned_entity_ids)
-compared the stems of words, and the stems of short names fall under _MIN_STEM: «Мия» and «Мии» share only «ми»,
+«Подарок для Зои» did not come up in probe / related / reason for «Зоя». Entity linking (mentioned_entity_ids)
+compared the stems of words, and the stems of short names fall under _MIN_STEM: «Зоя» and «Зои» share only «зо»,
 which plain text drops. Recall already read such a word as a form of the name (text.name_lemmas); linking did not.
-Of 237 forms of common names 60 names found none of their 77 forms: Мия, Анна, Оля, Юля, Ира, Ева, Илья, Вася, Алёна
+Of 237 forms of common names 60 names found none of their 77 forms: Анна, Оля, Юля, Ира, Илья, Вася, Алёна
 in every form, Андрей, Сергей, Артём in some.
 
 H5. A full name in an oblique case («Анне Петровой») was taken from the text as a new name next to the known one
@@ -61,12 +61,12 @@ def _names(provider):
 # -- H4: a fact naming a known person in another case is linked to them --------------------------------------------
 
 FORMS = {
-    "Мия": ("Мии", "Мию", "Мией"),
+    "Зоя": ("Зои", "Зою", "Зоей"),
     "Анна": ("Анны", "Анне", "Анну", "Анной"),
     "Оля": ("Оли", "Оле", "Олю", "Олей"),
     "Юля": ("Юли", "Юле", "Юлю", "Юлей"),
     "Ира": ("Иры", "Ире", "Иру", "Ирой"),
-    "Ева": ("Евы", "Еве", "Еву", "Евой"),
+    "Яна": ("Яны", "Яне", "Яну", "Яной"),
     "Илья": ("Ильи", "Илье", "Илью", "Ильёй"),
     "Вася": ("Васи", "Васе", "Васю", "Васей"),
     "Алёна": ("Алёны", "Алёне", "Алёну", "Алёной"),
@@ -85,15 +85,15 @@ def test_a_case_form_of_a_declared_name_links_the_fact_to_it(p, name):
 
 
 def test_the_review_case_comes_up_in_probe_related_and_reason(p):
-    _add(p, "Мия ходит в первый класс.", "Мия")
-    gift = _add(p, "Подарок для Мии спрятан в шкафу.")
-    first = _add(p, "Мии подарили велосипед.")  # the name opens the sentence
-    assert {gift, first} <= _probed(p, "Мия")
-    related = _call(p, action="related", entity="Мия")
+    _add(p, "Зоя ходит в первый класс.", "Зоя")
+    gift = _add(p, "Подарок для Зои спрятан в шкафу.")
+    first = _add(p, "Зои подарили велосипед.")  # the name opens the sentence
+    assert {gift, first} <= _probed(p, "Зоя")
+    related = _call(p, action="related", entity="Зоя")
     assert {gift, first} <= {f["fact_id"] for f in related.get("results", related.get("facts", []))}, related
-    reason = _call(p, action="reason", entities=["Мия"])
+    reason = _call(p, action="reason", entities=["Зоя"])
     assert {gift, first} <= {f["fact_id"] for f in reason.get("results", reason.get("facts", []))}, reason
-    assert "Мии" not in _names(p)
+    assert "Зои" not in _names(p)
 
 
 @pytest.mark.parametrize("name, text", [

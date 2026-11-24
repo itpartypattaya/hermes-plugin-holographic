@@ -778,7 +778,10 @@ def _holds_a_secret(match: re.Match) -> bool:
 # What a value after a credential word is not (_holds_a_secret, review 2026-11-17): a model whose tokens are counted,
 # a name of words joined by dots, a Latin word after «пароль».
 _RE_MODEL_NAME = re.compile(r"(?i:gpt|chatgpt|claude|gemini|gemma|llama|mistral|mixtral|qwen|deepseek|grok|yandexgpt"
-                            r"|gigachat|sonnet|opus|haiku|o[1-9])(?:[-.]?[a-z0-9]+)*")
+                            r"|gigachat|sonnet|opus|haiku|o[1-9])[a-z0-9]*(?:[-.][a-z0-9]+)*")
+# The tail is the same as `(?:[-.]?[a-z0-9]+)*` but splits a run of letters one way only: with the separator optional
+# a fullmatch that fails at the end tried every split, and "tokens gpt" + 28 letters + "/" took 11 s (Codex review of
+# hermes-dreaming#39, 0.31.2)
 # Cyrillic words with capitals only: "password love.it", "password-letmein.co" are passwords (0.15.1, 0.17.2)
 _RE_DOTTED_NAME = re.compile(r"[А-ЯЁ][а-яё]+(?:\.[А-ЯЁ][а-яё]+)+")
 _RE_RU_PASSWORD = re.compile(r"парол", re.IGNORECASE)
@@ -931,7 +934,16 @@ _RE_LATIN_END = re.compile(r"[A-Za-z]\W*\Z")
 # Latin letter the Cyrillic and Greek letters drawn as Latin ones. A word of Cyrillic alone stays as it is.
 _CONFUSABLE = str.maketrans("аеорсухіјѕԁԛԝАВЕКМНОРСТХІЈЅΑΒΕΗΙΚΜΝΟΡΤΧΥΖοα",
                             "aeopcyxijsdqwABEKMHOPCTXIJSABEHIKMNOPTXYZoa")
-_RE_MIXED_WORD = re.compile(r"[^\W\d_]*[A-Za-z][^\W\d_]*")
+# A word is a run of letters; only one with a Latin letter in it is rewritten. The Latin letter is looked for in the
+# word found, not by the pattern: `[^\W\d_]*[A-Za-z][^\W\d_]*` tried at each letter of a word without one ran to its
+# end, so 12 000 CJK characters took 1.8 s (Codex review of hermes-dreaming#39, 0.31.2).
+_RE_WORD_LETTERS = re.compile(r"[^\W\d_]+")
+_RE_A_LATIN_LETTER = re.compile(r"[A-Za-z]")
+
+
+def _latin_lookalikes(match: re.Match) -> str:
+    word = match.group()
+    return word.translate(_CONFUSABLE) if _RE_A_LATIN_LETTER.search(word) else word
 
 
 def _plain_letters(text: str) -> str:
@@ -939,7 +951,7 @@ def _plain_letters(text: str) -> str:
     if text.isascii():
         return text
     text = unicodedata.normalize("NFKC", text)
-    return _RE_MIXED_WORD.sub(lambda m: m.group().translate(_CONFUSABLE), text)
+    return _RE_WORD_LETTERS.sub(_latin_lookalikes, text)
 
 
 # Quoted spans are reported text ("the test case contains 'ignore previous instructions'"), not instructions.

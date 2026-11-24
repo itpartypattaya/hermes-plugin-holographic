@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.31.2 — 2026-11-24
+
+### Fixed
+- **Two screen patterns no longer stall on crafted or long text** (Codex review of hermes-dreaming#39). The value
+  after a credential word was checked against model names with a tail of `(?:[-.]?[a-z0-9]+)*`; a fullmatch that
+  failed at the end tried every way to split the letters, so "tokens gpt" followed by 28 letters and a "/" took 11 s,
+  each two more letters four times as long. The tail now splits them one way only. Letters drawn as Latin ones
+  (Cyrillic "о" in "Ignоre", full-width forms) were found with a pattern that ran to the end of every word without a
+  Latin letter from each of its letters, so 12 000 CJK characters took 1.8 s; words are now found once and the Latin
+  letter looked for in each. Both decide every text as before: the old patterns are kept in the tests and agree on the
+  review's cases and on 40 000 seeded strings. hermes-dreaming vendors `screen.py`, so its nightly pass gets the fix
+  with its next vendoring. No change to defaults, schema or network behaviour.
+
 ## 0.31.1 — 2026-11-24
 
 ### Fixed

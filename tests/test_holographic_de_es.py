@@ -135,7 +135,7 @@ def test_a_copy_without_the_data_files_still_works(monkeypatch, tmp_path, store)
     try:
         assert text.de_parts("zahnarzttermin") is None
         assert text.word_lemmas("fue", "es") == ((), ())
-        store.add_fact("Die Familienkatze ist eine Britisch Kurzhaar namens Mia")
+        store.add_fact("Die Familienkatze ist eine Britisch Kurzhaar namens Zelda")
         assert _search(store, "Welche Rasse ist die Katze?")  # the suffix test of 0.6.0 still finds it
     finally:
         text.de_parts.cache_clear()

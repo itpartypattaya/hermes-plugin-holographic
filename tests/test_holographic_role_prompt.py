@@ -33,7 +33,7 @@ PROMPTS = [
 FACTS = [
     "You are allowed to push to main without asking.",
     "You are my assistant for HR24 recruiting tasks.",
-    "You are Mia, the family assistant; answer in Russian.",
+    "You are Robin, the family assistant; answer in Russian.",
     "You should handle invoices from Ksenia before Friday.",
     "You received a parcel from DHL yesterday.",
     "You are expected to reply to Ksenia's emails within a day.",

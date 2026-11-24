@@ -62,7 +62,7 @@ def test_no_meeting_across_languages_or_by_prefix(plain, fact, query):
 
 @pytest.mark.parametrize("fact, query", [
     ("The family bots answer in two chats", "бот"),
-    ("Мия — бот семьи", "bots"),
+    ("Робин — бот семьи", "bots"),
     ("Old chats are archived monthly", "чатах"),
     ("Мы переписываемся в чатах", "chat"),
 ])

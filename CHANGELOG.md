@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.31.3 — 2026-11-24
+
+### Changed
+- **Test examples renamed.** Example facts in the tests and the languages diagram use other invented names, pets and
+  places; each test checks what it checked before. One test string is replaced by a neutral word. No change to the
+  plugin's code, defaults, schema or network behaviour.
+
 ## 0.31.2 — 2026-11-24
 
 ### Fixed

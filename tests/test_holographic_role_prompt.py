@@ -32,20 +32,20 @@ PROMPTS = [
 ]
 FACTS = [
     "You are allowed to push to main without asking.",
-    "You are my assistant for HR24 recruiting tasks.",
+    "You are my assistant for QX24 recruiting tasks.",
     "You are Robin, the family assistant; answer in Russian.",
-    "You should handle invoices from Ksenia before Friday.",
+    "You should handle invoices from Natasha before Friday.",
     "You received a parcel from DHL yesterday.",
-    "You are expected to reply to Ksenia's emails within a day.",
+    "You are expected to reply to Natasha's emails within a day.",
     "You are the release manager; your task is to tag releases on Fridays.",
     "You are right that the server has 8 GB of RAM; we must handle it carefully.",
     "Henry received an email from BlueVault about the NDA on May 29.",
     "The assistant is called Henry and handles deal-flow emails.",
-    "Ты помогаешь Антону с маркетингом HR24.",
+    "Ты помогаешь Леону с маркетингом QX24.",
     "Вы — команда поддержки, отвечаете клиентам до 18:00.",
     # Codex review: a standing rule about what to do with mail is no task received
     "You are my email assistant; when I forward a message, you should handle it according to my standing inbox rules.",
-    "Ты обычно отвечаешь на письма Ксюши до обеда, обработай его так же, если оно срочное.",
+    "Ты обычно отвечаешь на письма Наташи до обеда, обработай его так же, если оно срочное.",
 ]
 
 

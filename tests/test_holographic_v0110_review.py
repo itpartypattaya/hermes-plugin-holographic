@@ -61,9 +61,9 @@ def test_polish_and_turkish_letters_still_bring_their_stems():
 # -- a host name stays required in the newer languages ----------------------------------------------------------------
 
 @pytest.mark.parametrize("fact, query", [
-    ("hr-other sunucusunda kitaplar var.", "hr-vps'de kitap nerede?"),
-    ("Il server hr-other è nel garage.", "dov'è il server hr-vps?"),
-    ("De server hr-other staat in de garage.", "waar staat de server hr-vps?"),
+    ("qx-other sunucusunda kitaplar var.", "qx-vps'de kitap nerede?"),
+    ("Il server qx-other è nel garage.", "dov'è il server qx-vps?"),
+    ("De server qx-other staat in de garage.", "waar staat de server qx-vps?"),
 ])
 def test_a_host_name_stays_required(store, fact, query):
     store.add_fact(fact)
@@ -192,8 +192,8 @@ def test_a_three_letter_head_alone_never_recalls(store):
 
 
 def test_a_host_name_stays_required_in_a_tie_with_dutch(store):
-    store.add_fact("De server hr-other staat in de garage.")
-    assert _recalled(store, "De server hr-vps") == []
+    store.add_fact("De server qx-other staat in de garage.")
+    assert _recalled(store, "De server qx-vps") == []
 
 
 def test_a_malformed_compound_row_is_a_damaged_file(monkeypatch, tmp_path):

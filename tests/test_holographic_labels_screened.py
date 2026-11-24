@@ -62,7 +62,7 @@ def _anywhere(db, needle: str) -> bool:
     ("category", PASSWORD, "Qwerty123"),
 ])
 def test_add_refuses_a_secret_or_an_instruction_in_what_goes_with_the_text(provider, db, field, value, needle):
-    result = _call(provider, action="add", content="Anton rides a Honda Forza to the office", **{field: value})
+    result = _call(provider, action="add", content="Leon rides a Honda Vario to the office", **{field: value})
     assert "error" in result and "Not stored" in result["error"], result
     assert _rows(db, "SELECT COUNT(*) FROM facts")[0][0] == 0
     assert not _anywhere(db, needle)
@@ -73,11 +73,11 @@ def test_add_refuses_a_secret_or_an_instruction_in_what_goes_with_the_text(provi
     ("category", INJECTION, "previous instructions"),
 ])
 def test_update_and_change_refuse_them_too_and_leave_the_fact_as_it_was(provider, db, field, value, needle):
-    fact_id = _call(provider, action="add", content="Anton rides a Honda Forza", tags="bike")["fact_id"]
+    fact_id = _call(provider, action="add", content="Leon rides a Honda Vario", tags="bike")["fact_id"]
     before = _rows(db, "SELECT content, tags, category FROM facts WHERE fact_id = ?", (fact_id,))
     updated = _call(provider, action="update", fact_id=fact_id, **{field: value})
     assert "error" in updated and "Not updated" in updated["error"], updated
-    changed = _call(provider, action="change", fact_id=fact_id, content="Anton rides a Yamaha now", **{field: value})
+    changed = _call(provider, action="change", fact_id=fact_id, content="Leon rides a Yamaha now", **{field: value})
     assert "error" in changed and "Not changed" in changed["error"], changed
     assert _rows(db, "SELECT content, tags, category FROM facts WHERE fact_id = ?", (fact_id,)) == before
     assert not _anywhere(db, needle)
@@ -85,15 +85,15 @@ def test_update_and_change_refuse_them_too_and_leave_the_fact_as_it_was(provider
 
 @pytest.mark.parametrize("names, needle, refused", [
     ([TOKEN], TOKEN, [0]),
-    (["Anton", INJECTION], "previous instructions", [1]),
+    (["Leon", INJECTION], "previous instructions", [1]),
 ])
 def test_a_token_or_an_instruction_declared_as_a_name_is_not_linked(provider, db, names, needle, refused):
-    added = _call(provider, action="add", content="Anton rides a Honda Forza to the office", entities=names)
+    added = _call(provider, action="add", content="Leon rides a Honda Vario to the office", entities=names)
     assert added["status"] == "added" and [e["index"] for e in added["entities_not_linked"]] == refused, added
     fact_id = added["fact_id"]
     updated = _call(provider, action="update", fact_id=fact_id, entities=names)
     assert updated["updated"] is True and [e["index"] for e in updated["entities_not_linked"]] == refused, updated
-    for action, content in (("change", "Anton rides a Yamaha now"), ("correct", "Anton rides a Honda PCX")):
+    for action, content in (("change", "Leon rides a Yamaha now"), ("correct", "Leon rides a Honda PCX")):
         result = _call(provider, action=action, fact_id=fact_id, content=content, entities=names)
         assert "error" not in result and [e["index"] for e in result["entities_not_linked"]] == refused, result
         assert needle not in json.dumps(result, ensure_ascii=False)
@@ -103,27 +103,27 @@ def test_a_token_or_an_instruction_declared_as_a_name_is_not_linked(provider, db
 
 @pytest.mark.parametrize("action", ["alias", "rename"])
 def test_an_entity_does_not_take_a_token_as_its_name_or_alias(provider, db, action):
-    _call(provider, action="add", content="Anton rides a Honda Forza", entities=["Anton"])
-    result = _call(provider, action=action, entity="Anton", content=TOKEN)
+    _call(provider, action="add", content="Leon rides a Honda Vario", entities=["Leon"])
+    result = _call(provider, action=action, entity="Leon", content=TOKEN)
     assert "error" in result, result
     assert not _anywhere(db, TOKEN)
     rows = {r["name"]: r for r in _call(provider, action="entities")["entities"]}
-    assert "Anton" in rows and TOKEN not in rows["Anton"]["aliases"], rows
+    assert "Leon" in rows and TOKEN not in rows["Leon"]["aliases"], rows
 
 
 def test_ordinary_tags_categories_and_names_are_stored_as_before(provider, db):
     """The control: the screen refuses what is unsafe, not tags as such."""
-    added = _call(provider, action="add", content="Anton rides a Honda Forza", tags="bike, honda, transport",
-                  category="user_pref", entities=["Anton", "Honda Forza"])
+    added = _call(provider, action="add", content="Leon rides a Honda Vario", tags="bike, honda, transport",
+                  category="user_pref", entities=["Leon", "Honda Vario"])
     assert added["status"] == "added", added
-    assert {"Anton", "Honda Forza"} <= {r["name"] for r in _call(provider, action="entities")["entities"]}
+    assert {"Leon", "Honda Vario"} <= {r["name"] for r in _call(provider, action="entities")["entities"]}
     fact_id = added["fact_id"]
     assert _call(provider, action="update", fact_id=fact_id, tags="bike, petrol")["updated"] is True
-    changed = _call(provider, action="change", fact_id=fact_id, content="Anton rides a Honda PCX now",
-                    tags="bike, scooter", entities=["Anton"])
+    changed = _call(provider, action="change", fact_id=fact_id, content="Leon rides a Honda PCX now",
+                    tags="bike, scooter", entities=["Leon"])
     assert changed["status"] == "changed", changed
     assert _rows(db, "SELECT tags, category FROM facts WHERE fact_id = ?", (fact_id,)) == [("bike, scooter",
                                                                                             "user_pref")]
-    assert _call(provider, action="alias", entity="Anton", content="Тоха").get("error") is None
+    assert _call(provider, action="alias", entity="Leon", content="Лёва").get("error") is None
     rows = {r["name"]: r for r in _call(provider, action="entities")["entities"]}
-    assert "Тоха" in rows["Anton"]["aliases"], rows
+    assert "Лёва" in rows["Leon"]["aliases"], rows

@@ -53,7 +53,7 @@ def _add(p, content):
 
 def test_merge_names_the_missing_copy_not_the_fact_kept(tmp_path):
     p = _provider(tmp_path)
-    keep = _add(p, "Anton rides a Honda Forza.")
+    keep = _add(p, "Leon rides a Honda Vario.")
     missing_copy = _call(p, action="merge", fact_id=keep, **{"from": [999]})
     assert "#999" in missing_copy["error"] and f"#{keep} " not in missing_copy["error"], missing_copy
     missing_keep = _call(p, action="merge", fact_id=998, **{"from": [keep]})
@@ -128,7 +128,7 @@ def test_a_sync_after_shutdown_does_not_reopen_the_store(tmp_path):
 
 def test_a_search_query_longer_than_recall_reads_is_refused_with_a_hint(tmp_path):
     p = _provider(tmp_path)
-    _add(p, "Anton rides a Honda Forza.")
+    _add(p, "Leon rides a Honda Vario.")
     long = _call(p, action="search", query="Honda " * 700)  # 4200 characters
     assert "error" in long and "4200" in long["error"] and "4000" in long["error"], long
     fits = _call(p, action="search", query=("Honda " * 666)[:4000])
@@ -140,7 +140,7 @@ def test_a_search_query_longer_than_recall_reads_is_refused_with_a_hint(tmp_path
 
 def test_an_action_given_as_a_list_is_an_error_answer(tmp_path):
     p = _provider(tmp_path)
-    out = _call(p, action=["add"], content="Anton rides a Honda Forza.")
+    out = _call(p, action=["add"], content="Leon rides a Honda Vario.")
     assert "action must be a string" in out["error"], out
     assert p._store.list_facts() == []
     p.shutdown()
@@ -148,7 +148,7 @@ def test_an_action_given_as_a_list_is_an_error_answer(tmp_path):
 
 def test_correct_with_keywords_only_points_to_update(tmp_path):
     p = _provider(tmp_path)
-    fact_id = _add(p, "Anton rides a Honda Forza.")
+    fact_id = _add(p, "Leon rides a Honda Vario.")
     out = _call(p, action="correct", fact_id=fact_id, keywords=["bike"])
     assert "update" in out["error"] and f"fact_id: {fact_id}" in out["error"], out
     p.shutdown()
@@ -156,7 +156,7 @@ def test_correct_with_keywords_only_points_to_update(tmp_path):
 
 def test_update_of_an_ended_or_missing_fact_says_why(tmp_path):
     p = _provider(tmp_path)
-    fact_id = _add(p, "Anton rides a Honda Forza.")
+    fact_id = _add(p, "Leon rides a Honda Vario.")
     assert "error" not in _call(p, action="end", fact_id=fact_id)
     ended = _call(p, action="update", fact_id=fact_id, tags="bike")
     assert "has ended" in ended.get("error", "") and "revert" in ended["error"], ended
@@ -167,7 +167,7 @@ def test_update_of_an_ended_or_missing_fact_says_why(tmp_path):
 
 def test_memory_map_says_an_unknown_zone_is_unknown(tmp_path):
     p = _provider(tmp_path)
-    _add(p, "Anton rides a Honda Forza.")
+    _add(p, "Leon rides a Honda Vario.")
     p.shutdown()
     with pytest.raises(ValueError, match="unknown time zone"):
         export_map(tmp_path / "memory_store.db", tz="Nope/Zone")

@@ -771,7 +771,7 @@ def _hermes_timezone():
 
 
 def _source_line(src: dict | None) -> str:
-    """A version's source for list / history / export: "tool · telegram group -100…/7 · Anton (123) · session s1"."""
+    """A version's source for list / history / export: "tool · telegram group -100…/7 · Leon (123) · session s1"."""
     if not src:
         return "source unknown (stored before 0.8.0)"
     where = " ".join(p for p in (src.get("platform"), src.get("chat_type")) if p)
@@ -1788,7 +1788,7 @@ class HolographicMemoryProvider(MemoryProvider):
         return problem is None
 
     def _recall_suffix(self, src: dict | None) -> str:
-        """recall_source: short — " (recorded 2026-10-12 · Anton · this chat)", no ids; "" when the source is unknown."""
+        """recall_source: short — " (recorded 2026-10-12 · Leon · this chat)", no ids; "" when the source is unknown."""
         if not self._recall_source or not src:
             return ""
         chat = src.get("chat_id")

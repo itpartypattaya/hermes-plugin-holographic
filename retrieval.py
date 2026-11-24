@@ -35,7 +35,7 @@ _RE_UNSEGMENTED = UNSEGMENTED
 # A count or a year ("3", "2026"), a time ("15:30", "9.30", "5pm") or a date ("17.11", "17.11.2026", "20/06",
 # "2026-11-17"): is_identifier keeps it exact, but it says when or how many, not what a message is about. In relevant()
 # it is one of the message's words, never required of a fact nor enough on its own (review 2026-11-17, H1: "Сегодня
-# 17.11, на каком байке ездит Антон?" recalled nothing, "Wake me up at 15:30" a ballet class at 15:30). A longer
+# 17.11, на каком байке ездит Леон?" recalled nothing, "Wake me up at 15:30" a ballet class at 15:30). A longer
 # number (a phone, an order) and the other shapes ("10.0.0.5", "3.8.6", "pve-01") stay identifiers.
 _PLAIN_NUMBER = re.compile(r"\d{1,4}|\d{1,2}(?:[:.]\d{2})?(?:am|pm)|\d{1,2}:\d{2}"
                            r"|\d{1,2}[./]\d{1,2}(?:[./](?:\d{2}|\d{4}))?|\d{4}-\d{2}-\d{2}")
@@ -686,7 +686,7 @@ class FactRetriever:
             terms = query_terms(name)
             if not terms or any(t.found_in(analysis) for t in terms):
                 continue
-            # «Ева» and «Еву» share only «ев», a stem under _MIN_STEM that plain text keeps out of a word's keys, so the
+            # «Ася» and «Асю» share only «ас», a stem under _MIN_STEM that plain text keeps out of a word's keys, so the
             # fact read as being about someone else (2026-10-30); «Лев» and «Льва» share no stem at all. A name also
             # meets a word of the fact written with a capital that may be a case form of the same first form
             # (text.name_lemmas), and never a lower-case word: «Мая» is no «в мае». A shared short stem alone was
@@ -1011,7 +1011,7 @@ class FactRetriever:
         terms = [t for t in query_terms(_RE_UNSEGMENTED.sub(" ", query or "")) if t.word]
         numbers = {t for t in terms if t.identifier and _PLAIN_NUMBER.fullmatch(t.word)}  # words, not identifiers
         identifiers = [t for t in terms if t.identifier and t not in numbers]
-        if identifiers:  # "hr-vps" inside Chinese text: the character overlap must not stand in for the host
+        if identifiers:  # "qx-vps" inside Chinese text: the character overlap must not stand in for the host
             gram_kept = [f for f in gram_kept
                          if any(t.found_in(analyze(_fact_text(f))) for t in identifiers)]
         if not terms or not candidates:

@@ -17,7 +17,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         core: [main]  # core's main: its breaking changes show here first, and the catalog checks against it too
         include:
-          # and the latest core release, what users and Mia run (Linux): main moving on must not hide that
+          # and the latest core release, what users run (Linux): main moving on must not hide that
           - os: ubuntu-latest
             core: release
     runs-on: ${{ matrix.os }}

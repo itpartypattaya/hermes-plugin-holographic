@@ -403,7 +403,7 @@ def test_a_seam_between_han_and_hangul_splits_a_word(store):
     ("Node.js", "I like Node.js a lot"),
     ("Vue.js", "rewrote it in Vue.js"),
     ("kanban.db", "the board lives in kanban.db"),
-    ("app.hr24copilot.online", "deployed to app.hr24copilot.online today"),
+    ("app.qx24copilot.online", "deployed to app.qx24copilot.online today"),
     ("Mail.ru Group", "works at Mail.ru Group"),
     ("Яндекс.Такси", "вызвал Яндекс.Такси"),
     ("1С:Предприятие", "работаем в 1С:Предприятие"),

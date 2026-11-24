@@ -190,7 +190,7 @@ def core_without_compressor_reexport(monkeypatch):
 
 @pytest.fixture
 def core_before_session_rules(monkeypatch):
-    """Hermes up to v0.23.2 (what Mia ran when this was written): no session_rules, each helper only in its old module.
+    """Hermes up to v0.23.2 (what a production install ran when this was written): no session_rules, each helper only in its old module.
     The helpers are the running core's own, given their old address whether or not the running core still re-exports
     them there."""
     for home, attributes in _OLD_HOMES.items():

@@ -70,7 +70,7 @@ def test_an_english_question_recalls_the_chinese_fact(provider):
     """The recall before a turn counts the glued word as held by that fact; before, the word counted as held by no
     fact, so the gate weighed the message against nothing and recalled nothing."""
     fact = _add(provider, WATCHDOG)
-    _add(provider, "The production server hr-vps runs Debian 12")
+    _add(provider, "The production server qx-vps runs Debian 12")
     assert _recalled(provider, "How does the watchdog compare ppid?") == [fact]
 
 

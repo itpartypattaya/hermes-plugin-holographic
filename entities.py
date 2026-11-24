@@ -765,8 +765,8 @@ class EntityMixin:
         (0.16.1): the words of one name stand together on one line, never across a line break, a comma or a bracket
         ("Alice\nSmith" and "Alice, Smith" do not mention Alice Smith).
         A word written with a capital also mentions a name word that is its first form (text.name_lemmas, as recall
-        reads it): «Мии», «Анне», «Ильёй» mention «Мия», «Анна», «Илья», whose stems are too short to be keys of a plain
-        text (review 2026-11-17, H4: «Подарок для Мии» was not linked to «Мия»). Never a lower-case word: «в мае» is no
+        reads it): «Зои», «Анне», «Ильёй» mention «Зоя», «Анна», «Илья», whose stems are too short to be keys of a plain
+        text (review 2026-11-17, H4: «Подарок для Зои» was not linked to «Зоя»). Never a lower-case word: «в мае» is no
         «Мая», «льва» no «Лев». Nor does a lower-case word mention a one-word name written with a capital through a
         shared stem (H9: «в мире» is no «Мира», «варю» no «Варя», «гены» no «Гена»): in lower case only the name as
         written does («что марк ест?»). A Latin name (matched as written), a name written in lower case («npm») and

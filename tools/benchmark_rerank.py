@@ -277,7 +277,7 @@ def run(langs: list[str], mode: str, endpoint_url: str | None, reverse: bool,
                         asked += 1
                         hit5 += bool(found_keys & relevant)
                         # wrong-entity: the query names a person (PROBES); a fact about the OTHER person got into the
-                        # top-5 (e.g. Irma's school recalled for "what scooter does Anton ride?").
+                        # top-5 (e.g. Irma's school recalled for "what scooter does Leon ride?").
                         persons = dict(data.PROBES[lang])
                         for name, _own in persons.items():
                             if name in query:

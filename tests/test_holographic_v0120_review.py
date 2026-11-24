@@ -101,10 +101,10 @@ def test_undetermined_text_keeps_only_stems_that_could_be_words():
 
 
 def test_an_english_word_does_not_meet_an_indonesian_function_word(store):
-    for fact in ("Dia tinggal di Jakarta", "Dia suka kopi", "Media sosial penting untuk HR24"):
+    for fact in ("Dia tinggal di Jakarta", "Dia suka kopi", "Media sosial penting untuk QX24"):
         store.add_fact(fact)
-    assert _found(store, "social media") == ["Media sosial penting untuk HR24"]
-    assert _recalled(store, "social media") == ["Media sosial penting untuk HR24"]
+    assert _found(store, "social media") == ["Media sosial penting untuk QX24"]
+    assert _recalled(store, "social media") == ["Media sosial penting untuk QX24"]
 
 
 # -- lexicalised German compounds ----------------------------------------------------------------------------------

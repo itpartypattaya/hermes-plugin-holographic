@@ -484,7 +484,7 @@ FACTS = {
     "old_phones": {"en": ("Two old phones live in the kitchen drawer.", []),
                    "ru": ("Два старых телефона лежат в кухонном ящике.", []),
                    "zh": ("厨房抽屉里放着两部旧手机。", [])},
-    "anton_ytube": {"en": ("Dima's videos are on the channel dima_builds.", ["Dima"]),
+    "dima_videos": {"en": ("Dima's videos are on the channel dima_builds.", ["Dima"]),
                     "ru": ("Видео Димы на канале dima_builds.", ["Дима"]),
                     "zh": ("季马的视频在 dima_builds 频道。", ["季马"])},
     "garage_code": {"en": ("The garage keypad code is the year the garage was built.", []),

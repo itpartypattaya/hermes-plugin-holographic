@@ -150,8 +150,8 @@ def test_short_cjk_sentences_are_extracted(tmp_path):
 
 def test_a_missing_space_after_a_full_stop_still_splits(tmp_path):
     assert [m.group(0) for m in _RE_SENTENCE.finditer("I prefer tea.I use vim daily.")] == ["I prefer tea.", "I use vim daily."]
-    assert [m.group(0) for m in _RE_SENTENCE.finditer("We pin Python 3.12, keep notes in topic.md and run on hr-vps.local.")] \
-        == ["We pin Python 3.12, keep notes in topic.md and run on hr-vps.local."]
+    assert [m.group(0) for m in _RE_SENTENCE.finditer("We pin Python 3.12, keep notes in topic.md and run on qx-vps.local.")] \
+        == ["We pin Python 3.12, keep notes in topic.md and run on qx-vps.local."]
     provider = _provider(tmp_path, config={"auto_extract": "true"})
     provider.on_session_end([{"role": "user", "content": "I prefer tea.I use vim daily."}])
     assert sorted(_contents(provider)) == ["I prefer tea.", "I use vim daily."]

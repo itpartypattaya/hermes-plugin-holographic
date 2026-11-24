@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.31.4 — 2026-11-24
+
+### Changed
+- **More example names renamed.** The people, the company, the host name, the scooter model, the DJ and the districts
+  of the example facts in the tests, the stored benchmark results (`results/`, query texts and keys only), comments,
+  the README and the diagrams use other invented ones, and a few comments name no installation. Each test checks what
+  it checked before. No change to the plugin's code, defaults, schema or network behaviour.
+
 ## 0.31.3 — 2026-11-24
 
 ### Changed
@@ -108,9 +116,9 @@ Fixes of the review of 2026-11-17 (H2–H17), and Hermes main after 2026-11-17.
   its present text) until it changes; `stats` → `search_by_meaning` counts it as `refused_by_endpoint`. When the
   endpoint refuses a plain text too, it is the endpoint or a setting, and it pauses as before; a key (401, 403), a
   limit (429) or a server down (5xx) also pause as before. Tests: `tests/test_holographic_embeddings_rejected_input.py`.
-- **A Russian name in another case is linked to its entity.** «Подарок для Мии» was not linked to «Мия» unless the
-  agent passed `entities`, so `probe`, `related` and `reason` on Мия missed it: short names (Мия, Анна, Оля, Ира,
-  Ева, Илья…) have stems too short to be keys of a plain text, and Snowball stems «Андрея» and «Андрей» apart. A word
+- **A Russian name in another case is linked to its entity.** «Подарок для Зои» was not linked to «Зоя» unless the
+  agent passed `entities`, so `probe`, `related` and `reason` on Зоя missed it: short names (Зоя, Анна, Оля, Ира,
+  Яна, Илья…) have stems too short to be keys of a plain text, and Snowball stems «Андрея» and «Андрей» apart. A word
   with a capital now mentions a name word that is its first form, as recall already reads names; a lower-case word
   never does («в мае» is no Мая). So a message naming a person in any case brings that person's facts before a turn,
   as «Яна, …» always did, and the checks at write time see the same person. Tests:
@@ -181,12 +189,12 @@ Fixes of the review of 2026-11-17 (H2–H17), and Hermes main after 2026-11-17.
 ### Fixes
 - **A number, a time or a date in a message no longer stops recall before a turn, nor recalls a fact by itself.**
   Every word with a digit counted as an identifier, and a message naming an identifier recalls only facts that hold
-  it — a rule meant for `pve-01` and `v0.21.6`. So "Сегодня 17.11, на каком байке ездит Антон?", "Where is the
+  it — a rule meant for `pve-01` and `v0.21.6`. So "Сегодня 17.11, на каком байке ездит Леон?", "Where is the
   backup server located in 2026?" or "…, нужно до 18:00" recalled nothing, while "Wake me up at 15:30" brought a
   ballet class at 15:30 and "Give me 3 reasons…" a printer with 3 trays. A count or a year of up to four digits, a
   time (`15:30`, `9.30`, `5pm`) and a date (`17.11`, `17.11.2026`, `20/06`, `2026-11-17`) are now ordinary words of
   the message: they count towards coverage, but a fact needs a word of the message besides them. Identifiers of any
-  other shape (`pve-01`, `v0.21.6`, `HR24`, `10.0.0.5`, `3.8.6`, a phone or order number) stay required and
+  other shape (`pve-01`, `v0.21.6`, `QX24`, `10.0.0.5`, `3.8.6`, a phone or order number) stay required and
   decisive. `fact_store search` is unchanged. Tests: `tests/test_holographic_numbers_in_recall.py`.
 
 ## 0.29.2 — 2026-11-17
@@ -497,8 +505,8 @@ Found in a review of 0.26.0 (Codex and Antigravity); the default path is unchang
   the word. The list of such facts is kept until a fact's text may have changed (a write other than the recall counts,
   or a commit by another process), so a store without them reads nothing more per message: on 3,000 English facts
   search and prefetch take the same time as before. On the multilingual quality set (450 questions in 18 languages) two
-  answers changed, both toward the other languages: `HR24 Copilot能做什么` ranks the fact that ends in `HR24` higher,
-  and `hr-vpsのメモリはどれくらい？` also recalls the other `hr-vps` fact, as the English, Russian and Chinese questions
+  answers changed, both toward the other languages: `QX24 Copilot能做什么` ranks the fact that ends in `QX24` higher,
+  and `qx-vpsのメモリはどれくらい？` also recalls the other `qx-vps` fact, as the English, Russian and Chinese questions
   do. Codex review: a letter of another script next to the word is no edge (`яkeyring保存` holds no `keyring`), and
   a fact the index already finds by the word (`keyring保存`, a prefix; the word also written apart) counts once in
   its frequency (Codex review on GitHub found the same: `keyring保存密钥` fell out of the recall for "keyring watchdog
@@ -526,7 +534,7 @@ Found in a review of 0.26.0 (Codex and Antigravity); the default path is unchang
   an `EMAIL METADATA` block) is refused by `add`, `change`, `correct`, `update`, `revert`, `auto_extract` and the mirror
   of built-in memory, with a reason that says to store what is true instead; `auto_extract` skips such a message whole.
   One written before is left out of the recall before a turn (logged once), and `search` and `list` still show it, to
-  change or forget. Either half alone is no prompt: "You are allowed to push to main", "You are Mia, the family
+  change or forget. Either half alone is no prompt: "You are allowed to push to main", "You are Robin, the family
   assistant", "You received a parcel from DHL" are stored as before. English and Russian. Codex review: a standing
   rule ("when I forward a message, you should handle it …") is no task received, so "should handle it" alone no
   longer counts; «Вы — … Вам пришло письмо» does; the sentences of a pasted prompt are not extracted one by one; and
@@ -570,11 +578,11 @@ Found in a review of 0.26.0 (Codex and Antigravity); the default path is unchang
 
 ### Fixed
 - **A short Russian name in another case no longer drops a fact found by meaning.** `names_fit` keeps a fact offered
-  on meaning alone only when it mentions whoever the message names, in any word form; «Ева» / «Еву», «Ира» / «Иру»,
+  on meaning alone only when it mentions whoever the message names, in any word form; «Ася» / «Асю», «Ира» / «Иру»,
   «Оля» / «Олю», «Яна» / «Яне», «Аня» / «Ане» share only a two-letter stem, which plain Russian text keeps out of a
   word's keys (`_MIN_STEM`), so the fact read as being about someone else. Seen in holographic-memory
-  (engine of 0.24.0, text-embedding-3-small): «Где Ева будет учиться в Чиангмае?» left out the store's closest fact,
-  «…устроить Еву в школу…» (cosine 0.70, z 3.97 over the bar of 3.67). A name now also meets a word of the fact written
+  (engine of 0.24.0, text-embedding-3-small): «Где Ася будет учиться в Казани?» left out the store's closest fact,
+  «…устроить Асю в школу…» (cosine 0.70, z 3.97 over the bar of 3.67). A name now also meets a word of the fact written
   with a capital that shares a stem with it read as a name (`text.name_forms`), whether or not the store knows the
   name; a lower-case word never does («Мая» is no «в мае»), and «Евгений», «Ольга», «Ирина» stay apart. Not covered:
   «Ян» and «Яна» (their forms are one word: «Яну» is either), and names whose stem changes («Лев» / «Льва»). Tests:
@@ -812,7 +820,7 @@ Both additions are experimental and off by default; nothing changes for an insta
 ### Fixed
 
 - **A long message no longer fails the rerank call.** jina-reranker-v2 takes 1,024 tokens per query-document pair, and
-  llama-server refuses the whole request when one pair runs over: on Mia's night jobs, whose prompts are long, that was
+  llama-server refuses the whole request when one pair runs over: on a production install's night jobs, whose prompts are long, that was
   36 failed calls in a week, each pausing the endpoint. A message over 500 characters is not sent (`skipped_long`,
   the rerank-off order, not a failure — also while the endpoint is paused), and each fact is cut to what the message
   leaves of 1,000 characters for the pair (was 2,000 for each): a token of XLM-RoBERTa's tokenizer covers at least one
@@ -844,8 +852,8 @@ only where a question holds such a form and the store holds the name.
 - **«Яне» did not meet «Яна» or «Яны».** A family store asked «что Яне нужно взять с собой во вторник и какой чай
   она любит?» got the fact about Tuesdays and not «Яна любит жасминовый чай…»: the coverage gate cut it at 0.25. In
   plain Russian text «Яна», «Яны» and «Яне» share only Snowball's stem «ян», which is under `_MIN_STEM` and left out
-  of a word's keys (as a prefix it would find «январь»), so the name's case forms never met, while «Ксюша» and «Ксюше»
-  share «ксюш»; the same for «Оля», «Аня», «Юля», «Ира» and every name whose stem is two letters. The gate now
+  of a word's keys (as a prefix it would find «январь»), so the name's case forms never met, while «Наташа» and «Наташе»
+  share «наташ»; the same for «Оля», «Аня», «Юля», «Ира» and every name whose stem is two letters. The gate now
   credits a term that is a form of a name the store knows (an entity's name or alias; a one-word name whether
   declared or guessed) to a fact holding another form of it, by the key the two share with the name, and counts
   such a term's document frequency over the texts, which the FTS index cannot. Nothing else reads these keys: not
@@ -1047,7 +1055,7 @@ common word with the message.
   word that only one fact holds, and scripts without capitals (README, Languages). Codex review: three findings (the
   FTS prefix count, names compared by spelling, caseless scripts and German), each fixed with a test.
   `test_holographic_v0140_embeddings.py` pinned prefetch to 0.13.0; four of its thirteen questions now recall fewer
-  facts, the ones that share only "run", "Lena", «Яна» or «Антон» with the question, and the test says which.
+  facts, the ones that share only "run", "Lena", «Яна» or «Леон» with the question, and the test says which.
 
 ### Internal
 
@@ -1674,7 +1682,7 @@ version numbers, words like `count` and short phrases from the chat).
   - a version number with nothing beside it that names a thing ("0.17.0 installed", «версия 0.17.0»; "Python 3.12",
     "Ubuntu 24.04 LTS" and «1С:Предприятие 8.3» stay: a word with a capital, or in a script without case, names one);
   - in quotes, a span all in lower case in a script with letter case and no identifier in it ('count', 'max', 'run
-    fast', «быстро беги»; 'kanban.db', 'gpt-4o', 'hr-vps' stay);
+    fast', «быстро беги»; 'kanban.db', 'gpt-4o', 'qx-vps' stay);
   - in quotes, a greeting or a courtesy ("Good morning", «Спасибо большое», “谢谢”; "Good Morning America" and
     "Hello Kitty" stay);
   - in quotes, a Chinese span that reads as something said (`text.zh_phrase`): its last word is a sentence-final
@@ -2366,7 +2374,7 @@ Italian, Turkish, Polish and Dutch at the level of Spanish and French.
 - **Italian, Turkish, Polish, Dutch.** Snowball stems (each word stemmed as written and folded, so a word typed
   without its marks still meets one typed with them), function words, greetings and courtesy pieces, negators,
   "with" / "without" and "but" words. Turkish: `İ`, `I`, `ı` and `i` compare as one (`İstanbul` / `ISTANBUL`, `KIZIM`
-  / `kızım`); a case ending after an apostrophe comes off a name (`Ankara'da`, `Ayşe'nin`, `HR24'ün`, `hr-vps'de`), so
+  / `kızım`); a case ending after an apostrophe comes off a name (`Ankara'da`, `Ayşe'nin`, `QX24'ün`, `qx-vps'de`), so
   the name is mentioned and an identifier stays required; the noun without the possessive `s` Snowball leaves
   (`kedisi` / `kedi`). Polish: `ł` compares as `l` and is still searched as written (`szkoła` / `szkole` / `szkola`).
   Italian: elision after `quest'`, `quell'`, `dov'`, `com'`, `cos'`, `anch'` and the like (not before a lone `s`:
@@ -2399,9 +2407,9 @@ Italian, Turkish, Polish and Dutch at the level of Spanish and French.
 - Latin text of no determined language is stemmed in English, Spanish, French, Portuguese, Indonesian and German as
   before; in Turkish, Polish or Dutch only when it has their letters, in Italian never (Polish stems joined `army` /
   `arm`, `apply` / `apple`).
-- A host name stays required in Turkish, Italian, Polish and Dutch text (`hr-vps'de`): only Spanish, French,
+- A host name stays required in Turkish, Italian, Polish and Dutch text (`qx-vps'de`): only Spanish, French,
   Portuguese, Indonesian and German text reads a letters-only hyphenated word as a compound, and only when every tied
-  language does ("De server hr-vps" ties Dutch with Spanish).
+  language does ("De server qx-vps" ties Dutch with Spanish).
 - A Japanese fact whose spelling the variants changed also keeps it as written, so a question in kanji only (not
   folded: it has no kana) still meets it (`締切` / `締切は明日`). A hiragana variant starts after other hiragana only
   when that is a particle after a kanji or katakana word (`かいちょう` holds no `いちょう`).
@@ -2699,12 +2707,12 @@ Reviewed before release by Codex CLI; its findings are fixed below, each with a 
   text changed: 0.03–0.07 s per search at 5,000 facts, after a first scan that analyses every fact (about 1 s at
   5,000, 4–6 s at 20,000). A store without such facts never scans.
 - **Folding**: Latin accents and ligatures, Arabic vowel marks and letter variants (`أ` = `ا`, `ة` = `ه`), the Indic
-  nukta, native digits (searched in each digit system too, inside identifiers as well: `2027` finds `২০২৭`, `HR24`
-  finds `HR২৪`). Control characters never reach an FTS5 expression.
+  nukta, native digits (searched in each digit system too, inside identifiers as well: `2027` finds `২০২৭`, `QX24`
+  finds `QX২৪`). Control characters never reach an FTS5 expression.
 - **Tokens**: Unicode punctuation stripped (`¿`, `؟`, `।`); French elision (`d'Irma`) and, in French text, inversion
   (`prend-il`, `est-ce`, but not `rendez-vous`); Portuguese enclisis in Portuguese text; reduplication (`anak-anak`); a
-  hyphen between scripts splits (`hr-vps-এর`). Letters-only hyphenated tokens stay identifiers in English text and
-  text of no determined language (`hr-vps`, also inside Chinese text); in Spanish, French, Portuguese and Indonesian
+  hyphen between scripts splits (`qx-vps-এর`). Letters-only hyphenated tokens stay identifiers in English text and
+  text of no determined language (`qx-vps`, also inside Chinese text); in Spanish, French, Portuguese and Indonesian
   text they are compound words.
 - **Greetings** in the seven languages; negators (`no`, `pas`, `não`, `tidak`, `لا`, `नहीं`, `না`).
 
@@ -2732,13 +2740,13 @@ Language quality, measured on English, Russian and Chinese stores (see README, "
   "可以，继续吧" recalled a fact that also said 可以. Recall before the turn also accepts IDF-weighted coverage of the
   meaningful characters (stricter, 0.5), since a one-character word (猫) or a reordered phrase (名字 / 名叫) shares
   characters rather than bigrams. Main-set recall 75 % → 100 %.
-- **Latin words inside Chinese text** ("猎头公司HR24", "服务器hr-vps运行") are found: the tokenizer glues them to the
+- **Latin words inside Chinese text** ("猎头公司QX24", "服务器qx-vps运行") are found: the tokenizer glues them to the
   characters around them, so they are matched as substrings, and an ASCII identifier's word boundary is ASCII-only.
 - **Declared Chinese names** are recognised inside a message (no spaces around them), so their facts join the recall.
 - **reason** with a name that is not an entity matches it in any word form ("allergy" finds "allergic"; was an exact
   phrase), and Chinese words by substring.
-- **Conflicts in Chinese**: claims compare by characters with 不/没/无 as negation ("安东喝黑咖啡，不加糖" vs
-  "安东喝咖啡加牛奶和糖" is flagged).
+- **Conflicts in Chinese**: claims compare by characters with 不/没/无 as negation ("莱昂喝黑咖啡，不加糖" vs
+  "莱昂喝咖啡加牛奶和糖" is flagged).
 - **Russian derivations** Snowball keeps apart ("переезжаем" / "переезд") meet on their shared beginning (stems of
   7+ letters, first len-2 letters, at least 5).
 - **Greetings** ("good morning", "доброе утро", "早上好") are courtesies: they no longer recall facts about mornings.

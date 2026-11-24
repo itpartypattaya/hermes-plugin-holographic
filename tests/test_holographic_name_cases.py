@@ -3,7 +3,7 @@
 A family store, 0.18.2: «что Яне нужно взять с собой во вторник и какой чай она любит?» brought the fact about
 Tuesdays («у Яны балет…») and cut «Яна любит жасминовый чай…» at coverage 0.25. In plain Russian text «Яна», «Яны»
 and «Яне» have no key in common: Snowball's stem «ян» is under _MIN_STEM and dropped (as a prefix it would find
-«январь»), while «Ксюша» and «Ксюше» share «ксюш». The store knew the name all along: name_keys reads «ян» in an
+«январь»), while «Наташа» and «Наташе» share «наташ». The store knew the name all along: name_keys reads «ян» in an
 entity's name. The gate now credits a term that is a form of a name the store knows to a fact holding another form
 of it. Nothing else changes: not Word.keys, not the FTS index, not the duplicate and conflict checks at write time,
 not entity linking, not a store that does not hold the name, not Latin names. The facts are synthetic, modelled on
@@ -26,8 +26,8 @@ from hermes_plugin_holographic.text import query_terms
 FACTS = {
     "ballet": "По вторникам у Яны балет; во вторник напоминать взять балетную форму.",
     "tea": "Яна любит жасминовый чай.",
-    "anton_coffee": "Антон пьёт чёрный кофе без сахара.",
-    "ksu_tea": "Ксюша любит зелёный чай с мятой.",
+    "leon_coffee": "Леон пьёт чёрный кофе без сахара.",
+    "natasha_tea": "Наташа любит зелёный чай с мятой.",
     "dima_pool": "Дима ходит в бассейн по вторникам и четвергам.",
     "rubbish": "Мусор вывозят во вторник и в пятницу.",
     "umbrella": "В сезон дождей взять с собой зонт и дождевик.",
@@ -43,7 +43,7 @@ FACTS = {
     "wifi": "Пароль от вайфая записан на холодильнике.",
     "plants": "Орхидеи поливать раз в неделю.",
     "yoga": "Йога по понедельникам в семь вечера.",
-    "ksu_work": "Ксюша работает из дома по пятницам.",
+    "natasha_work": "Наташа работает из дома по пятницам.",
     "mama_call": "Маме звонить по воскресеньям.",
     # words that share a two-letter stem with another word: «ель» / «ели» (ate), «уха» / «ухо», «рой» / «рою» (I dig)
     "forest": "В лесу у дома растёт старая ель.",

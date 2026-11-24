@@ -304,7 +304,7 @@ STOPWORDS = frozenset().union(*STOP.values())
 # Function words of a new language that are also content words, names or abbreviations of another ("come" and "dove"
 # in English, Spanish "come"; Turkish "kim", "ben"; Polish "bo", single "u", "w", "z"; Dutch "door", "met", "van", the
 # Thai "wat"): they do not vote for their language, and are dropped only in text that language alone is best
-# supported in, so "Ana come carne" stays Spanish and "Anton met Irma at the door" English.
+# supported in, so "Ana come carne" stays Spanish and "Leon met Irma at the door" English.
 _WEAK = {
     "it": _folded("per come dove ci vi io lei ed chi fra sei col"),
     "tr": _folded("kim ben ki var bile sen beni yani daha az sana ama"),
@@ -503,7 +503,7 @@ def is_greeting(text: str) -> bool:
 
 
 def is_identifier(token: str) -> bool:
-    """'pve-01', 'v0.21.6', 'gpt-4o', 'host:22', '/etc/hosts', 'hr-vps': kept exact, never stemmed or dropped, and a
+    """'pve-01', 'v0.21.6', 'gpt-4o', 'host:22', '/etc/hosts', 'qx-vps': kept exact, never stemmed or dropped, and a
     message naming one is about that one. A hyphenated word with a letter outside ASCII is a word ("кто-то",
     "peut-être"), and so is any letters-only hyphenated word in Spanish, French, Portuguese or Indonesian text (see
     analyze); French inversion, Portuguese enclisis and reduplication are taken apart before this is asked."""
@@ -1289,7 +1289,7 @@ def word_lemmas(word: str, lang: str) -> tuple:
 _ELISION = re.compile(r"^(?:l|d|j|m|n|s|t|c|qu|jusqu|lorsqu|puisqu|quoiqu|dell|all|nell|sull|dall|un)'(?=[^\W\d_])"
                       r"|^(?:quest|quell|dov|com|cos|anch|nessun|tutt|sant|senz|bell|buon|quant|quand|qual|dev)'"
                       r"(?=[^\W\d_])(?!s$)")
-# Turkish writes the case ending of a name after an apostrophe ("Ankara'da", "Ayşe'nin", "HR24'ün", "hr-vps'de"): in
+# Turkish writes the case ending of a name after an apostrophe ("Ankara'da", "Ayşe'nin", "QX24'ün", "qx-vps'de"): in
 # text that may be Turkish the name is the word, and the whole stays in the bag. These endings only (folded), so
 # "Irma's", "o'clock" and "rock'n'roll" are left alone.
 _TR_ENDINGS = _folded("""a e ı i u ü ya ye yı yi yu yü na ne nı ni nu nü da de ta te nda nde dan den tan ten ndan nden
@@ -1326,7 +1326,7 @@ def _strip_edges(token: str) -> str:
 
 
 def _script_split(token: str) -> list[str]:
-    """A hyphenated token split where the script changes: "hr-vps-এর" is hr-vps + এর, "IT-тусовка" is it +
+    """A hyphenated token split where the script changes: "qx-vps-এর" is qx-vps + এর, "IT-тусовка" is it +
     тусовка, "03:00-এ" is 03:00 + এ (digits and symbols go with Latin)."""
     if "-" not in token or UNSEGMENTED.search(token):
         return [token]
@@ -1457,8 +1457,8 @@ def analyze(text: str) -> Analysis:
         langs, determined = tuple(lang for lang in LATIN if lang not in _EVIDENCE or (
             _EVIDENCE[lang] is not None and _EVIDENCE[lang].search(lowered))), False
     # Spanish, French, Portuguese, Indonesian and German write compound words with a hyphen; English text, text of the
-    # newer languages and text of no determined language keep letters-only hyphenated tokens as identifiers ("hr-vps",
-    # also in "hr-vps'de")
+    # newer languages and text of no determined language keep letters-only hyphenated tokens as identifiers ("qx-vps",
+    # also in "qx-vps'de")
     compounds = determined and _HYPHEN_COMPOUNDS.issuperset(langs)  # every tied language ("de" is es/fr/pt/nl)
     english = determined and "en" in langs  # a tie ("on" is English and French) still includes English
     # Cyrillic is Russian for roots unless the text has letters Russian does not (Ukrainian, Belarusian): the Russian
@@ -2110,7 +2110,7 @@ def _plain_grams(run: str) -> list[tuple[str, float]]:
 
 def query_grams(text: str) -> list[tuple[str, float]]:
     """Weighted substrings to look for when *text* contains unsegmented script: its content n-grams, plus the Latin
-    words and identifiers written into it ("HR24", "hr-vps", "Python"), which the tokenizer glues to the
+    words and identifiers written into it ("QX24", "qx-vps", "Python"), which the tokenizer glues to the
     neighbouring characters. Lower-cased; weight-0 grams dropped; [] for text without unsegmented script."""
     lowered = _fold_text((text or "").lower())
     if not UNSEGMENTED.search(lowered):
@@ -2272,8 +2272,8 @@ class Term:
 
     @cached_property
     def _bounded(self) -> re.Pattern:
-        # An ASCII identifier is bounded by ASCII word characters only: in Chinese text "hr-vps" is glued to the
-        # characters around it ("服务器hr-vps运行").
+        # An ASCII identifier is bounded by ASCII word characters only: in Chinese text "qx-vps" is glued to the
+        # characters around it ("服务器qx-vps运行").
         edge = r"A-Za-z0-9_\-" if self.word.isascii() else r"\w\-"
         return re.compile(rf"(?<![{edge}])" + re.escape(self.word) + rf"(?![{edge}])")
 

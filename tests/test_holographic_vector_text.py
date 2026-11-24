@@ -18,7 +18,7 @@ from hermes_plugin_holographic import HolographicMemoryProvider, embeddings  # n
 
 DIM = 64
 _WORDS: dict[str, int] = {}  # word -> its own dimension: no two words collide
-DACHA = "Anton's grandmother spends the summer at the dacha near Tver."
+DACHA = "Leon's grandmother spends the summer at the dacha near Tver."
 JOINED = DACHA + "\nkeywords: country house, summer, granny"
 
 

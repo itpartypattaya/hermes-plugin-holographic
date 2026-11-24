@@ -30,7 +30,7 @@ FACTS = {
     "force": "Never run git push --force on the main branch.",
     "tool": "The fact_store tool takes an action and a query.",
     # fillers, so that the words above are rare in the store
-    "coffee": "Антон пьёт чёрный кофе без сахара.",
+    "coffee": "Леон пьёт чёрный кофе без сахара.",
     "rubbish": "Мусор вывозят во вторник и в пятницу.",
     "dentist": "The dentist sees patients on Wednesdays after lunch.",
     "wifi": "The wifi password is written on the fridge.",

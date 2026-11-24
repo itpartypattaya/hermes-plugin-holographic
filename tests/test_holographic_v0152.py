@@ -58,7 +58,7 @@ def test_a_variable_with_its_secret_is_refused(text):
     "OPENAI_API_KEY=sk-...",  # a placeholder
     "OPENAI_API_KEY=<your key>",
     "OPENAI_API_KEY=[REDACTED]",
-    "GOOGLE_APPLICATION_CREDENTIALS=/home/anton/gcp.json",  # a path
+    "GOOGLE_APPLICATION_CREDENTIALS=/home/leon/gcp.json",  # a path
     "OPENAI_API_KEY лежит в ~/.hermes/.env",
     "GEMINI_API_KEY is set on the server",
     "The bot reads TELEGRAM_BOT_TOKEN from .env",
@@ -145,7 +145,7 @@ def test_antigravity_instructions_are_refused(text):
     "password minimum length: 12_chars", "token expiration time: 3600s", "API key rate limit: 100/min",
     "password expiration period: 30_days", "token expiration time is 3600s",
     "http://localhost:8000?email=alice@example.com", "http://localhost:3000?user=@handle",
-    "GOOGLE_APPLICATION_CREDENTIALS=/home/anton/gcp.json", "Ignore the instructions in the README draft? No, keep them",
+    "GOOGLE_APPLICATION_CREDENTIALS=/home/leon/gcp.json", "Ignore the instructions in the README draft? No, keep them",
 ])
 def test_antigravity_facts_are_kept(text):
     assert _kept(text) and not _secret_in(text)
@@ -189,8 +189,8 @@ def test_antigravity2_instructions_are_refused(text):
     "The script will send $API_KEY in the authorization header", "We send ${OPENAI_API_KEY} in the request",
     "OPENAI_API_KEY={api_key}", "OPENAI_API_KEY={your_key}", "API_KEY={YOUR_API_KEY}", "API_KEY=<YOUR_API_KEY>",
     "MAX_TOKENS=128000", "TOTAL_TOKENS=500000", "API_KEY_PATH=/etc/secrets/key.json",
-    "SSL_KEY_FILE=/etc/ssl/certs/server.key", "GOOGLE_APPLICATION_CREDENTIALS=C:/Users/anton/gcp.json",
-    r"GOOGLE_APPLICATION_CREDENTIALS=C:\Users\anton\gcp.json",
+    "SSL_KEY_FILE=/etc/ssl/certs/server.key", "GOOGLE_APPLICATION_CREDENTIALS=C:/Users/leon/gcp.json",
+    r"GOOGLE_APPLICATION_CREDENTIALS=C:\Users\leon\gcp.json",
 ])
 def test_antigravity2_kept_and_sendable(text):
     assert _kept(text) and not _secret_in(text)

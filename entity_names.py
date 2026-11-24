@@ -484,7 +484,7 @@ def _name_shaped(name: str, *, quoted: bool) -> bool:
     """_valid_entity, and for a name guessed from a fact's text (0.16.0) also not: a version number with nothing that
     names a thing beside it ("0.17.0 installed", «версия 0.17.0»; "Python 3.12" and «1С:Предприятие 8.3» stay, for a
     word with a capital or in an uncased script names one); in quotes, a span in a cased script all in lower case with
-    no identifier in it ('count', 'run fast', «быстро беги»; 'kanban.db', 'gpt-4o' and 'hr-vps' stay), a greeting or
+    no identifier in it ('count', 'run fast', «быстро беги»; 'kanban.db', 'gpt-4o' and 'qx-vps' stay), a greeting or
     courtesy ("Good morning", «Спасибо большое», “谢谢”: text.is_greeting), a Chinese span that reads as something said
     (text.zh_phrase: “先去搜索再告诉我答案”, “知道了”; 平凡的世界, 有赞科技有限公司 and 饿了么 stay), or more Han characters
     than a name has (a quotation). A name in lower case, or a phrase that only reads as one, is what someone said;

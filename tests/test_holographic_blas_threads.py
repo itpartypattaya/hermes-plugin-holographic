@@ -4,7 +4,7 @@ numpy's OpenBLAS commits a buffer of ~32 MB per CPU thread when the DLL loads. M
 Hermes on an 8-thread laptop (numpy 2.4.6, OpenBLAS 0.3.31): 242 MB of commit charge after ``import numpy``, 17 MB
 with OPENBLAS_NUM_THREADS=1; the working set is the same. Hermes core does not import numpy, the plugin does on the
 first recall, so every Hermes process that recalls paid ~225 MB. The plugin's math (a matrix-vector product, FFTs)
-needs one thread. On Linux the same buffers cost no resident memory (hr-ovh: RSS 46.5 vs 46.6 MB), so nothing changes
+needs one thread. On Linux the same buffers cost no resident memory (RSS 46.5 vs 46.6 MB), so nothing changes
 there.
 
 The requirements:

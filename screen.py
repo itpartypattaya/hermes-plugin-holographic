@@ -126,20 +126,39 @@ _RE_INJECTION = re.compile(_alternatives(
     r"|systeemprompt|prompt\s+systemowy|sistem\s+istemi|prompt\s+sistem)\s*[:：]",
     re.IGNORECASE)
 
-# Prompt extraction that the classic injection regex misses: an override of prior context combined with a request to
-# print hidden instructions. The two families need not be adjacent. Caution: a benign fact may mention prompts, and a
-# quoted discussion of an injection may mention override language, so neither family alone is enough to refuse.
+# Prompt extraction that the classic injection regex misses. Refuse only one connected request addressed to the
+# assistant: an override of prior context first, then a request for hidden instructions right after it. The two
+# families must both be present and neither may be negated or qualified by an exception. English only for now.
 _RE_OVERRIDE_CONTEXT = re.compile(
-    r"\b(?:ignore|disregard|forget|override)\b[\s\S]{0,120}\b(?:above|previous|prior|earlier|context|instructions?|rules?)\b",
+    r"\b(?:ignore|disregard|forget|override)\b[\s\S]{0,100}?\b(?:above|previous|prior|earlier|before|preceding|context|instructions?|rules?)\b",
     re.IGNORECASE)
-_RE_PROMPT_EXFILTRATION = re.compile(
-    r"\b(?:print|show|reveal|output|dump|repeat|quote)\b[\s\S]{0,120}\b(?:system\s+prompt|hidden\s+instructions?|developer\s+message|initial\s+instructions?)\b",
+_RE_PROMPT_REQUEST = re.compile(
+    r"\b(?:print|show|reveal|output|dump|repeat|quote|write\s+out|tell\s+me|display)\b[\s\S]{0,100}?"
+    r"\b(?:your\s+)?(?:system\s+prompt|hidden\s+instructions?|developer\s+message|initial\s+instructions?)\b"
+    r"(?!\s+(?:editor|field|screen|setting|documentation|test|example))",
     re.IGNORECASE)
+
+
+def _unnegated_request(text: str, match: re.Match) -> bool:
+    """Whether a request match is an order, not a reminder to keep the rules."""
+    before = _RE_NEGATED_BEFORE.search(text, max(0, match.start() - 24), match.start())
+    if before and (_RE_ANY_NEGATION_END.search(text, max(0, before.start() - 24), before.start())
+                   or _RE_EXCEPTION_AFTER.match(text, match.end())):
+        before = None
+    after = not _RE_LATIN_END.search(match.group()) and _RE_NEGATED_AFTER.match(text[match.end():match.end() + 16])
+    return not (before or after)
 
 
 def _prompt_extraction_in(text: str) -> bool:
-    """Whether text combines context override with hidden prompt extraction."""
-    return bool(_RE_OVERRIDE_CONTEXT.search(text) and _RE_PROMPT_EXFILTRATION.search(text))
+    """Whether text gives one connected, unnegated order to override context and reveal hidden instructions."""
+    plain = _plain_letters(text)
+    for override in _RE_OVERRIDE_CONTEXT.finditer(plain):
+        if not _unnegated_request(plain, override):
+            continue
+        for request in _RE_PROMPT_REQUEST.finditer(plain, override.end(), min(len(plain), override.end() + 160)):
+            if _unnegated_request(plain, request):
+                return True
+    return False
 
 
 # Environment variables that hold a key, a token or a password: "OPENAI_API_KEY=sk-…", "配置OPENAI_API_KEY=…",

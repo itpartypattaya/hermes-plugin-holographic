@@ -566,7 +566,7 @@ FULL = _load_full_scan()
 CHANGED_DECISIONS = (TESTS / "test_holographic_screen_gaps.py",
                      # the H6 letters drawn as Latin ones, as cases of the faster rewrite (0.31.2)
                      TESTS / "test_holographic_screen_backtracking.py",
-                     # prompt extraction phrasing added in the AndaLabX fork
+                     # prompt extraction phrasing covered by the faster rewrite
                      TESTS / "test_holographic_prompt_extraction.py")
 
 

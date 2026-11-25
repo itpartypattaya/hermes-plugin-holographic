@@ -126,16 +126,28 @@ _RE_INJECTION = re.compile(_alternatives(
     r"|systeemprompt|prompt\s+systemowy|sistem\s+istemi|prompt\s+sistem)\s*[:：]",
     re.IGNORECASE)
 
-# Prompt extraction that the classic injection regex misses. Refuse only one connected request addressed to the
-# assistant: an override of prior context first, then a request for hidden instructions right after it. The two
-# families must both be present and neither may be negated or qualified by an exception. English only for now.
-_RE_OVERRIDE_CONTEXT = re.compile(
-    r"\b(?:ignore|disregard|forget|override)\b[\s\S]{0,100}?\b(?:above|previous|prior|earlier|before|preceding|context|instructions?|rules?)\b",
+# Prompt extraction that the classic injection regex misses. Refuse one request addressed to the assistant: the
+# override verb is imperative at the start of the text or of a sentence, and a request verb opens the next clause
+# after a connector, with no subject of its own. This is what separates an order from a note about an order.
+# English only for now.
+_RE_OVERRIDE_VERB = re.compile(r"\b(?:ignore|disregard|forget|override)\b", re.IGNORECASE)
+_RE_IMPERATIVE_OVERRIDE = re.compile(
+    r"(?:\A|(?<=[.!?。！？;\n]))\s*"
+    r"(?:(?:please|now)\s+)?"
+    r"(?:(?:you\s+(?:must|should|need\s+to)|i\s+want\s+you\s+to)\s+)?"
+    r"(?:ignore|disregard|forget|override)\b[\s\S]{0,100}?"
+    r"\b(?:earlier\s+context|prior\s+(?:context|rules?)|previous\s+(?:context|instructions?|rules?)"
+    r"|above|earlier|prior|previous|before|preceding|context|instructions?|rules?)\b",
     re.IGNORECASE)
+_RE_REQUEST_CONNECTOR = (
+    r"\s*(?:(?:(?:and|then|instead)\s*)+|[,;]\s*(?:(?:and|then|instead)\s*)*"
+    r"|[.!?。！？]\s*(?:(?:and|then|instead)\s*)?)"
+)
 _RE_PROMPT_REQUEST = re.compile(
-    r"\b(?:print|show|reveal|output|dump|repeat|quote|write\s+out|tell\s+me|display)\b[\s\S]{0,100}?"
-    r"\b(?:your\s+)?(?:system\s+prompt|hidden\s+instructions?|developer\s+message|initial\s+instructions?)\b"
-    r"(?!\s+(?:editor|field|screen|setting|documentation|test|example))",
+    _RE_REQUEST_CONNECTOR
+    + r"(?:please\s+|now\s+)?"
+    + r"(?:print|show|reveal|output|dump|repeat|quote|write\s+out|tell\s+me|display)\b[\s\S]{0,80}?"
+    + r"\b(?:your\s+)?(?:system\s+prompt|hidden\s+instructions?|developer\s+message|initial\s+instructions?)\b",
     re.IGNORECASE)
 
 
@@ -152,12 +164,14 @@ def _unnegated_request(text: str, match: re.Match) -> bool:
 def _prompt_extraction_in(text: str) -> bool:
     """Whether text gives one connected, unnegated order to override context and reveal hidden instructions."""
     plain = _plain_letters(text)
-    for override in _RE_OVERRIDE_CONTEXT.finditer(plain):
+    if not _RE_OVERRIDE_VERB.search(plain):
+        return False
+    for override in _RE_IMPERATIVE_OVERRIDE.finditer(plain):
         if not _unnegated_request(plain, override):
             continue
-        for request in _RE_PROMPT_REQUEST.finditer(plain, override.end(), min(len(plain), override.end() + 160)):
-            if _unnegated_request(plain, request):
-                return True
+        request = _RE_PROMPT_REQUEST.search(plain, override.end(), min(len(plain), override.end() + 80))
+        if request and _unnegated_request(plain, request):
+            return True
     return False
 
 

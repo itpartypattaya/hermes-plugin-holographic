@@ -132,21 +132,22 @@ _RE_INJECTION = re.compile(_alternatives(
 # English only for now.
 _RE_OVERRIDE_VERB = re.compile(r"\b(?:ignore|disregard|forget|override)\b", re.IGNORECASE)
 _RE_IMPERATIVE_OVERRIDE = re.compile(
-    r"(?:\A|(?<=[.!?。！？;\n]))\s*"
+    r"(?:(?:\A|(?<=[.!?。！？;]))\s*|(?<=\n)[^\S\n]*)"
     r"(?:(?:please|now)\s+)?"
     r"(?:(?:you\s+(?:must|should|need\s+to)|i\s+want\s+you\s+to)\s+)?"
-    r"(?:ignore|disregard|forget|override)\b[\s\S]{0,100}?"
+    r"(?:ignore|disregard|forget|override)\b[^.!?。！？;\n]{0,100}?"
     r"\b(?:earlier\s+context|prior\s+(?:context|rules?)|previous\s+(?:context|instructions?|rules?)"
     r"|above|earlier|prior|previous|before|preceding|context|instructions?|rules?)\b",
     re.IGNORECASE)
 _RE_REQUEST_CONNECTOR = (
-    r"\s*(?:(?:(?:and|then|instead)\s*)+|[,;]\s*(?:(?:and|then|instead)\s*)*"
-    r"|[.!?。！？]\s*(?:(?:and|then|instead)\s*)?)"
+    r"\s*(?:(?:\b(?:and|then|instead)\b[\s,]*)+|[,;]\s*(?:\b(?:and|then|instead)\b[\s,]*)*"
+    r"|[.!?。！？]\s*(?:\b(?:and|then|instead)\b[\s,]*)?)"
 )
 _RE_PROMPT_REQUEST = re.compile(
-    _RE_REQUEST_CONNECTOR
-    + r"(?:please\s+|now\s+)?"
-    + r"(?:print|show|reveal|output|dump|repeat|quote|write\s+out|tell\s+me|display)\b[\s\S]{0,80}?"
+    r"(?:(?!\b(?:and|then|instead)\b)[^.!?。！？;,\n]){0,40}"
+    + _RE_REQUEST_CONNECTOR
+    + r"(?:(?:please|now)\b[\s,]*)?"
+    + r"(?:print|show|reveal|output|dump|repeat|quote|write\s+out|tell\s+me|display)\b[^.!?。！？;\n]{0,80}?"
     + r"\b(?:your\s+)?(?:system\s+prompt|hidden\s+instructions?|developer\s+message|initial\s+instructions?)\b",
     re.IGNORECASE)
 
@@ -169,7 +170,7 @@ def _prompt_extraction_in(text: str) -> bool:
     for override in _RE_IMPERATIVE_OVERRIDE.finditer(plain):
         if not _unnegated_request(plain, override):
             continue
-        request = _RE_PROMPT_REQUEST.search(plain, override.end(), min(len(plain), override.end() + 80))
+        request = _RE_PROMPT_REQUEST.match(plain, override.end(), min(len(plain), override.end() + 120))
         if request and _unnegated_request(plain, request):
             return True
     return False

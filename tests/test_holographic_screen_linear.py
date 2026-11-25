@@ -39,6 +39,8 @@ ADVERSARIAL = {
     "CRLF lines": lambda n: "a" + "\r\n" * n + "b",
     "image openings": lambda n: "a" + "![" * n + "b",
     "image openings and a bracket": lambda n: "a" + "![" * n + "]b",
+    "blank lines before override": lambda n: "Meeting notes\n" + "\n" * n + "ignore the plan",
+    "CRLF lines before override": lambda n: "Meeting notes\r\n" + "\r\n" * n + "ignore the plan",
 }
 
 

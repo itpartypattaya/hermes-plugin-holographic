@@ -23,6 +23,12 @@ Issue #95, keywords in a fact's vector — two arms on the same frozen keywords,
     EMB_URL=http://127.0.0.1:1241/v1 EMB_MODEL=bge-m3 python -I tools/provenance_probe.py --set household         --split test --modes off --emb on --keywords tools/issue95_keywords/household.json --kw-coverage half         --embed-text content          # then the same with --embed-text content+keywords
     python tools/mcnemar_gate.py --pair embed_text <the two files>
 
+Issue #121, a lower margin whose facts a check confirms — an explicit off arm and the checked arm, rerank off:
+    python -I tools/provenance_probe.py --set multi --modes off --emb on --endpoint <url> --recall-check-margin off
+    python -I tools/provenance_probe.py --set multi --modes off --emb on --endpoint <url> --recall-check-margin 0.5
+        --check-model <the checker's model> --check-instruction <a file holding its instruction>
+    python tools/mcnemar_gate.py --pair check_margin <the _coff files and the _c0.5 files>
+
 Rows: results/provenance_<set>_<emb>.jsonl (one row per query; mode is a row field, git_sha is the commit).
 """
 from __future__ import annotations
@@ -79,6 +85,7 @@ EMB_URL = os.environ.get("EMB_URL", "http://127.0.0.1:1237/v1")
 EMB_MODEL = os.environ.get("EMB_MODEL", "bge-m3")
 ENDPOINT = os.environ.get("RERANK_URL", "http://127.0.0.1:1235/v1/rerank")
 SCALE = os.environ.get("RERANK_SCALE", "logit")  # endpoint scale (fix-list item 4, 14:01)
+CHECK_MODEL: str | None = None  # --check-model: the rerank_model the check's requests name (main sets it for a run)
 
 
 # Issue #95 (main sets them for one run and puts them back): the keywords this run stores with the facts, per language
@@ -168,6 +175,8 @@ def make_provider(db: Path, mode: str, emb, extra: dict | None = None) -> Hologr
                        "rerank_scale": SCALE, "rerank_url": ENDPOINT, "rerank_model": "probe-reranker"})
     if emb == "on":
         config.update({"embeddings": "on", "embedding_url": EMB_URL, "embedding_model": EMB_MODEL})
+    if not spec and _holographic_embeddings.RECALL_CHECK_MARGIN is not None:  # the check's endpoint, rerank off
+        config.update({"rerank_scale": SCALE, "rerank_url": ENDPOINT, "rerank_model": CHECK_MODEL})
     if extra:
         config.update(extra)
     p = HolographicMemoryProvider(config=config)
@@ -190,6 +199,7 @@ class Probe:
         self._wrap(p, "_sendable_docs", self._sendable_docs)
         self._wrap(p, "_not_recent", self._not_recent)
         self._wrap(p, "_recallable", self._recallable)
+        self._wrap(p, "_check_fact", self._check)  # embeddings.RECALL_CHECK_MARGIN's question, when a turn asks one
         # the runner on main has no _rescorer at all — getattr, no direct access (fix-list item 5)
         rsc = getattr(p, "_rescorer", None)
         if rsc is not None:
@@ -247,6 +257,18 @@ class Probe:
             return ranked
         return call
 
+    def _check(self, orig):
+        def call(check, query, fact):
+            t0 = time.perf_counter()
+            outcome, score = orig(check, query, fact)
+            if outcome == "not_answered":
+                # as for rerank (fix-list 19:07): a check that did not answer must not read as a no — the run stops
+                raise SystemExit(f"check of fact #{fact.get('fact_id')} not answered — the run was stopped")
+            self.ctx["check"] = {"check_calls": int(not outcome.startswith("skipped_")), "check_outcome": outcome,
+                                 "check_score": score, "check_ms": round((time.perf_counter() - t0) * 1000, 1)}
+            return outcome, score
+        return call
+
     def _relevant(self, orig):
         def call(query, candidates, min_coverage=0.3):
             cids = [f["fact_id"] for f in candidates]
@@ -299,7 +321,9 @@ class Probe:
         self.ctx = {"tags": {}, "blocked": {}, "gate_called": False,
                     "pool": [], "rerank_top5": [], "rank_order": [], "ranked": None,
                     "rerank_call": "not_called",
-                    "window": 0.0, "weight": 0.0}
+                    "window": 0.0, "weight": 0.0,
+                    # every row says whether its turn asked the check, also a turn that shows nothing (issue #121)
+                    "check": {"check_calls": 0, "check_outcome": None, "check_score": None, "check_ms": None}}
         rescorer = getattr(self.p, "_rescorer", None)
         if rescorer is None:
             self.ctx["rerank_call"] = "off"  # rerank is off in the config — no call can happen by construction
@@ -448,7 +472,7 @@ def run_multilingual(langs, modes, emb, endpoint, extra: dict | None = None) -> 
                              "miss_cls": miss_cls, "ms": round(ms, 1),
                              "pool_n": len(ctx.get("pool") or []),
                              "gate_called": ctx.get("gate_called"),
-                         "rerank_call": ctx.get("rerank_call"),
+                         "rerank_call": ctx.get("rerank_call"), **ctx["check"],
                              "rerank_top5": ctx.get("rerank_top5") or [],
                              "rank_order": ctx.get("rank_order") or []})
             for r in rows[first:]:
@@ -494,7 +518,7 @@ def run_contrast(set_name, modes, emb, endpoint, extra: dict | None = None) -> l
                              "hit5": own_pos is not None and own_pos <= 5, "out_n": len(keys),
                              "miss_cls": miss_cls, "pool_n": len(ctx.get("pool") or []),
                              "gate_called": ctx.get("gate_called"),
-                         "rerank_call": ctx.get("rerank_call"),
+                         "rerank_call": ctx.get("rerank_call"), **ctx["check"],
                              "rerank_top5": ctx.get("rerank_top5") or [],
                              "rank_order": ctx.get("rank_order") or []})
         for i, (query, cat) in enumerate(contrast.CHITCHAT):
@@ -510,7 +534,7 @@ def run_contrast(set_name, modes, emb, endpoint, extra: dict | None = None) -> l
                          "hit": None, "wrong": [], "hit5": None, "out_n": len(keys), "miss_cls": "-",
                          "pool_n": len(ctx.get("pool") or []),
                          "gate_called": ctx.get("gate_called"),
-                         "rerank_call": ctx.get("rerank_call"),
+                         "rerank_call": ctx.get("rerank_call"), **ctx["check"],
                          "rerank_top5": ctx.get("rerank_top5") or []})
         for r in rows[first:]:
             r.update(coverage)
@@ -582,7 +606,7 @@ def run_household(modes, emb, endpoint, split="all", names_fit="on",
                              "sources": {str(f): ctx["tags"].get(f, ["pool-only"]) for f in found},
                              "pool_n": len(ctx.get("pool") or []),
                              "gate_called": ctx.get("gate_called"),
-                         "rerank_call": ctx.get("rerank_call"),
+                         "rerank_call": ctx.get("rerank_call"), **ctx["check"],
                              "rerank_top5": ctx.get("rerank_top5") or [],
                              "rank_order": ctx.get("rank_order") or []})
             for hid in hids:
@@ -600,7 +624,7 @@ def run_household(modes, emb, endpoint, split="all", names_fit="on",
                              "sources": {str(f): ctx["tags"].get(f, ["pool-only"]) for f in found},
                              "pool_n": len(ctx.get("pool") or []),
                              "gate_called": ctx.get("gate_called"),
-                         "rerank_call": ctx.get("rerank_call"),
+                         "rerank_call": ctx.get("rerank_call"), **ctx["check"],
                              "rerank_top5": ctx.get("rerank_top5") or [],
                              "rank_order": ctx.get("rank_order") or []})
             for r in rows[first:]:
@@ -661,7 +685,7 @@ def run_synthetic_zh(modes, emb, endpoint, extra: dict | None = None) -> list[di
                          "sources": {str(f): ctx["tags"].get(f, ["pool-only"]) for f in found},
                          "pool_n": len(ctx.get("pool") or []),
                          "gate_called": ctx.get("gate_called"),
-                         "rerank_call": ctx.get("rerank_call"),
+                         "rerank_call": ctx.get("rerank_call"), **ctx["check"],
                          "rerank_top5": ctx.get("rerank_top5") or [],
                          "rank_order": ctx.get("rank_order") or []})
         for hid, h in sz.CHITCHAT.items():
@@ -679,7 +703,7 @@ def run_synthetic_zh(modes, emb, endpoint, extra: dict | None = None) -> list[di
                          "sources": {str(f): ctx["tags"].get(f, ["pool-only"]) for f in found},
                          "pool_n": len(ctx.get("pool") or []),
                          "gate_called": ctx.get("gate_called"),
-                         "rerank_call": ctx.get("rerank_call"),
+                         "rerank_call": ctx.get("rerank_call"), **ctx["check"],
                          "rerank_top5": ctx.get("rerank_top5") or [],
                          "rank_order": ctx.get("rank_order") or []})
         for r in rows[first:]:
@@ -927,12 +951,18 @@ def _load_keywords(path: str, coverage: str, seed: int) -> dict:
     return out
 
 
+def _off_or_float(text: str):
+    """--recall-check-margin: `off`, the explicit baseline arm, or a margin."""
+    return text if text == "off" else float(text)
+
+
 def main(argv):
-    global ENDPOINT, SCALE, KEYWORDS, DB_DIR
+    global ENDPOINT, SCALE, KEYWORDS, DB_DIR, CHECK_MODEL
     # Every override below is process-global: a later main([]) in the same process must not run at this
     # run's margin, endpoint or scale under the plain file name and overwrite a baseline (review of PR #31:
     # item 3 for RECALL_MARGIN; ENDPOINT is also --endpoint's default below, so it leaked the same way).
-    saved_endpoint, saved_scale = ENDPOINT, SCALE
+    saved_endpoint, saved_scale, saved_check_model = ENDPOINT, SCALE, CHECK_MODEL
+    saved_check_margin = _holographic_embeddings.RECALL_CHECK_MARGIN
     saved_margin = _holographic_embeddings.RECALL_MARGIN
     saved_embed_text, saved_keywords, saved_db_dir = _holographic_embeddings.EMBED_TEXT, KEYWORDS, DB_DIR
     ap = argparse.ArgumentParser(description="Provenance probe: the sources of facts in prefetch")
@@ -969,10 +999,32 @@ def main(argv):
     ap.add_argument("--kw-coverage", default="all", choices=["all", "half"],
                     help="with --keywords: every fact, or half of each language's chosen by --kw-seed")
     ap.add_argument("--kw-seed", type=int, default=95, help="with --kw-coverage half: the seed (default 95)")
+    ap.add_argument("--recall-check-margin", default=None, type=_off_or_float,
+                    help="issue #121: embeddings.RECALL_CHECK_MARGIN for this run, or `off` for the explicit baseline "
+                         "arm. A fact that stands out at <v> but not at RECALL_MARGIN is offered on the check's yes "
+                         "(the cross-encoder at --endpoint, rerank off). Every row carries check_margin, `off` without "
+                         "the check; the file gets _c<v> or _coff")
+    ap.add_argument("--check-model", default=None,
+                    help="with --recall-check-margin <v>: the checker's model, stamped into every row and sent as "
+                         "rerank_model")
+    ap.add_argument("--check-instruction", default=None,
+                    help="with --recall-check-margin <v>: a file holding the instruction the checker applies; the "
+                         "sha256 of its bytes is stamped into every row")
     args = ap.parse_args(argv)
     try:
         if args.recall_margin is not None:
             _holographic_embeddings.RECALL_MARGIN = args.recall_margin
+        check, instruction_sha = args.recall_check_margin, None  # None (no flag), "off" or the checked margin
+        if check not in (None, "off"):
+            if not (args.endpoint and args.check_model and args.check_instruction):
+                raise SystemExit("--recall-check-margin <v>: --endpoint, --check-model and --check-instruction name "
+                                 "the check")
+            if args.set == "budget" or args.emb != "on" or args.modes.replace(" ", "") != "off":
+                raise SystemExit("--recall-check-margin <v> needs embeddings and rerank off: --emb on --modes off")
+            if check >= _holographic_embeddings.RECALL_MARGIN:
+                raise SystemExit(f"--recall-check-margin {check} is not below the recall margin: nothing is checked")
+            instruction_sha = hashlib.sha256(Path(args.check_instruction).read_bytes()).hexdigest()
+            _holographic_embeddings.RECALL_CHECK_MARGIN, CHECK_MODEL = check, args.check_model
         if args.embed_text is not None:
             _holographic_embeddings.EMBED_TEXT = args.embed_text
         kw_file, kw_coverage = None, "none"
@@ -1032,6 +1084,8 @@ def main(argv):
             label = f"_{args.label}" if args.label else ""
             # --recall-margin: two margins must not overwrite each other (PR #17 recipe, 2026-10-24)
             margin_sfx = "" if args.recall_margin is None else f"_m{args.recall_margin!r}"
+            if check is not None:  # issue #121: each arm of the check gets a file of its own, _coff and _c0.5
+                margin_sfx += "_coff" if check == "off" else f"_c{check!r}"
             # --keywords / --embed-text: the two arms of issue #95 and each coverage get files of their own
             kw_sfx = "" if not args.keywords else (
                 "_kwall" if args.kw_coverage == "all" else f"_kwhalf{args.kw_seed}")
@@ -1043,6 +1097,10 @@ def main(argv):
                 r["endpoint"] = args.endpoint or "mock"
                 r["scale"] = SCALE  # which scale was set for the run
                 r["margin"] = _holographic_embeddings.RECALL_MARGIN  # which RECALL_MARGIN the run used
+                # issue #121: the check margin (off without the check), the checker and its instruction's sha256
+                r["check_margin"] = check if instruction_sha else "off"
+                r["check_model"] = CHECK_MODEL if instruction_sha else None
+                r["check_instruction_sha256"] = instruction_sha
                 r["embed_text"] = _holographic_embeddings.EMBED_TEXT  # what the fact vectors were made from
                 r["kw_file"], r["kw_coverage"] = kw_file, kw_coverage
                 r.setdefault("emb_model", None)  # the store's own stamp when embeddings were on (catch_up_vectors)
@@ -1058,8 +1116,9 @@ def main(argv):
             all_rows.extend(rows)
         return all_rows
     finally:
-        ENDPOINT, SCALE = saved_endpoint, saved_scale
+        ENDPOINT, SCALE, CHECK_MODEL = saved_endpoint, saved_scale, saved_check_model
         _holographic_embeddings.RECALL_MARGIN = saved_margin
+        _holographic_embeddings.RECALL_CHECK_MARGIN = saved_check_margin
         _holographic_embeddings.EMBED_TEXT = saved_embed_text
         if DB_DIR is not None and DB_DIR != saved_db_dir:  # this run's stores, closed by now: nothing left in Temp
             shutil.rmtree(DB_DIR, ignore_errors=True)

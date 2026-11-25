@@ -11,6 +11,7 @@ files you point it at:
     python tools/mcnemar_gate.py results/provenance_household_dev_on.jsonl
     python tools/mcnemar_gate.py --pair margin <two files>       # PR #17 (--margin-pair is the same)
     python tools/mcnemar_gate.py --pair embed_text <two files>   # issue #95, gate G1
+    python tools/mcnemar_gate.py --pair check_margin <files>     # issue #121: the off arm against the checked one
 
 A file that cannot be compared honestly aborts instead of printing a pass: duplicated
 rows, mixed runs (several git_sha/scale/endpoint/emb/split values) and targets that
@@ -172,8 +173,11 @@ def _noise(r: dict) -> bool:
     return r.get("kind") == "real" and not (r.get("targets") or [])
 
 
-# One clean head for a whole paired comparison: a field that differs between the two runs is a second change.
-_HEAD = ("git_sha", "emb", "mode", "scale", "endpoint")
+# One clean head for a whole paired comparison: a field that differs between the two runs is a second change. The
+# check margin of issue #121 too: two runs of which one asked the check are not one change of margin or vector text.
+_HEAD = ("git_sha", "emb", "mode", "scale", "endpoint", "check_margin")
+# --pair check_margin: the check margin is the change, and the ordinary margin must be the same in both arms
+_CHECK_HEAD = _HEAD[:-1] + ("margin",)
 # Issue #95 adds the embedding model and its vector size (two models are not one change of vector text), the margin,
 # the keyword coverage and names_fit. The keywords file is one per set, so it is compared inside each pair, with the
 # store's count of facts with keywords: only the vector text may differ.
@@ -189,6 +193,8 @@ def _paired(paths: list[str], field: str, head: tuple, value=lambda v: v,
     rows = []
     for path in paths:
         rows.extend(json.loads(line) for line in open(path, encoding="utf-8") if line.strip())
+    for r in rows:  # a row written before the check margin was stamped ran without the check
+        r.setdefault("check_margin", "off")
     unstamped = [i for i, r in enumerate(rows) if r.get(field) in (None, "")]
     if unstamped:
         raise SystemExit(f"{len(unstamped)} rows carry no {field} (row {unstamped[0]}) — a row that does "
@@ -240,16 +246,39 @@ def _paired(paths: list[str], field: str, head: tuple, value=lambda v: v,
     return rows, values, by, real_keys
 
 
-def report_margins(paths: list[str]) -> None:
+def _check_value(value) -> float:
+    """A check_margin to sort by: off, the default arm, above every margin."""
+    return math.inf if value == "off" else float(value)
+
+
+def _checker(rows: list[dict], checked: dict) -> str:
+    """--pair check_margin: rows from one clean commit, and a checked arm that names one checker and one sha256 of its
+    instruction (the wording changes the verdicts, #121) — refused otherwise; returned for the report's head."""
+    if any(str(r["git_sha"]).endswith("-dirty") for r in rows):
+        raise SystemExit("rows captured on a tree with uncommitted changes (git_sha ...-dirty): measure at a commit")
+    stamps = {(r.get("check_model"), r.get("check_instruction_sha256")) for r in checked.values()}
+    if len(stamps) != 1 or None in next(iter(stamps)):
+        raise SystemExit(f"the checked arm must name one checker and one instruction sha256, got {sorted(stamps, key=str)}")
+    model, sha = next(iter(stamps))
+    return f" | margin {rows[0]['margin']} | checker {model}, instruction sha256 {sha}"
+
+
+def report_margins(paths: list[str], field: str = "margin") -> None:
     """Two-margin pairing for the PR #17 gate: rows stamped with `margin` (provenance_probe
     --recall-margin) are paired per (set, lang, qid) and compared 0.6 against 1.0 on one head.
+    *field* "check_margin" (issue #121, provenance_probe --recall-check-margin) pairs the explicit off arm with the
+    checked one instead, at one ordinary margin (_CHECK_HEAD), and adds what the check did on every turn.
 
     Reports hit@5 with exact McNemar on the pooled rows, the gained and lost top-five targets as
     `set/lang qid -> target`, noise (chit AND no-answer rows with output) and confusion — the four
     guards of the recipe: no target lost anywhere, noise not higher, confusion not higher, and the
     rescue passing p < 0.05 pooled (2026-10-24)."""
-    rows, margins, by, real_keys = _paired(paths, "margin", _HEAD, value=float)
-    lo, hi = margins  # sorted ascending: lo is the proposal (0.6), hi the current default (1.0)
+    checked = field == "check_margin"
+    rows, margins, by, real_keys = _paired(paths, field, _CHECK_HEAD if checked else _HEAD,
+                                           value=_check_value if checked else float)
+    lo, hi = margins  # sorted ascending: lo is the proposal (0.6), hi the current default (1.0, or the check off)
+    label = {lo: lo, hi: "off" if hi == math.inf else hi}
+    checker = _checker(rows, by[lo]) if checked else ""
 
     hit = {m: {k: bool(by[m][k].get("hit5")) for k in real_keys} for m in margins}
     # b/c of McNemar: b = rescued BY the proposal (miss at the default, hit at the proposal), c = lost
@@ -272,13 +301,21 @@ def report_margins(paths: list[str]) -> None:
     conf = {m: sum(1 for k in real_keys if _confused(by[m][k])) for m in margins}
     hits = {m: sum(hit[m].values()) for m in margins}
 
-    print(f"\n== margins {hi} (default) vs {lo} (proposal) | rows {n} real | git_sha {rows[0].get('git_sha')}")
-    print(f"{'margin':>8} {'hit5':>9} {'noise':>6} {'confused':>9}")
+    print(f"\n== {field if checked else 'margins'} {label[hi]} (default) vs {lo} (proposal){checker} | rows {n} real | "
+          f"git_sha {rows[0].get('git_sha')}")
+    print(f"{'check' if checked else 'margin':>8} {'hit5':>9} {'noise':>6} {'confused':>9}")
     for m in (lo, hi):
-        print(f"{m:>8} {hits[m]:4d}/{n} {noise[m]:6d} {conf[m]:9d}")
+        print(f"{label[m]:>8} {hits[m]:4d}/{n} {noise[m]:6d} {conf[m]:9d}")
     print(f"paired misses: b={b} (rescued at {lo}), c={c} (lost at {lo}), exact McNemar p={p:.4f}")
     print(f"gained targets in the top five ({len(gained)}): " + ("; ".join(gained) or "-"))
     print(f"lost targets in the top five ({len(lost)}): " + ("; ".join(lost) or "-"))
+    if checked:  # every turn of the checked arm, also those that showed nothing: the journal does not see them
+        turns = list(by[lo].values())
+        outcomes = collections.Counter(r.get("check_outcome") for r in turns if r.get("check_outcome"))
+        print(f"check: {sum(r.get('check_calls') or 0 for r in turns)} calls in {len(turns)} turns, "
+              f"{dict(sorted(outcomes.items()))}, slowest {max((r.get('check_ms') or 0 for r in turns), default=0)} ms")
+        if any(r.get("split") == "dev" for r in rows):
+            print("  dev rows included: report them beside the test pool; they do not decide")
     # the gate judges THE PROPOSAL (lo) against the current default (hi)
     guards = {
         "no target lost": not lost,
@@ -388,12 +425,12 @@ def main() -> None:
         return
     if sys.argv[1:2] == ["--pair"]:
         field = sys.argv[2] if len(sys.argv) > 2 else ""
-        if field == "margin":
-            report_margins(sys.argv[3:])
+        if field in ("margin", "check_margin"):
+            report_margins(sys.argv[3:], field)
         elif field == "embed_text":
             report_embed_text(sys.argv[3:])
         else:
-            raise SystemExit("--pair margin|embed_text <files>")
+            raise SystemExit("--pair margin|check_margin|embed_text <files>")
         return
     paths = sys.argv[1:] or sorted(
         glob.glob(os.path.join(os.path.dirname(__file__), "..",

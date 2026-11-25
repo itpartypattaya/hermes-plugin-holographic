@@ -32,6 +32,7 @@ from tools.registry import tool_error
 from utils import is_truthy_value
 from . import embeddings
 from . import holographic as hrr
+from . import recall_check
 from . import rerank
 from .text import (  # they lived here, and tests import _split_tags from the package
     _KW_MARK, _MAX_KEYWORD_CHARS, _MAX_KEYWORDS, _join_tags, _keywords, _split_tags)
@@ -915,6 +916,7 @@ class HolographicMemoryProvider(MemoryProvider):
         # the blend. Shared by every store; one synchronous call at recall time, backoff on failure (rerank.py).
         self._rerank = rerank.settings_from(self._config)
         self._rescorer = (rerank.Rescorer(self._rerank, secret_check=_secret_in) if self._rerank else None)
+        self._recall_check = None  # embeddings.RECALL_CHECK_MARGIN's default check (recall_check.py), made on first use
         if self._rescorer and self._rescorer.unavailable():
             logger.warning("holographic: rerank is on but cannot run (%s); the current order is kept",
                            self._rescorer.unavailable())
@@ -1514,12 +1516,28 @@ class HolographicMemoryProvider(MemoryProvider):
         # embedding alone (standout margin, names_fit), at most embedding_prefetch_facts of them, marked
         # so the model knows the match is looser.
         if meaning is not None and self._embedding is not None and self._embedding.recall_facts:
+            # embeddings.RECALL_CHECK_MARGIN (a measurement, None by default; recall_check.py): a fact that stands out
+            # at that lower margin but not at RECALL_MARGIN is offered only on the check's yes. No check to ask: the
+            # margin stays RECALL_MARGIN.
+            check = self._recall_checker()
+            margin = embeddings.RECALL_MARGIN if check is None else embeddings.RECALL_CHECK_MARGIN
+            asked: list[int] = []  # one question a turn: the closest fact that needs the check, inside the time budget
+
+            def confirmed(fact: dict) -> bool:
+                if check is None or meaning.standout(fact["fact_id"], embeddings.RECALL_MARGIN,
+                                                     self._embedding.min_score):
+                    return True
+                if asked:
+                    return False
+                asked.append(fact["fact_id"])
+                return self._check_fact(check, query, fact)[0] == recall_check.YES
+
             for fact in self._retriever.by_meaning(meaning, exclude=have, min_trust=self._min_trust,
                                                    limit=self._embedding.recall_facts + 3,
-                                                   margin=embeddings.RECALL_MARGIN,
+                                                   margin=margin,
                                                    min_score=self._embedding.min_score):
                 if len(by_meaning) < self._embedding.recall_facts and self._not_recent(key, fact, turn) \
-                        and self._recallable(fact) and self._retriever.names_fit(query, fact):
+                        and self._recallable(fact) and self._retriever.names_fit(query, fact) and confirmed(fact):
                     meaning_facts.append(fact)
                     have.add(fact["fact_id"])
                     by_meaning.add(fact["fact_id"])
@@ -1537,6 +1555,24 @@ class HolographicMemoryProvider(MemoryProvider):
                     entity_facts.append(fact)
                     have.add(fact["fact_id"])
         return meaning_facts, entity_facts, by_meaning
+
+    def _recall_checker(self):
+        """The check of embeddings.RECALL_CHECK_MARGIN: the cross-encoder on the rerank_* keys. None, and the value
+        changes nothing: unset or not below RECALL_MARGIN, or no rerank_url (no call to an address nobody configured)."""
+        margin = embeddings.RECALL_CHECK_MARGIN
+        if margin is None or margin >= embeddings.RECALL_MARGIN:
+            return None
+        if self._recall_check is None and str(self._config.get("rerank_url") or "").strip():
+            self._recall_check = functools.partial(recall_check.cross_encoder, rerank.Rescorer(
+                rerank.Settings(self._config), secret_check=_secret_in))
+        return self._recall_check
+
+    @staticmethod
+    def _check_fact(check, query: str, fact: dict) -> tuple[str, float | None]:
+        """recall_check.ask about one fact: its whole text screened, sent as recall shows it. tools/provenance_probe.py
+        records each turn's question here."""
+        content = fact.get("content") or ""
+        return recall_check.ask(check, query, content, _one_line(content))
 
     def _unified_stream(self, query: str, meaning, candidates: list[dict], key: str,
                         turn: int) -> tuple[list[dict], set[int]]:

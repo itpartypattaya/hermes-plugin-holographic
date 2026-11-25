@@ -5,13 +5,15 @@ With RECALL_CHECK_MARGIN set, a fact that stands out at that lower margin but no
 only on the check's yes. A no or a not_answered leaves it out, so recall is what it is without the value. One question
 a turn at most, about the closest such fact.
 
-``cross_encoder`` is the check, on the rerank_* keys.
+``CHECK`` lets a run swap the check (another model, another API): a callable ``(message, fact) -> (verdict, score)``.
+None, the default, is ``cross_encoder`` on the rerank_* keys.
 """
 from __future__ import annotations
 
 from . import rerank
 
 YES, NO, NOT_ANSWERED = "yes", "no", "not_answered"
+CHECK = None
 
 
 def cross_encoder(rescorer: rerank.Rescorer, message: str, fact: str) -> tuple[str, float | None]:

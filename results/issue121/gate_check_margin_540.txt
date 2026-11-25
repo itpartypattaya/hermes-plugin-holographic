@@ -1,0 +1,15 @@
+$ python tools/mcnemar_gate.py --pair check_margin results/issue121/provenance_{multi,contrast_en,contrast_ru,contrast_zh,household_test}_{coff,c0.5}_on.jsonl
+
+== check_margin off (default) vs 0.5 (proposal) | margin 1.0 | checker Qwen/Qwen3-Reranker-0.6B, instruction sha256 5336bc93ae7c30960c4f5940de5a98826fe2ecee05c549a846897344d7b73b72 | rows 540 real | git_sha 31de6eb5af2ae3366f1be32c3b847f338cbf2a7c
+   check      hit5  noise  confused
+     0.5  486/540     93        34
+     off  480/540     93        34
+paired misses: b=6 (rescued at 0.5), c=0 (lost at 0.5), exact McNemar p=0.0312
+gained targets in the top five (6): multi/nl 18 -> python; contrast_en/contrast_en p3q1 -> denis_car; contrast_en/contrast_en p4q1 -> dina_flat; contrast_en/contrast_en p14q1 -> olga_ielts; contrast_zh/contrast_zh p4q0 -> andrey_vacation; household/en q063 -> andrey_no_sweet
+lost targets in the top five (0): -
+check: 29 calls in 810 turns, {'no': 20, 'yes': 9}, slowest 171.3 ms
+  PASS  no target lost
+  PASS  noise not higher (93 <= 93)
+  PASS  confusion not higher (34 <= 34)
+  PASS  pooled McNemar p < 0.05 (0.031)
+  => gate PASSES on these files

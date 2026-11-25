@@ -1,0 +1,1 @@
+Decide whether the document alone supplies a concrete answer to the query, including the requested entity and attribute. A shared topic without the requested information is insufficient.

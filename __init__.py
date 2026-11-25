@@ -1558,10 +1558,10 @@ class HolographicMemoryProvider(MemoryProvider):
 
     def _recall_checker(self):
         """The check of embeddings.RECALL_CHECK_MARGIN: recall_check.CHECK when a run set one, else the cross-encoder
-        on the rerank_* keys. None, and the value changes nothing: unset or not below RECALL_MARGIN, or no check and
-        no rerank_url (no call to an address nobody configured)."""
+        on the rerank_* keys. None, and the value changes nothing: unset or not below RECALL_MARGIN, rerank on (the
+        check runs with rerank off only), or no check and no rerank_url (no call to an address nobody configured)."""
         margin = embeddings.RECALL_CHECK_MARGIN
-        if margin is None or margin >= embeddings.RECALL_MARGIN:
+        if margin is None or margin >= embeddings.RECALL_MARGIN or self._rescorer is not None:
             return None
         if recall_check.CHECK is not None:
             return recall_check.CHECK

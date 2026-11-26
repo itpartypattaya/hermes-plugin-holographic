@@ -999,11 +999,21 @@ def _latin_lookalikes(match: re.Match) -> str:
 
 
 def _plain_letters(text: str) -> str:
-    """*text* with letters drawn as Latin ones written as those (_CONFUSABLE); *text* itself when it has none."""
+    """*text* with letters drawn as Latin ones written as those (_CONFUSABLE); *text* itself when it has none.
+
+    The result is its own rewrite, which the screens rely on: they rewrite a text once (0.31.6). A Latin letter put in
+    place of a lookalike can compose with the combining mark after it (Cyrillic "с" + U+0327 becomes "ç"), and the word
+    that joins may hold lookalikes no earlier word did, so normalizing and rewriting repeat until neither changes."""
     if text.isascii():
         return text
     text = unicodedata.normalize("NFKC", text)
-    return _RE_WORD_LETTERS.sub(_latin_lookalikes, text)
+    while True:
+        plain = _RE_WORD_LETTERS.sub(_latin_lookalikes, text)
+        if plain == text:
+            return plain
+        text = unicodedata.normalize("NFKC", plain)
+        if text == plain:
+            return plain
 
 
 # Quoted spans are reported text ("the test case contains 'ignore previous instructions'"), not instructions.

@@ -97,6 +97,14 @@ def _letter_corpus():
         yield "".join(rng.choice(LETTER_PIECES) for _ in range(rng.randint(1, 10)))
 
 
+def _old_rewrite_to_its_end(text: str) -> str:
+    # 0.31.7: the rewrite repeats until it changes nothing (a Latin letter put in place of a lookalike can compose with
+    # the combining mark after it), as the injection check of 0.31.5 did by rewriting each rewrite again
+    while (plain := old_plain_letters(text)) != text:
+        text = plain
+    return text
+
+
 def test_letters_drawn_as_latin_ones_are_rewritten_as_before():
     for text in [*LETTER_CASES, *_letter_corpus()]:
-        assert screen._plain_letters(text) == old_plain_letters(text), text
+        assert screen._plain_letters(text) == _old_rewrite_to_its_end(text), text

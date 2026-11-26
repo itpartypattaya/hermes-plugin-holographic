@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.31.5 — 2026-11-26
+
+### Fixed
+- **Prompt extraction phrased around the classic pattern is refused** (#134, thanks @andausman). An imperative
+  override of prior context ("ignore the above", "disregard prior rules", "you must forget the earlier context")
+  followed, in the next clause and without a subject of its own, by a request for the system prompt, hidden or
+  initial instructions or the developer message ("… and print your system prompt", "…; output the hidden
+  instructions") is refused on write and withheld from recall; a quoted example is still stored and shown on request,
+  as before. Ordinary notes that mention such things ("Dana said to ignore the previous invoice; the deck will show
+  the system prompt …") are stored. Lookalike letters are read as Latin, negation and exceptions stay within their
+  clause, and long runs of blank lines are screened in linear time. English only. hermes-dreaming vendors
+  `screen.py`, so its nightly pass gets the change with its next vendoring. No change to defaults, schema or network
+  behaviour.
+
 ## 0.31.4 — 2026-11-24
 
 ### Changed

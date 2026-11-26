@@ -29,6 +29,10 @@ Issue #121, a lower margin whose facts a check confirms — an explicit off arm 
         --check-model <the checker's model> --check-instruction <a file holding its instruction>
     python tools/mcnemar_gate.py --pair check_margin <the _coff files and the _c0.5 files>
 
+An endpoint whose vectors differ between calls (OpenAI's do): --emb-cache <file> gives every arm that names the same
+file one vector per (model, text) — the first run asks the endpoint and appends, later runs read (EmbCache):
+    python -I tools/provenance_probe.py --set multi --modes off --emb on --emb-cache <dir>/multi.emb-cache.jsonl ...
+
 Rows: results/provenance_<set>_<emb>.jsonl (one row per query; mode is a row field, git_sha is the commit).
 """
 from __future__ import annotations
@@ -36,12 +40,15 @@ from __future__ import annotations
 import argparse
 import hashlib
 import importlib.util
+import io
 import json
 import os
 import random
 import shutil
+import subprocess
 import sys
 import tempfile
+import threading
 import time
 from pathlib import Path
 
@@ -956,6 +963,81 @@ def _off_or_float(text: str):
     return text if text == "off" else float(text)
 
 
+class EmbCache:
+    """--emb-cache: the plugin's embeddings opener with a by-text cache in front, for one probe run.
+
+    OpenAI's embeddings differ slightly between calls (two identical off arms on text-embedding-3-small, 2026-11-26:
+    4 noise rows, 2 confusion rows and 1 hit apart — the size of what tools/mcnemar_gate.py judges). Every arm that
+    names the same file sees one vector per (model, dimensions, text): a text the file has is answered from it, the
+    rest of the batch goes to the endpoint and is appended, one JSON line {model, text, vector} each (`dimensions` when
+    the request sets it) — the format of results/issue121/text-embedding-3-small/scripts/emb_cache_proxy.py, whose
+    files this reads. Only the network exchange is replaced: the plugin's request, timeouts, checks and failures run as
+    without the cache, and an answer it would refuse, or a failed request, adds nothing.
+
+    Kept as appended: the first line of a key wins, a rerun appends nothing. A run that died mid-write leaves its last
+    line torn; that piece is cut off here and its text asked for again. A broken line anywhere else stops the run: the
+    file is damaged, and an arm measured on part of it would not see what the other arm saw. Two runs started at once
+    on a file that lacks their texts each ask the endpoint: warm the file with one arm, then run the others. One file
+    per endpoint: the key does not hold the address. The plugin's check that the endpoint works (embeddings._PLAIN,
+    after a fact batch is refused as input) always goes to the endpoint."""
+
+    def __init__(self, path: Path, opener):
+        self.path, self._opener = Path(path), opener
+        self._lock = threading.Lock()
+        self._vectors: dict[tuple, list] = {}
+        self.hits = self.sent = 0
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        raw = self.path.read_bytes() if self.path.exists() else b""
+        lines = raw.split(b"\n")
+        torn = lines.pop()  # after the last line break: b"" in a whole file
+        for n, line in enumerate(lines, 1):
+            if not line.strip():
+                continue
+            try:
+                record = json.loads(line)
+                key, vector = (record["model"], record.get("dimensions"), record["text"]), record["vector"]
+            except (ValueError, KeyError, TypeError):
+                key = vector = None
+            if not (key and isinstance(key[0], str) and isinstance(key[2], str) and isinstance(vector, list)
+                    and vector):
+                raise SystemExit(f"--emb-cache {self.path}: line {n} is not a cache line — the file is damaged")
+            self._vectors.setdefault(key, vector)
+        if torn:
+            with open(self.path, "r+b") as fh:
+                fh.truncate(len(raw) - len(torn))
+
+    def open(self, request, timeout):
+        body = json.loads(request.data)
+        model, dims, texts = body["model"], body.get("dimensions"), list(body["input"])
+        if texts == [_holographic_embeddings._PLAIN]:  # the plugin asking whether the endpoint works: it must answer
+            return self._opener.open(request, timeout=timeout)
+        with self._lock:
+            missing = [t for t in dict.fromkeys(texts) if (model, dims, t) not in self._vectors]
+        if missing:
+            request.data = json.dumps({**body, "input": missing}).encode("utf-8")  # the same request: its socket holder
+            with self._opener.open(request, timeout=timeout) as response:
+                raw = _holographic_embeddings._read_until(response, _holographic_embeddings._now() + timeout)
+            # the plugin's own check of the answer for what was sent: what it would refuse is not kept, and fails the
+            # request (passed on, an answer with a vector too many could pass for the whole batch, cached texts too)
+            _holographic_embeddings._vectors(json.loads(raw), len(missing), dims)
+            got = sorted(json.loads(raw)["data"], key=lambda item: item.get("index") or 0)
+            with self._lock, open(self.path, "ab") as fh:
+                for text, item in zip(missing, got):
+                    key = (model, dims, text)
+                    if key not in self._vectors:  # another request of this run may have written it meanwhile
+                        self._vectors[key] = item["embedding"]
+                        line = {"model": model, "text": text, "vector": item["embedding"]}
+                        if dims:
+                            line["dimensions"] = dims
+                        fh.write((json.dumps(line) + "\n").encode("utf-8"))
+        with self._lock:
+            self.sent += len(missing)
+            self.hits += len(texts) - len(missing)
+            data = [{"object": "embedding", "index": i, "embedding": self._vectors[(model, dims, t)]}
+                    for i, t in enumerate(texts)]
+        return io.BytesIO(json.dumps({"object": "list", "model": model, "data": data}).encode("utf-8"))
+
+
 def main(argv):
     global ENDPOINT, SCALE, KEYWORDS, DB_DIR, CHECK_MODEL
     # Every override below is process-global: a later main([]) in the same process must not run at this
@@ -965,6 +1047,7 @@ def main(argv):
     saved_check_margin = _holographic_embeddings.RECALL_CHECK_MARGIN
     saved_margin = _holographic_embeddings.RECALL_MARGIN
     saved_embed_text, saved_keywords, saved_db_dir = _holographic_embeddings.EMBED_TEXT, KEYWORDS, DB_DIR
+    saved_opener, cache = _holographic_embeddings._OPENER, None
     ap = argparse.ArgumentParser(description="Provenance probe: the sources of facts in prefetch")
     ap.add_argument("--set", default="multi",
                     help="multi | contrast_ru | contrast_en | contrast_zh | household | budget")
@@ -1010,8 +1093,27 @@ def main(argv):
     ap.add_argument("--check-instruction", default=None,
                     help="with --recall-check-margin <v>: a file holding the instruction the checker applies; the "
                          "sha256 of its bytes is stamped into every row")
+    ap.add_argument("--emb-cache", default=None,
+                    help="a JSONL file of vectors by (model, text): every arm that names it sees one vector per text "
+                         "(an endpoint whose vectors differ between calls, as OpenAI's do); a text it lacks is asked "
+                         "for and appended. Inside the repo only as *.emb-cache.jsonl, a name git ignores: it holds "
+                         "the texts")
     args = ap.parse_args(argv)
     try:
+        if args.emb_cache:
+            if args.emb == "off" or args.set == "budget":
+                raise SystemExit("--emb-cache needs embeddings: --emb on or both")
+            path = Path(args.emb_cache).resolve()
+            near = next(d for d in path.parents if d.is_dir())  # the repo, if any, the file would be in
+            try:  # 0 ignored, 1 a repo would commit it, 128 no repo there; no git: nothing to commit it with
+                tracked = subprocess.run(["git", "check-ignore", "-q", str(path)], cwd=near,
+                                         capture_output=True, timeout=10).returncode == 1
+            except (OSError, subprocess.SubprocessError):
+                tracked = False
+            if tracked:
+                raise SystemExit(f"--emb-cache {path}: git would commit it, and it holds every text the run embedded "
+                                 "— name it *.emb-cache.jsonl or put it outside the repo")
+            cache = _holographic_embeddings._OPENER = EmbCache(path, saved_opener)
         if args.recall_margin is not None:
             _holographic_embeddings.RECALL_MARGIN = args.recall_margin
         check, instruction_sha = args.recall_check_margin, None  # None (no flag), "off" or the checked margin
@@ -1116,6 +1218,9 @@ def main(argv):
             all_rows.extend(rows)
         return all_rows
     finally:
+        _holographic_embeddings._OPENER = saved_opener
+        if cache is not None:
+            print(f"emb-cache {cache.path}: {cache.hits} texts from the file, {cache.sent} asked for and appended")
         ENDPOINT, SCALE, CHECK_MODEL = saved_endpoint, saved_scale, saved_check_model
         _holographic_embeddings.RECALL_MARGIN = saved_margin
         _holographic_embeddings.RECALL_CHECK_MARGIN = saved_check_margin

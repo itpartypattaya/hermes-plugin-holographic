@@ -4,3 +4,4 @@ __pycache__/
 CLAUDE.md
 HANDOFF.md
 plans/
+*.emb-cache.jsonl

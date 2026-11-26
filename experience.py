@@ -224,6 +224,9 @@ class ExperienceMixin:
                 return entry
 
             issued = [ref(f) for f in emitted[:MAX_REFS]]
+            if trace:  # why each came in (0.32.0): a kind and numbers, never text; a copy, the stages share the refs
+                issued = [dict(r, why=f["_why_text"]) if f.get("_why_text") else r
+                          for r, f in zip(issued, emitted[:MAX_REFS])]
             observations = []
             if trace:
                 # A candidate another writer changed or forgot meanwhile (a rerank call can take seconds) is left out

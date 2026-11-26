@@ -1307,6 +1307,27 @@ class HistoryMixin:
                 f"AND fact_id IN ({','.join('?' * len(chunk))})", chunk))
         return out
 
+    def recent_revisions(self, fact_ids, since: str) -> dict[int, tuple[str, str]]:
+        """{fact_id: ("changed" | "corrected", day)} for facts whose current text came from a change or a correction
+        recorded on *since* or later (0.32.0, recall_history). The version it replaced, as `supersedes` names it: a
+        revert reopens an older version, whose own predecessor says how that one came to be. Not marked: a correction
+        of the start date alone (the text is the same claim), a resumed or merged fact, and a fact whose row no longer
+        says what its current version says (an old writer rewrote it without a version)."""
+        ids = [int(i) for i in fact_ids]
+        if not ids or not self.history_ready():
+            return {}
+        out = {}
+        for i in range(0, len(ids), 500):
+            chunk = ids[i:i + 500]
+            for r in self.read(
+                    "SELECT c.fact_id, c.recorded_on, p.status FROM fact_versions c "
+                    "JOIN fact_versions p ON p.version_id = c.supersedes "
+                    "JOIN facts f ON f.fact_id = c.fact_id AND f.content = c.content "
+                    "WHERE c.status = 'current' AND p.status IN ('changed', 'corrected') AND p.content != c.content "
+                    f"AND c.recorded_on >= ? AND c.fact_id IN ({','.join('?' * len(chunk))})", [since, *chunk]):
+                out[r["fact_id"]] = (r["status"], r["recorded_on"])
+        return out
+
     def current_sources(self, fact_ids) -> dict[int, dict | None]:
         """{fact_id: source of its current version} (None: unknown, stored before 0.8.0)."""
         ids = [int(i) for i in fact_ids]

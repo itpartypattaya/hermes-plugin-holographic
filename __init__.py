@@ -24,6 +24,7 @@ import threading
 import time
 import unicodedata
 from collections import Counter, OrderedDict, deque
+from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -31,6 +32,7 @@ from agent.memory_provider import MemoryProvider
 from tools.registry import tool_error
 from utils import is_truthy_value
 from . import embeddings
+from .dates import absolutize
 from . import holographic as hrr
 from . import recall_check
 from . import rerank
@@ -113,6 +115,13 @@ FACT_STORE_SCHEMA = {
             "valid_to": {"type": "string", "description": "'end': the date (YYYY-MM-DD) from which it no longer held, "
                                                           "only when the message says so."},
             "as_of": {"type": "string", "description": "'search' / 'list': a date (YYYY-MM-DD); what held then."},
+            "dates": {"type": "string", "enum": ["keep"],
+                      "description": "'add' / 'change' / 'correct' / 'update': 'keep' stores the text as written; by "
+                                     "default a relative day word (today, tomorrow, вчера...) gets its day, "
+                                     "'tomorrow (2026-11-28)', and the result lists it in dates_added."},
+            "explain": {"type": "boolean", "description": "'search': add to each result why it was found (the "
+                                                          "message's words it holds, by meaning, through the memory "
+                                                          "graph, the reranker's rank)."},
             "entity": {"type": "string", "description": "Entity name (or an alias) for 'probe' / 'related' / 'alias' / "
                                                         "'rename' / 'delete_entity' / 'split'."},
             "status": {"type": "string", "enum": ["all", "established", "provisional"],
@@ -434,6 +443,32 @@ def _reaction(sentence: str) -> bool:
                 or any(p.search(rest.lstrip()) for p in _FR_EXTRACT + _ES_EXTRACT))
 
 
+def _person_today() -> date | None:
+    """The person's day as Hermes tells it (its configured timezone, else the machine's own: hermes_time.now), or
+    None on a core without hermes_time — then no relative day word is dated (absolute_dates)."""
+    try:
+        from hermes_time import now
+    except ImportError:
+        return None
+    try:
+        return now().date()
+    except Exception as exc:  # noqa: BLE001 - a broken clock dates nothing; the fact is stored as written
+        _warn_once("Hermes's clock could not be read; relative days are stored as written", exc)
+        return None
+
+
+def _with_dates(answer: str, added: list[str]) -> str:
+    """A write's answer with what absolute_dates added, unless the write was refused (nothing was stored)."""
+    try:
+        result = json.loads(answer)
+    except ValueError:
+        return answer
+    if not isinstance(result, dict) or "error" in result:
+        return answer
+    result["dates_added"] = added
+    return _dumps(result)
+
+
 def _write_problem(content: str, person: bool = False) -> str | None:
     """Why *content* is not stored, changed to or extracted as a fact: _fact_problem's reasons (0.22.0's decisions),
     then what is no fact though nothing in it is unsafe (screen._not_a_fact; *person*: the person's own words)."""
@@ -485,6 +520,8 @@ def _dumps(value) -> str:
 
 
 def _results(items: list, key: str = "results") -> str:
+    # A fact may carry internal marks of how it was found ("_why", "_rank": 0.32.0); they never leave the provider.
+    items = [{k: v for k, v in i.items() if not k.startswith("_")} if isinstance(i, dict) else i for i in items]
     return _dumps({key: items, "count": len(items)})
 
 
@@ -496,6 +533,8 @@ _WRITE_ACTIONS = frozenset({"add", "update", "remove", "alias", "change", "end",
 # Actions whose 'entities' declares names on a fact: a declared name that was only an alias a fact's text gave splits
 # off, and the answer says so ("split", 0.17.0).
 _DECLARING_ACTIONS = frozenset({"add", "update", "change", "correct"})
+# Actions whose new text gets the day after "tomorrow" / "вчера" (absolute_dates, 0.32.0)
+_DATED_ACTIONS = frozenset({"add", "update", "change", "correct"})
 # Context fields Hermes passes to initialize() that a version's source keeps (chat names are not kept: they change).
 _IDENTITY = ("chat_id", "chat_type", "thread_id", "user_id", "user_name")
 def _keyword_report(value) -> dict:
@@ -541,12 +580,15 @@ _CHOICES = (("scope", _SCOPES, "one of profile, user, chat, thread"), ("recall_s
             # a named config problem with memory off, like the other 0.17.8 keys
             # ("scope: users" silently merged every chat into one store), not a silent fallback.
             ("rerank_scale", {"unit", "logit"}, "unit or logit"),
+            ("recall_history", _TRUE_WORDS | _FALSE_WORDS, "on or off"),
+            ("absolute_dates", _TRUE_WORDS | _FALSE_WORDS, "on or off"),
             *((key, _TRUE_WORDS | _FALSE_WORDS, "true or false")
               for key in ("recall_indicator", "cron_writes", "auto_extract", "mirror_memory_writes")))
 # A separate database per chat (or per forum topic / thread): facts meet in the FTS index, n-gram scan, entities, HRR
 # banks and the write checks, so a chat_id column would need a filter in each of them; a file isolates by construction.
 _CHAT_SCOPES = frozenset({"chat", "thread"})
 _PREFETCH_CANDIDATES, _PREFETCH_FACTS, _ENTITY_FACTS = 15, 5, 2
+_HISTORY_DAYS = 90  # recall_history: a change or correction older than this is no longer news (0.32.0)
 # Rescoring (rerank.py, RFC #9): how far the first stage's limit is widened when rerank is on — the cross-encoder
 # receives a pool several times deeper than the final need (rerank_top_k), and the FTS query is cheap while the
 # rerank call is what costs, so widening the candidates is nearly free.
@@ -906,6 +948,11 @@ class HolographicMemoryProvider(MemoryProvider):
         # Where a recalled fact was written, appended to its line before a turn: off by default (it costs tokens and
         # tells the room which chat a fact came from); "short" = date, person, this / another chat, no ids.
         self._recall_source = str(self._config.get("recall_source", "off")).strip().lower() == "short"
+        # A recalled fact whose text was changed or corrected in the last _HISTORY_DAYS says so (0.32.0): on by default,
+        # the old text is never shown.
+        self._recall_history = is_truthy_value(self._config.get("recall_history", "on"))
+        # "tomorrow" in a text the agent stores gets its day: "tomorrow (2026-11-28)" (0.32.0, fact_store writes only)
+        self._absolute_dates = is_truthy_value(self._config.get("absolute_dates", "on"))
         # Search by meaning (online, off by default): settings and the endpoint, shared by every store opened here.
         self._embedding = embeddings.settings_from(self._config)
         self._embedder = embeddings.Embedder(self._embedding) if self._embedding else None
@@ -1057,6 +1104,13 @@ class HolographicMemoryProvider(MemoryProvider):
             {"key": "recall_source", "description": "Append where each recalled fact was written (date, person, this or "
              "another chat; no ids) to the facts recalled before a turn",
              "default": current("recall_source", "off"), "choices": ["off", "short"]},
+            {"key": "recall_history", "description": "Mark a fact recalled before a turn whose text was changed or "
+             "corrected in the last 90 days: (changed 2026-10-12) / (corrected 2026-10-12); the old text is never shown",
+             "default": current("recall_history", "on"), "choices": ["on", "off"]},
+            {"key": "absolute_dates", "description": "Add the day after a relative day word (today, tomorrow, "
+             "yesterday, сегодня, завтра, вчера...) in a text fact_store stores: 'tomorrow (2026-11-28)'. The agent "
+             "sees what was added (dates_added) and can store a text as written with dates: keep",
+             "default": current("absolute_dates", "on"), "choices": ["on", "off"]},
             {"key": "experience", "description": "Record local task outcomes separately from trust (30 days, opt-in)",
              "default": current("experience", "off"), "choices": ["off", "on"]},
             {"key": "experience_trace", "description": "Include bounded candidate/stage ids in recorded memory attempts",
@@ -1396,13 +1450,14 @@ class HolographicMemoryProvider(MemoryProvider):
             lines = []
             if fresh:
                 sources = self._store.current_sources([f["fact_id"] for f in fresh]) if self._recall_source else {}
+                revised = self._revisions(fresh)
                 # A conclusion nobody confirmed reads as one (0.15.0): the model should not state it as what it was
                 # told.
                 origins = self._store.origins([f["fact_id"] for f in fresh])
                 lines = [f"- #{f['fact_id']} [{f.get('trust_score', 0):.1f}] {_one_line(f.get('content', ''))}"
                          + (" (by meaning)" if f["fact_id"] in by_meaning else "")
                          + (" (inferred)" if (origins.get(f["fact_id"]) or {}).get("origin") == "inferred" else "")
-                         + self._recall_suffix(sources.get(f["fact_id"])) for f in fresh]
+                         + self._recall_suffix(sources.get(f["fact_id"]), revised.get(f["fact_id"])) for f in fresh]
                 if self._max_tokens:  # a refresh carries no attempt line: no room is kept for one
                     fresh, lines = self._budgeted(key, fresh, lines)
             refresh = self._refresh_only(key, fresh)  # read before _remember moves the injection turns
@@ -1427,6 +1482,9 @@ class HolographicMemoryProvider(MemoryProvider):
                 self._experience_stages = []
                 attempt = None
             else:
+                if self._experience and self._experience_trace:  # why each fact came in (0.32.0): kinds, no words
+                    for f in fresh:
+                        f["_why_text"] = self._why(query, f)
                 attempt = self._record_experience("prefetch", fresh)
                 receipts = self._receipted.setdefault(key, set())
                 if attempt:
@@ -1538,6 +1596,7 @@ class HolographicMemoryProvider(MemoryProvider):
                                                    min_score=self._embedding.min_score):
                 if len(by_meaning) < self._embedding.recall_facts and self._not_recent(key, fact, turn) \
                         and self._recallable(fact) and self._retriever.names_fit(query, fact) and confirmed(fact):
+                    fact["_why"] = "meaning"
                     meaning_facts.append(fact)
                     have.add(fact["fact_id"])
                     by_meaning.add(fact["fact_id"])
@@ -1552,6 +1611,7 @@ class HolographicMemoryProvider(MemoryProvider):
                                                      limit=_ENTITY_FACTS * 3):
                 if len(entity_facts) < _ENTITY_FACTS and fact["fact_id"] not in have \
                         and self._not_recent(key, fact, turn) and self._recallable(fact):
+                    fact["_why"] = "entity"
                     entity_facts.append(fact)
                     have.add(fact["fact_id"])
         return meaning_facts, entity_facts, by_meaning
@@ -1628,6 +1688,9 @@ class HolographicMemoryProvider(MemoryProvider):
             outcome = rescorer.outcome() if docs else "not_called"
             if ranked is not None:
                 ranked = self._rescored(ranked, send_idx)
+                for place, (i, _) in enumerate(ranked, 1):  # the rank of what the reranker scored (0.32.0, why)
+                    if i < len(union):
+                        union[i]["_rank"] = place
                 if logger.isEnabledFor(logging.DEBUG):
                     logger.debug("holographic: rescore prefetch: %s: %s", rescorer.last_status,
                                  _trace_scores((union[i]["fact_id"], score)
@@ -1826,16 +1889,43 @@ class HolographicMemoryProvider(MemoryProvider):
                            problem)
         return problem is None
 
-    def _recall_suffix(self, src: dict | None) -> str:
-        """recall_source: short — " (recorded 2026-10-12 · Leon · this chat)", no ids; "" when the source is unknown."""
+    def _why(self, query: str, fact: dict) -> str:
+        """How a recalled fact came in, for the journal (0.32.0): "words:2", "meaning", "entity" or "graph", and
+        " rerank:N" when the reranker scored it. A kind and numbers only: the journal keeps no text."""
+        kind = fact.get("_why") or "words"
+        text = f"words:{len(self._retriever.matched_words(query, fact.get('content', '')))}" if kind == "words" else kind
+        return text + (f" rerank:{fact['_rank']}" if fact.get("_rank") else "")
+
+    def _explained(self, query: str, fact: dict) -> dict:
+        """fact_store search with explain: the kind, the message's words the fact holds, the reranker's rank."""
+        kind = "meaning" if fact.get("match") == "meaning" else fact.get("_why") or "words"
+        why = {"kind": kind}
+        if kind == "words":
+            why["words"] = self._retriever.matched_words(query, fact.get("content", ""))
+        if fact.get("_rank"):
+            why["rank"] = fact["_rank"]
+        return why
+
+    def _revisions(self, facts: list[dict]) -> dict[int, tuple[str, str]]:
+        """recall_history: {fact_id: (changed | corrected, day)} for the facts about to be recalled (one read)."""
+        if not self._recall_history or not facts:
+            return {}
+        since = (date.fromisoformat(self._store.today()) - timedelta(days=_HISTORY_DAYS)).isoformat()
+        return self._store.recent_revisions([f["fact_id"] for f in facts], since)
+
+    def _recall_suffix(self, src: dict | None, revised: tuple[str, str] | None = None) -> str:
+        """recall_source: short — " (recorded 2026-10-12 · Leon · this chat)", no ids; "" when the source is unknown.
+        recall_history: a changed or corrected text says so instead of "recorded" — the day its version was recorded
+        is the day of the change — and without recall_source the mark stands alone: " (corrected 2026-10-12)"."""
+        mark = f"{revised[0]} {revised[1]}" if revised else ""
         if not self._recall_source or not src:
-            return ""
+            return f" ({mark})" if mark else ""
         chat = src.get("chat_id")
         here = "this chat" if chat and chat == self._ident.get("chat_id") else "another chat" if chat else ""
         name = _one_line(src.get("user_name", ""), 40)
         if name and (not _RE_DISPLAY_NAME.fullmatch(name) or _recall_problem(name)):
             name = ""  # the platform lets anyone pick it: only a plain name goes into the prompt
-        parts = [f"recorded {src['recorded_on']}" if src.get("recorded_on") else "", name, here]
+        parts = [mark or (f"recorded {src['recorded_on']}" if src.get("recorded_on") else ""), name, here]
         parts = [p for p in parts if p]
         return f" ({' · '.join(parts)})" if parts else ""
 
@@ -1989,12 +2079,24 @@ class HolographicMemoryProvider(MemoryProvider):
                                        or (tool_name == "fact_experience" and args.get("action") == "outcome")):
             return tool_error("The fact store is read-only in this context (subagent, flush, or cron with "
                               "cron_writes off); only the main agent writes facts.")
+        dated: list[str] = []
+        if tool_name == "fact_store" and args.get("action") in _DATED_ACTIONS and self._absolute_dates                 and args.get("dates") != "keep" and isinstance(args.get("content"), str):
+            text, dated = absolutize(args["content"], _person_today())
+            # A fact that already says the text as written (stored before 0.32.0, or with dates: keep) is that fact:
+            # an add of it stays the "exists" it was, not a second fact with a day in it
+            if dated and args["action"] == "add" and self._store.read("SELECT 1 FROM facts WHERE content = ?",
+                                                                       (args["content"].strip(),)):
+                dated = []
+            if dated:
+                args = {**args, "content": text, "_as_written": args["content"].strip()}
         if tool_name == "fact_store" and args.get("action") in _DECLARING_ACTIONS and args.get("entities"):
             # what a declared name split off is reported once committed, also when a later step fails (0.17.1)
             with self._store.collect_splits() as splits:
                 answer = self._run_tool(tool_name, args)
-            return _with_unlinked(_with_splits(answer, splits), args["entities"])
-        return self._run_tool(tool_name, args)
+            answer = _with_unlinked(_with_splits(answer, splits), args["entities"])
+        else:
+            answer = self._run_tool(tool_name, args)
+        return _with_dates(answer, dated) if dated else answer
 
     def _run_tool(self, tool_name: str, args: dict) -> str:
         try:
@@ -2427,7 +2529,8 @@ class HolographicMemoryProvider(MemoryProvider):
                 result["superseded"] = old_id
             return _dumps(result)
         content = a["content"].strip()
-        forgotten = self._cron_forgotten(content)  # a cron job re-reading old messages: not what the user had forgotten
+        written = a.get("_as_written")  # the text before absolute_dates dated it: forgotten in that form too
+        forgotten = self._cron_forgotten(content) or (self._cron_forgotten(written) if written else None)
         if forgotten is not None:
             return forgotten
         if not self._store.read("SELECT 1 FROM facts WHERE content = ?", (content,)):
@@ -2467,7 +2570,7 @@ class HolographicMemoryProvider(MemoryProvider):
                                      f"[{fact_id}]}}: one fact, both histories kept"
                                      + (" (the person's word on the new one stays as its confirmation)." if origin in
                                         ("said", "confirmed") else ".") if check["similar"] else ""))
-            gone = self._store.forgotten_match(content)
+            gone = self._store.forgotten_match(content) or (self._store.forgotten_match(written) if written else None)
             if gone is not None:
                 result["forgotten_before"] = {"fact_id": gone["fact_id"], "forgotten_at": gone["forgotten_at"]}
                 result["hint"] = (f"The user asked to forget this (fact #{gone['fact_id']}, {gone['forgotten_at'][:10]}). "
@@ -2781,6 +2884,8 @@ class HolographicMemoryProvider(MemoryProvider):
                 indexes = [i for i, _ in ranked] if ranked is not None else None
                 if indexes is not None:
                     mapped = [send_idx[i] for i in indexes if 0 <= i < len(send_idx)]
+                    for place, i in enumerate(mapped, 1):  # explain's rank (0.32.0)
+                        results[i]["_rank"] = place
                     # What the reranker did not score (the tail when limit > top_k) keeps its place AFTER the ranked
                     # ones (PR #10, point 4): before, rebuilding from ≤top_k indexes silently cut the tail.
                     seen = set(mapped)
@@ -2814,6 +2919,10 @@ class HolographicMemoryProvider(MemoryProvider):
                 fact["origin"] = info["origin"]
             if info.get("confirmations"):
                 fact["confirmations"] = info["confirmations"]
+            if a.get("explain") is True:  # why each fact was found (0.32.0)
+                fact["why"] = self._explained(a["query"], fact)
+            if self._experience and self._experience_trace:
+                fact["_why_text"] = self._why(a["query"], fact) if fact.get("match") != "meaning" else "meaning"
         response = json.loads(_results(self._counted(results)))
         attempt = self._record_experience("search", results)
         if attempt:

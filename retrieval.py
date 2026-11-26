@@ -361,6 +361,7 @@ class FactRetriever:
             if fact is None:
                 continue
             fact["fts_rank"] = 0.0  # a discovery matches no query word: it is reached through the graph
+            fact["_why"] = "graph"  # why it was recalled (0.32.0); the provider strips "_" keys from what it returns
             candidates[fact_id] = fact
             expanded.add(fact_id)
         return expanded
@@ -675,6 +676,23 @@ class FactRetriever:
         fact has one of that size yet."""
         ids, matrix, hashes = self.vector_index(tag).matrix_with_hashes(int(vector.shape[0]))
         return Meaning(ids, matrix @ vector, weight, hashes) if ids else None
+
+    @staticmethod
+    def matched_words(query: str, content: str) -> list[str]:
+        """The informative words of *query* that *content* holds, in any word form (0.32.0, why a fact was recalled):
+        the query's own words, lower-cased, sorted; a run of an unsegmented script counts as one word."""
+        theirs = content_keys(content)
+        found = set()
+        for w in analyze(query).words:
+            if UNSEGMENTED.search(w.text):
+                keys = [frozenset({g}) for g, weight in run_grams(w.text) if weight]
+            elif w.identifier or (not w.stop and len(w.text) > 1):
+                keys = [w.keys - w.forms if w.forms else w.keys]
+            else:
+                continue
+            if any(not k.isdisjoint(t) for k in keys for t in theirs):
+                found.add(w.text)
+        return sorted(found)
 
     def names_fit(self, query: str, fact: dict) -> bool:
         """Does a fact offered on meaning alone mention whoever the message names: every capitalized word inside a

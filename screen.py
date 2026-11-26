@@ -162,9 +162,10 @@ def _unnegated_request(text: str, match: re.Match) -> bool:
     return not (before or after)
 
 
-def _prompt_extraction_in(text: str) -> bool:
-    """Whether text gives one connected, unnegated order to override context and reveal hidden instructions."""
-    plain = _plain_letters(text)
+def _prompt_extraction_in(text: str, plain: str | None = None) -> bool:
+    """Whether text gives one connected, unnegated order to override context and reveal hidden instructions.
+    *plain*: _plain_letters(text), when the caller has it."""
+    plain = _plain_letters(text) if plain is None else plain
     if not _RE_OVERRIDE_VERB.search(plain):
         return False
     for override in _RE_IMPERATIVE_OVERRIDE.finditer(plain):
@@ -961,9 +962,9 @@ _RE_NEGATED_AFTER = re.compile(r"^\s*(?:(?:しないで|ないで)(?![はも])|�
                                r"|(?:যেও|যাবে|যাবেন|করো|কোরো|করবে|করবেন)?\s*না(?!\S))")
 
 
-def _injection_in(text: str, folded: str | None = None) -> bool:
+def _injection_in(text: str, folded: str | None = None, plain: str | None = None) -> bool:
     """Whether *text* holds an instruction to drop the assistant's rules (_RE_INJECTION) that no negation turns
-    into a reminder to keep them. *folded*: _folded(text), when the caller has it."""
+    into a reminder to keep them. *folded*: _folded(text), *plain*: _plain_letters(text), when the caller has them."""
     for m in _injection_matches(text, folded):
         before = _RE_NEGATED_BEFORE.search(text, max(0, m.start() - 24), m.start())
         if before and (_RE_ANY_NEGATION_END.search(text, max(0, before.start() - 24), before.start())
@@ -974,8 +975,9 @@ def _injection_in(text: str, folded: str | None = None) -> bool:
         after = not _RE_LATIN_END.search(m.group()) and _RE_NEGATED_AFTER.match(text[m.end():m.end() + 16])
         if not (before or after):
             return True
-    plain = _plain_letters(text)
-    return plain != text and _injection_in(plain)
+    # the rewrite once per text: _plain_letters of a megabyte takes about a second, and of its own result gives it back
+    plain = _plain_letters(text) if plain is None else plain
+    return plain != text and _injection_in(plain, None, plain)
 
 
 _RE_LATIN_END = re.compile(r"[A-Za-z]\W*\Z")
@@ -1056,8 +1058,8 @@ def _fact_problem(content: str) -> str | None:
     if _RE_ROLE_MARKUP.search(text):
         return "contains chat-role or tool-call markup"
     unquoted = _RE_QUOTED_SPAN.sub(" ", text)
-    folded = _folded(unquoted)
-    if _injection_in(unquoted, folded) or _prompt_extraction_in(unquoted):
+    folded, plain = _folded(unquoted), _plain_letters(unquoted)
+    if _injection_in(unquoted, folded, plain) or _prompt_extraction_in(unquoted, plain):
         return "reads like an instruction to the assistant, not a fact"
     if _asks_to_send(unquoted, folded):
         return "asks to send credentials somewhere: an instruction, not a fact"
@@ -1087,8 +1089,8 @@ def _recall_problem(content: str) -> str | None:
     text = (content or "").strip()
     if _RE_ROLE_MARKUP.search(text):
         return "chat-role or tool-call markup"
-    folded = _folded(text)
-    if _injection_in(text, folded) or _prompt_extraction_in(text) or _asks_to_send(text, folded):
+    folded, plain = _folded(text), _plain_letters(text)
+    if _injection_in(text, folded, plain) or _prompt_extraction_in(text, plain) or _asks_to_send(text, folded):
         return "an instruction to the assistant (quoted or not)"
     if _has_credential(text, folded):
         return "a credential with its value"

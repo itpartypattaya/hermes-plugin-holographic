@@ -1,0 +1,16 @@
+$ python tools/mcnemar_gate.py --pair check_margin results/issue121/text-embedding-3-small/off_decisions/provenance_multi_coff_on.jsonl results/issue121/text-embedding-3-small/off_decisions/provenance_contrast_en_coff_on.jsonl results/issue121/text-embedding-3-small/off_decisions/provenance_contrast_ru_coff_on.jsonl results/issue121/text-embedding-3-small/off_decisions/provenance_contrast_zh_coff_on.jsonl results/issue121/text-embedding-3-small/off_decisions/provenance_household_test_coff_on.jsonl results/issue121/text-embedding-3-small/decisions/provenance_multi_c0.5_on.jsonl results/issue121/text-embedding-3-small/decisions/provenance_contrast_en_c0.5_on.jsonl results/issue121/text-embedding-3-small/decisions/provenance_contrast_ru_c0.5_on.jsonl results/issue121/text-embedding-3-small/decisions/provenance_contrast_zh_c0.5_on.jsonl results/issue121/text-embedding-3-small/decisions/provenance_household_test_c0.5_on.jsonl
+
+
+== check_margin off (default) vs 0.5 (proposal) | margin 1.0 | checker gpt-6-luna, instruction sha256 e28e1830a959804d5c06aa04b8a0d7bb373c6d08b7e4f1f45cca40ecb28aefab | rows 540 real | git_sha 67229de5886bf802887cf88c4ef53162d2400a1f
+   check      hit5  noise  confused
+     0.5  492/540    106        33
+     off  486/540    106        32
+paired misses: b=6 (rescued at 0.5), c=0 (lost at 0.5), exact McNemar p=0.0312
+gained targets in the top five (6): multi/nl 18 -> python; contrast_en/contrast_en p4q1 -> dina_flat; contrast_en/contrast_en p5q0 -> marina_night; contrast_zh/contrast_zh p14q1 -> mary_ielts; household/en q067 -> irina_walk; household/zh q068 -> andrey_gym
+lost targets in the top five (0): -
+check: 42 calls in 810 turns, {'no': 35, 'yes': 7}, slowest 1044.6 ms
+  PASS  no target lost
+  PASS  noise not higher (106 <= 106)
+  FAIL  confusion not higher (33 <= 32)
+  PASS  pooled McNemar p < 0.05 (0.031)
+  => gate DOES NOT PASS on these files

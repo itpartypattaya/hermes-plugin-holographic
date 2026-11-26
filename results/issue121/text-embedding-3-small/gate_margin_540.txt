@@ -1,0 +1,15 @@
+$ python tools/mcnemar_gate.py --pair margin results/issue121/text-embedding-3-small/off/provenance_multi_coff_on.jsonl results/issue121/text-embedding-3-small/off/provenance_contrast_en_coff_on.jsonl results/issue121/text-embedding-3-small/off/provenance_contrast_ru_coff_on.jsonl results/issue121/text-embedding-3-small/off/provenance_contrast_zh_coff_on.jsonl results/issue121/text-embedding-3-small/off/provenance_household_test_coff_on.jsonl results/issue121/text-embedding-3-small/margin_0.5/provenance_multi_m0.5_coff_on.jsonl results/issue121/text-embedding-3-small/margin_0.5/provenance_contrast_en_m0.5_coff_on.jsonl results/issue121/text-embedding-3-small/margin_0.5/provenance_contrast_ru_m0.5_coff_on.jsonl results/issue121/text-embedding-3-small/margin_0.5/provenance_contrast_zh_m0.5_coff_on.jsonl results/issue121/text-embedding-3-small/margin_0.5/provenance_household_test_m0.5_coff_on.jsonl
+
+
+== margins 1.0 (default) vs 0.5 (proposal) | rows 540 real | git_sha 67229de5886bf802887cf88c4ef53162d2400a1f
+  margin      hit5  noise  confused
+     0.5  493/540    124        33
+     1.0  486/540    106        32
+paired misses: b=7 (rescued at 0.5), c=0 (lost at 0.5), exact McNemar p=0.0156
+gained targets in the top five (7): multi/nl 18 -> python; contrast_en/contrast_en p4q1 -> dina_flat; contrast_en/contrast_en p5q0 -> marina_night; contrast_zh/contrast_zh p14q1 -> mary_ielts; household/en q067 -> irina_walk; household/ru q056 -> shoes_rule; household/zh q068 -> andrey_gym
+lost targets in the top five (0): -
+  PASS  no target lost
+  FAIL  noise not higher (124 <= 106)
+  FAIL  confusion not higher (33 <= 32)
+  PASS  pooled McNemar p < 0.05 (0.016)
+  => gate DOES NOT PASS on these files

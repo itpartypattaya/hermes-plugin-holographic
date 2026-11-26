@@ -27,3 +27,5 @@ checked arm asked 46 times, 22 of them on turns that showed nothing: 11 yes, 35 
 
 0.5, the rule (one question a turn, yes above 0) and the instruction were chosen on these same sets, so the p values
 are exploratory; a run on another model with everything frozen is a replication.
+
+A replication on OpenAI `text-embedding-3-small`, with a Decisions API arm beside the Qwen3 one: `text-embedding-3-small/`.

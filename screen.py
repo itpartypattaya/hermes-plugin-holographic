@@ -126,6 +126,56 @@ _RE_INJECTION = re.compile(_alternatives(
     r"|systeemprompt|prompt\s+systemowy|sistem\s+istemi|prompt\s+sistem)\s*[:：]",
     re.IGNORECASE)
 
+# Prompt extraction that the classic injection regex misses. Refuse one request addressed to the assistant: the
+# override verb is imperative at the start of the text or of a sentence, and a request verb opens the next clause
+# after a connector, with no subject of its own. This is what separates an order from a note about an order.
+# English only for now.
+_RE_OVERRIDE_VERB = re.compile(r"\b(?:ignore|disregard|forget|override)\b", re.IGNORECASE)
+_RE_IMPERATIVE_OVERRIDE = re.compile(
+    r"(?:(?:\A|(?<=[.!?。！？;]))\s*|(?<=\n)[^\S\n]*)"
+    r"(?:(?:please|now)\s+)?"
+    r"(?:(?:you\s+(?:must|should|need\s+to)|i\s+want\s+you\s+to)\s+)?"
+    r"(?:ignore|disregard|forget|override)\b[^.!?。！？;\n]{0,100}?"
+    r"\b(?:earlier\s+context|prior\s+(?:context|rules?)|previous\s+(?:context|instructions?|rules?)"
+    r"|above|earlier|prior|previous|before|preceding|context|instructions?|rules?)\b",
+    re.IGNORECASE)
+_RE_REQUEST_CONNECTOR = (
+    r"\s*(?:(?:\b(?:and|then|instead)\b[\s,]*)+|[,;]\s*(?:\b(?:and|then|instead)\b[\s,]*)*"
+    r"|[.!?。！？]\s*(?:\b(?:and|then|instead)\b[\s,]*)?)"
+)
+_RE_PROMPT_REQUEST = re.compile(
+    r"(?:(?!\b(?:and|then|instead)\b)[^.!?。！？;,\n]){0,40}"
+    + _RE_REQUEST_CONNECTOR
+    + r"(?:(?:please|now)\b[\s,]*)?"
+    + r"(?:print|show|reveal|output|dump|repeat|quote|write\s+out|tell\s+me|display)\b[^.!?。！？;\n]{0,80}?"
+    + r"\b(?:your\s+)?(?:system\s+prompt|hidden\s+instructions?|developer\s+message|initial\s+instructions?)\b",
+    re.IGNORECASE)
+
+
+def _unnegated_request(text: str, match: re.Match) -> bool:
+    """Whether a request match is an order, not a reminder to keep the rules."""
+    before = _RE_NEGATED_BEFORE.search(text, max(0, match.start() - 24), match.start())
+    if before and (_RE_ANY_NEGATION_END.search(text, max(0, before.start() - 24), before.start())
+                   or _RE_EXCEPTION_AFTER.match(text, match.end())):
+        before = None
+    after = not _RE_LATIN_END.search(match.group()) and _RE_NEGATED_AFTER.match(text[match.end():match.end() + 16])
+    return not (before or after)
+
+
+def _prompt_extraction_in(text: str) -> bool:
+    """Whether text gives one connected, unnegated order to override context and reveal hidden instructions."""
+    plain = _plain_letters(text)
+    if not _RE_OVERRIDE_VERB.search(plain):
+        return False
+    for override in _RE_IMPERATIVE_OVERRIDE.finditer(plain):
+        if not _unnegated_request(plain, override):
+            continue
+        request = _RE_PROMPT_REQUEST.match(plain, override.end(), min(len(plain), override.end() + 120))
+        if request and _unnegated_request(plain, request):
+            return True
+    return False
+
+
 # Environment variables that hold a key, a token or a password: "OPENAI_API_KEY=sk-…", "配置OPENAI_API_KEY=…",
 # "TELEGRAM_BOT_TOKEN: 123…". The name is a credential word like "password" (0.15.2, issue #3): before, "API_KEY" after
 # "OPENAI_" had no edge ("_" is a letter to a word), and an assignment was only kept from the endpoint, not refused —
@@ -1007,7 +1057,7 @@ def _fact_problem(content: str) -> str | None:
         return "contains chat-role or tool-call markup"
     unquoted = _RE_QUOTED_SPAN.sub(" ", text)
     folded = _folded(unquoted)
-    if _injection_in(unquoted, folded):
+    if _injection_in(unquoted, folded) or _prompt_extraction_in(unquoted):
         return "reads like an instruction to the assistant, not a fact"
     if _asks_to_send(unquoted, folded):
         return "asks to send credentials somewhere: an instruction, not a fact"
@@ -1038,7 +1088,7 @@ def _recall_problem(content: str) -> str | None:
     if _RE_ROLE_MARKUP.search(text):
         return "chat-role or tool-call markup"
     folded = _folded(text)
-    if _injection_in(text, folded) or _asks_to_send(text, folded):
+    if _injection_in(text, folded) or _prompt_extraction_in(text) or _asks_to_send(text, folded):
         return "an instruction to the assistant (quoted or not)"
     if _has_credential(text, folded):
         return "a credential with its value"

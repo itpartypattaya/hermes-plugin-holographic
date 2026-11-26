@@ -1,8 +1,34 @@
 # Changelog
 
-## Unreleased
+## 0.32.0 — 2026-11-27
 
 ### Added
+- **A recalled fact whose text was recently changed or corrected says so** (`recall_history`, on by default). The
+  line ends in `(changed 2026-10-12)` or `(corrected 2026-10-12)` — the day the current text was recorded — for 90
+  days after the change, so a model that still sees the old value earlier in the conversation does not argue for it.
+  The old text is never shown: a corrected one was wrong, and a shortened one loses its "not". The version the current
+  one replaced is the one its history names (`supersedes`), so a revert does not describe the change it undid; a
+  correction of the start date alone, a resumed or merged fact, and a fact whose row an old writer rewrote without a
+  version are not marked. With `recall_source: short` the mark takes the place of `recorded` in the same suffix. The
+  mark is part of the line for `prefetch_max_tokens` and the presence gate. `recall_history: off` gives the lines of
+  0.31.7 byte for byte (a recorded golden test).
+- **Why a fact was recalled, for whoever looks into it.** With the task-outcome journal and `experience_trace` on, each
+  emitted fact of an attempt carries `why`: `words:2` (how many of the message's words it holds), `meaning`, `entity`
+  (a name the message gives), `graph` (reached through the memory graph), and ` rerank:N` when the reranker scored it.
+  A kind and numbers only: the journal still keeps no text. `fact_store search` takes `explain: true` and adds `why`
+  to each result with the message's words the fact holds (`{"kind": "words", "words": ["budget", "observatory"]}`).
+  Nothing of it goes into the recall block.
+- **A relative day the agent stores gets its date** (`absolute_dates`, on by default). In a `fact_store` add, change,
+  correct or update, "today", "tonight", "tomorrow", "yesterday", "the day after tomorrow", "the day before
+  yesterday" and сегодня, завтра, вчера, послезавтра, позавчера are followed by their day: "tomorrow (2026-11-28)".
+  The day is the person's, as Hermes's clock gives it (its configured timezone, else the machine's own); on a core
+  without that clock nothing is added. Words that do not name one day whatever surrounds them ("in 3 days" after
+  what?, "on Friday", "next week") and words inside quotes, inline code or a URL are left as they are, and a word
+  already followed by a date is not dated again. The result lists what was added (`dates_added`); `dates: "keep"`
+  stores a text as written, also to take an added day back out with `correct`. A text forgotten as written is still
+  recognised when it comes back dated, and an add of a text a fact already holds as written stays that fact. Automatic
+  extraction and the built-in memory mirror are not changed: they read old messages again at compaction and session
+  end, when the day would be wrong.
 - **The measurement probe can give every arm the same vector for the same text** (`tools/provenance_probe.py
   --emb-cache <file>`, opt-in). OpenAI's embeddings differ between calls: two identical off arms on
   text-embedding-3-small came out 4 noise rows, 2 confusion rows and 1 hit apart, the size of what

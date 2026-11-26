@@ -538,9 +538,14 @@ A word matches another when they share its plain form or its stem in the languag
       50 %), and in the top five in 90 % (was 74 %).
     - **The cost**: four words copied from a sentence find it first 0.3–3.7 points less often, because the function
       words they shared with it no longer count.
+    - **Hausa, Yoruba, Amharic** (unreleased): Hausa `a`, `ko`, `yi`, `mai` and Yoruba `lọ`, `ṣe`, `jẹ`, `fi` vote
+      (the Yoruba verbs stay search words), and Amharic's free-standing prepositions `በ ከ የ ለ` are function words.
+      Hausa is told in 91 % (was 69 %), Yoruba 92 % (was 84 %); false recall goes to 79 % for Hausa and 63 % for
+      Yoruba. Hausa `ya` and Yoruba `ó` do not vote, being Turkish, Portuguese and Polish words too. The probe covers
+      all 26 languages of the plugin; none of the others moved.
     - **Names**: MasakhaNER name words written with a capital and dropped as function words stay at 0.1–0.6 % (they
       were 0.1–0.8 %, through the other languages' lists). Amharic has 1.5 %: `እስከ` (until), `በፊት` (before), which
-      the dataset tags inside dates.
+      the dataset tags inside dates; 2.6 % unreleased, with `ከ`, `በ`, `ለ` of the same dates.
 - **Chinese, Japanese, Korean, Thai** (no spaces between words): character n-grams, bigrams for Chinese, Japanese and
   Korean, trigrams for Thai. Grammar weighs less: Chinese function characters (的 是 了), Japanese particles (は が を
   に の), Thai function words (ของ ที่ และ); a message that is only a filler (はい, 네, โอเค) recalls nothing. Chinese

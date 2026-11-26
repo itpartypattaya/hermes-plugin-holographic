@@ -288,3 +288,57 @@ def test_ethiopic_numerals_marks_and_word_space():
     assert words("፟") == []  # a lone gemination mark is no word
     assert words("ልጄ፡በአዲስ፡አበባ") == ["ልጄ", "በአዲስ", "አበባ"]  # ፡, the old word space, separates words
     assert {"ውስጥ", "ነው", "ወደ"} <= _stops("ልጄ ወደ ትምህርት ቤት ውስጥ ነው")
+
+
+# -- 0.33.1: Hausa, Yoruba and Amharic lists, measured on FLORES-200 -------------------------------------------------
+# In 0.33.0 Hausa was told in 69 % of FLORES devtest sentences and Yoruba in 84 %: their commonest words ("a", "ko",
+# "mai"; "o", "lo", "se") are also Portuguese, Spanish or Italian ones and did not vote, so those languages won.
+
+@pytest.mark.parametrize("text, lang", [
+    ("Mai gidan ya ce za a yi taro a kasuwa ko a makaranta", "ha"),  # the landlord said the meeting is at the market
+    ("Wannan mota ce mai kyau kuma ana iya gyara ta", "ha"),  # this is a good car and it can be repaired
+    ("Bàbá mi lọ sí ọjà láti ra ẹja", "yo"),  # my father went to the market to buy fish
+    ("Ó ṣe iṣẹ́ náà dáadáa", "yo"),  # he did the work well
+])
+def test_hausa_and_yoruba_short_sentences_are_told(text, lang):
+    assert lang in analyze(text).langs
+
+
+def test_yoruba_common_verbs_vote_but_stay_search_words():
+    """lọ (go), ṣe (do), jẹ (be, eat), fi (use) tell the language and are not dropped in Yoruba text. (In a tie with
+    Spanish a word is dropped when it is a function word of either, as "lo" is in Spanish.)"""
+    text = "Bàbá mi lọ sí ọjà láti ra ẹja àti ẹran, ó sì ṣe iṣẹ́ náà dáadáa"
+    assert analyze(text).langs == ("yo",)
+    for word in ("lo", "se"):
+        assert word not in _stops(text)
+
+
+@pytest.mark.parametrize("text, word", [
+    ("Musa yana iya karatu sosai kuma yana son makaranta", "iya"),
+    ("Mutanen masu kudi suna zuwa kasuwa a cikin gari", "masu"),
+])
+def test_new_hausa_function_words_are_dropped(text, word):
+    assert word in _stops(text)
+
+
+def test_amharic_free_prepositions_and_modals_are_function_words():
+    assert {"በ", "ይችላል", "ደግሞ"} <= _stops("ልጁ በ ትምህርት ቤት ደግሞ መጫወት ይችላል")
+
+
+@pytest.mark.parametrize("text", [
+    "O presidente recebeu bem o anúncio do governo",  # FLORES devtest sentences that tied with Yoruba by "o" ...
+    "Orada bulunan insan sayısı o kadar fazlaydı ki herkes geldi",
+    "W poniedziałek o godzinie siódmej",
+    "Kim ya da ne olduğu belli değil",  # ... or with Hausa by Turkish "ya"
+])
+def test_old_languages_get_no_new_language_by_o_or_ya(text):
+    """Yoruba "o" and Hausa "ya" are Portuguese, Polish and Turkish words too: they do not vote. (The ties these
+    sentences have between older languages, "o" and "do" in Portuguese and Polish, were there before.)"""
+    from hermes_plugin_holographic.text import _TWO_WORDS
+    assert not set(analyze(text).langs) & set(_TWO_WORDS)
+
+
+def test_a_turkish_either_or_keeps_turkish():
+    """Known: "ya ... ya" (either ... or) is two Swahili "ya" too, a tie that keeps Turkish and its stems; making Swahili
+    "ya" not vote would lose 9 points of Swahili sentences on FLORES."""
+    assert "tr" in analyze("Ya geldi ya gelmedi, bilmiyorum").langs

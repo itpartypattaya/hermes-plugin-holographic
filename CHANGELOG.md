@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- **Hausa, Yoruba, Amharic** (README, Languages → African languages): more of their commonest words tell the language.
+  - **Hausa**: `a`, `ko`, `yi`, `mai` vote, and `iya`, `masu`, `mafi`, `wajen`, `kasance` are function words. Told
+    in 91 % of FLORES-200 devtest sentences (was 69 %).
+  - **Yoruba**: `tó` and `ó` are function words; the verbs `lọ`, `ṣe`, `jẹ`, `fi` tell the language and stay search
+    words. Told in 92 % (was 84 %).
+  - **Amharic**: free-standing `በ ከ የ ለ`, the modal `ይችላል`, relative and copula forms (`ያለው`, `የሆነ`, `ሊሆን`) and
+    `ሁሉም`, `አንዳንድ`, `ደግሞ` are function words.
+  - Hausa `ya` and Yoruba `ó` still do not vote: they are Turkish, Portuguese and Polish words too. One Portuguese
+    and one more Polish sentence in 1,012 tie with Hausa or Yoruba; the older language stays.
+  - **False recall** for a question the store holds no fact for: Hausa 84 % → 79 %, Yoruba 76 % → 63 %; the right
+    fact is recalled 99 % → 97 % for Hausa, 96 % → 98 % for Yoruba. Amharic is unchanged (70 %).
+  - Every other language of the plugin measures as before (`tools/african_probe.py` now covers all 26).
+
 ## 0.33.0 — 2026-11-27
 
 ### Added

@@ -64,7 +64,12 @@ _POLISH_PROBE = '"się" OR "jest" OR "oraz" OR "który" OR "przez" OR "jak"'
 _SCAN_PROBE = " OR ".join((_INDONESIAN_PROBE, _GERMAN_PROBE, _DUTCH_PROBE, _TURKISH_PROBE, _POLISH_PROBE))
 # A question told to be in one of these languages scans whatever the store holds: the probe words above are a sample,
 # and a store of short facts may have none of them ("Kitabı masada bıraktım." asked as "Kitap nerede?")
-_SCAN_LANGUAGES = frozenset({"id", "de", "tr", "pl", "nl"})
+_SCAN_LANGUAGES = frozenset({"id", "de", "tr", "pl", "nl", "ha"})
+# A store with a fact that writes a Hausa hooked letter (ɓ ɗ ƙ ƴ) scans too: the index keeps those letters, so
+# "kwallon kafa" typed without them cannot reach "ƙwallon ƙafa" by a prefix query, whatever language the store is in.
+# Only words the analysis marks for the scan are scanned: a question in Hausa or of undetermined language, not one told
+# to be English or Spanish ("Who plays kwallon kafa?"), as with Polish ł typed as l from English text.
+_HOOKED_GLOB = "*[ɓɗƙƴƁƊƘƳ]*"
 
 
 # Search by meaning: what a message names (_inner_names).
@@ -467,13 +472,16 @@ class FactRetriever:
 
     def _scan_terms(self, terms, corpus: _Corpus | None = None, query: str = "") -> list:
         """The terms matched word by word: Arabic and Indic always; Latin ones (Indonesian, German, Dutch, Turkish,
-        Polish, or a query of undetermined language) only when the store holds facts in one of those languages, so an
-        English store never pays for a scan."""
-        fts = (corpus or self._current).fts
+        Polish, or a query of undetermined language) only when the store holds facts in one of those languages or a
+        fact with a Hausa hooked letter, so an English store never pays for a scan."""
+        corpus = corpus or self._current
+        fts = corpus.fts
         scan = [t for t in terms if t.scan]
         if any(t.fts_ok for t in scan) and not _scan_language(query):
             try:
-                needed = bool(self.store.read(f"SELECT 1 FROM {fts} WHERE {fts} MATCH ? LIMIT 1", (_SCAN_PROBE,)))
+                needed = bool(self.store.read(f"SELECT 1 FROM {fts} WHERE {fts} MATCH ? LIMIT 1", (_SCAN_PROBE,))) \
+                    or bool(self.store.read(f"SELECT 1 FROM {corpus.source} WHERE content GLOB ? OR tags GLOB ? LIMIT 1",
+                                            (*corpus.params, _HOOKED_GLOB, _HOOKED_GLOB)))
             except Exception:  # noqa: BLE001 - a damaged index: the scan does not need it
                 needed = True
             if not needed:

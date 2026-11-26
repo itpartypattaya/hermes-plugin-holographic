@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **African languages** (README, Languages):
+  - **Hausa letters**: the hooked letters `ɓ ɗ ƙ ƴ` compare as `b d k y`, and a store that holds one turns the word
+    scan on, so a question typed without them finds the fact.
+  - **Function words**: Swahili, Hausa, Yoruba, Somali, Zulu and Afrikaans are told by their function words. It takes
+    two of their words to decide a short message, and their homographs of English words and names do not vote.
+  - **Ethiopic script**: Amharic and Tigrinya, with letters of one sound folded and `፡` as a word space.
+  - **Amharic stemmer**: a light one of the plugin's own (HornMorpho is GPL-3): sure stems for prepositions, plurals
+    and plural possessives, same-root keys for the one-letter suffixes.
+  - **Measured** on FLORES-200 with `tools/african_probe.py`: the ten older Latin languages keep their language on
+    every sentence but one Polish tie in 1,012. False recall falls from 95–99 % to 44–84 % (Zulu 80 % to 22 %), while
+    the right fact is recalled at most 2.4 points less. Hausa typed without hooks finds its sentence in the top five
+    90 % of the time, against 74 % before.
+  - **Built and reviewed**: the lists come from stopwords-iso and spaCy (MIT), pruned by hand. The change was reviewed
+    by Codex and by Fable, and their findings were fixed; one known limit is kept as an xfail.
+
 ## 0.32.0 — 2026-11-27
 
 ### Added

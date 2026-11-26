@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **The measurement probe can give every arm the same vector for the same text** (`tools/provenance_probe.py
+  --emb-cache <file>`, opt-in). OpenAI's embeddings differ between calls: two identical off arms on
+  text-embedding-3-small came out 4 noise rows, 2 confusion rows and 1 hit apart, the size of what
+  `tools/mcnemar_gate.py` judges, so the #121 replication paired its arms through a separate loopback proxy. The cache
+  now sits inside the probe, in front of the plugin's embeddings request: a text the file has is answered from it, the
+  rest is asked for and appended as `{model, text, vector}` lines (the proxy's format, so its files still read). A
+  rerun appends nothing, a line torn by a crash is dropped and asked for again, a failed or refused answer is not kept.
+  Inside the repo the file must be named `*.emb-cache.jsonl`, which git ignores: it holds the texts. Agreed with the
+  author of #135 as a follow-up. The plugin itself does not change.
+
 ## 0.31.7 — 2026-11-26
 
 ### Fixed

@@ -80,7 +80,7 @@ _DERIV_WEIGHT = 0.6  # a same-root word or a shorter shared beginning counts thi
 
 def _script(ch: str) -> str:
     o = ord(ch)
-    if o < 0x250 or 0x1E00 <= o <= 0x1EFF:
+    if o < 0x2B0 or 0x1E00 <= o <= 0x1EFF:  # with the IPA extensions: Hausa ɓ ɗ, the ɛ ɔ of West African languages
         return "latin"
     if 0x400 <= o <= 0x52F:
         return "cyrillic"
@@ -92,6 +92,8 @@ def _script(ch: str) -> str:
         return "bengali"
     if 0xA00 <= o <= 0xDFF:
         return "indic"
+    if 0x1200 <= o <= 0x139F or 0x2D80 <= o <= 0x2DDF or 0xAB00 <= o <= 0xAB2F:
+        return "ethiopic"
     return "other"
 
 
@@ -103,27 +105,40 @@ def word_script(word: str) -> str:
 # Scripts the FTS5 unicode61 index cannot serve: it splits Indic words at their vowel signs (marks are not token
 # characters), and Arabic attaches conjunctions, prepositions and the article to the front of a word, where a prefix
 # query cannot see past them. Words in these scripts are matched against the text of every fact instead.
-_SCAN_SCRIPTS = frozenset({"arabic", "devanagari", "bengali", "indic"})
-_SCRIPT_LANGS = {"cyrillic": ("ru",), "arabic": ("ar",), "devanagari": ("hi",), "bengali": ("bn",)}
-LATIN = ("en", "es", "fr", "pt", "id", "de", "it", "tr", "pl", "nl")
+# Ethiopic too: Amharic glues prepositions to the front of a word (በአዲስ, "in Addis") and the vowel of a suffix into
+# the last letter (ቤቶች, houses, of ቤት), which a prefix query cannot see past, and folding merges letters the index
+# keeps apart.
+_SCAN_SCRIPTS = frozenset({"arabic", "devanagari", "bengali", "indic", "ethiopic"})
+_SCRIPT_LANGS = {"cyrillic": ("ru",), "arabic": ("ar",), "devanagari": ("hi",), "bengali": ("bn",),
+                 "ethiopic": ("am", "ti")}
+# Swahili, Hausa, Yoruba, Somali, Zulu and Afrikaans (unreleased) are told by their function words only (_EVIDENCE):
+# text without one is not stemmed or read in them.
+LATIN = ("en", "es", "fr", "pt", "id", "de", "it", "tr", "pl", "nl", "sw", "ha", "yo", "so", "zu", "af")
 # Latin text of no determined language is stemmed in every language of LATIN but these, which need their own letters
 # first: Polish and Turkish stems of English words join unrelated ones ("army" / "arm", "apply" / "apple", "policy" /
 # "police" are one stem in Polish), and Italian has no letters of its own
-_HYPHEN_COMPOUNDS = frozenset({"es", "fr", "pt", "id", "de"})
-_EVIDENCE = {"it": None, "tr": re.compile("[ığş\u0307]"), "pl": re.compile("[ąęłńśźżć]"), "nl": re.compile("ij")}
+_HYPHEN_COMPOUNDS = frozenset({"es", "fr", "pt", "id", "de", "yo"})  # Yoruba: "ile-iwe" (school), "ojo-ibi" (birthday)
+_EVIDENCE = {"it": None, "tr": re.compile("[ığş\u0307]"), "pl": re.compile("[ąęłńśźżć]"), "nl": re.compile("ij"),
+             "sw": None, "ha": None, "yo": None, "so": None, "zu": None, "af": None}
 # Latin languages whose words are also matched word by word against the facts' text (see Word.scan): Indonesian
 # prefixes, German compounds, Dutch plurals that change the word ("raam" / "ramen"), Turkish consonant changes ("kitap"
 # / "kitabı") and Turkish and Polish letters typed without their marks ("toplanti", "szkola") hide a word from an FTS5
 # prefix query.
-_SCAN_LATIN = frozenset({"id", "de", "tr", "pl", "nl"})
+# Languages with no stemmer of their own: a text is in one of them only when two of its words say so. With one, the text
+# stays as it was (often undetermined: stemmed in six languages, scanned), which serves a short message better than a
+# language that compares words only as written ("Sana güveniyorum", "Kanye albums", "Kati kommt morgen").
+_TWO_WORDS = ("sw", "ha", "yo", "so", "zu", "af")
+_SCAN_LATIN = frozenset({"id", "de", "tr", "pl", "nl", "ha"})  # Hausa: hooked letters typed without the hooks
 # Languages stemmed as written as well as folded: Snowball reads the letters folding drops (Turkish "çocuğun" is
 # "çocuk", folded "cocugun" stays "cocugu"; Polish "domów" is "dom", "domow" stays), and a word typed without its marks
 # still meets one typed with them through the folded stem.
 _NATIVE = frozenset({"it", "tr", "pl", "nl"})
 # Turkish dotless ı and Polish ł are letters of their own to Unicode (no accent to drop), but are typed as i and l on
-# keyboards without them, and Turkish upper-case I lower-cases to i in Python: they compare as i and l. FTS5's
-# unicode61 keeps them, so a word that has them is also searched as written (see _native_keys).
-_DOTLESS = str.maketrans({"ı": "i", "ł": "l"})
+# keyboards without them, and Turkish upper-case I lower-cases to i in Python: they compare as i and l. So do the
+# hooked letters of Hausa, ɓ ɗ ƙ ƴ, which keyboards mostly lack and people type as b d k y ("kasa" for "ƙasa"). FTS5's
+# unicode61 keeps all six, so a word that has one is also searched as written (see _native_keys, _undotted).
+_DOTLESS = str.maketrans({"ı": "i", "ł": "l", "ɓ": "b", "ɗ": "d", "ƙ": "k", "ƴ": "y"})
+_KEPT = re.compile("[ıłɓɗƙƴ]")  # the letters of _DOTLESS: FTS5 indexes them as written
 # Dutch writes compounds as one word, as German does ("kinderarts", "reservesleutels"). True: a word matches the end of
 # a compound in Dutch text too, as in German. Off: measured on 10 questions that ask by the end of a compound and 7
 # that use that end in its own sense, it found 2 more right facts but recalled 4 more wrong ones ("huis" in
@@ -137,6 +152,10 @@ _FOLD = str.maketrans({
     "़": None, "ँ": "ं",  # Devanagari nukta; candrabindu written as anusvara
     "়": None, "ঁ": None,  # Bengali nukta and candrabindu
     **{chr(base + d): str(d) for base in (0x660, 0x6F0, 0x966, 0x9E6) for d in range(10)},  # native digits
+    # Ethiopic letters of one sound in Amharic and Tigrinya alike (ሠ = ሰ, ፀ = ጸ, every vowel order), and the
+    # gemination marks; the Amharic-only merges (ሐ ኀ = ሀ, ዐ = አ) are in _amharic_stem
+    **{chr(0x1220 + k): chr(0x1230 + k) for k in range(8)}, **{chr(0x1340 + k): chr(0x1338 + k) for k in range(8)},
+    **{chr(c): None for c in range(0x135D, 0x1360)},
 })
 # Traditional Chinese characters compare as Simplified ones (學校 = 学校, 醫院 = 医院): a Taiwan user's fact and a mainland
 # user's question, or the other way round, share their characters. OpenCC's table (cjk_fold.py); stored text unchanged.
@@ -299,8 +318,56 @@ STOP = {
     wordt worden werd heeft heb hebt hebben had hadden kan kun kunt kunnen moet moeten moest wil wilt willen zal zullen
     zou in op aan bij met van voor naar uit over onder tot om door te tegen zonder na er hier daar nu zo heel veel meer
     ja nee oké ok bedankt dank hallo hoi doei graag z'n zo'n"""),
+# African languages (unreleased). Written folded: no tones, Hausa hooks as plain letters, Yoruba underdots dropped.
+# Started from stopwords-iso (MIT, LICENSES/stopwords-iso-MIT.txt; its African lists come from dohliam's
+# more-stoplists, CC BY 3.0 / Apache-2.0, counted on a story corpus, so nouns and verbs were taken out by hand) and
+# spaCy's Amharic and Tigrinya lists (MIT, LICENSES/spaCy-MIT.txt), checked against how often a word occurs in FLORES-200 dev text
+# of the language and of the other supported ones (tools/african_probe.py). Swahili, Hausa, Yoruba, Somali, Zulu and
+# Afrikaans have no stemmer: their words compare as written (folded).
+"sw": _folded("""
+    na ya wa kwa za la cha vya ni katika kwenye kwamba kuwa ili lakini au pia sana tu zaidi hata kama kila hii hiyo
+    huo hizo hayo hicho hiki huu haya hawa yule ile kile ule wale huyo hao huku huko hapa pale hapo kule humo sasa tena
+    bado basi pamoja bila hadi mpaka baada kabla juu chini ndani nje karibu kati kuhusu ambayo ambao ambaye
+    ambacho ambazo ambalo ambapo ambako ndiyo ndio hapana sio si siyo yeye wao mimi wewe sisi nyinyi ninyi yake yao
+    yangu yako wake wangu wako zake zao chake changu lake langu letu yetu wetu yenu wenu nini nani gani wapi lini vipi
+    ngapi
+    je ee kuna ilikuwa alikuwa walikuwa ilikuwa asante tafadhali sawa"""),
+"ha": _folded("""
+    da a na ya ta ba su ne ce mai ko yi kuma cikin wani wasu sun suka yana tana suna shi ita mu ku ni kai ke ka
+    za zai zan zata zasu don domin saboda amma sai idan in inda yadda haka wannan wancan waɗannan waɗanda wanda daga
+    zuwa ga kan bisa game tare har kafin bayan yayin lokacin cewa wai fa kuwa ma nan can yanzu babu akwai shine shi
+    yake take muna kuna nake ake aka ana an duk dukka kowa komai kome me mece wane wace wa ina yaushe nawa to madalla
+    nagode sannu"""),
+"yo": _folded("""
+    ni ti si won awon ati lati fun pe mo re wa ko bi ki ba kan naa yii eyi pelu sugbon nitori nigba tabi lori ninu
+    sinu maa ma le gbogbo pupo opolopo oun emi iwo awa yin mi ju kini tani nibo nigbawo bawo eelo"""),
+"so": _folded("""
+    oo waa ayaa ku ka in uu ay soo la iyo ee ah si ugu waxa waxaa waxay wuxuu waxuu ayuu ayay aad kale inuu inay
+    inaad markii marka isku uga lagu laga loo loogu sida sidoo kala inta ilaa iyada isaga iyaga aniga adiga annaga
+    idinka waan maxaa yaa xagee halkee goorma sidee imisa kuwa kuwaas kan kaas tan taas halkan halkaas hadda mar
+    kasta dhan ama laakiin lakin balse haddii haddana hadana hoos kor dhex gudaha kadib badan leh yahay tahay yihiin
+    ahaa ahaan jiray jirtay ma aan wax hore waxaan waxaad waxaynu ayaan ayaad ayey waana waase"""),
+"zu": _folded("""
+    futhi kanye ukuthi kakhulu uma lapho kodwa ukuze zonke khona ukuba nje kahle kusho noma njengoba lokhu lokho
+    cishe ngemva ngaphandle ngenxa nakuba ngokuthi kuphela wonke yonke ngaphambi ngisho nokho kaningi kusukela kube
+    kuya ngakho phakathi manje yini ubani kuphi nini kanjani kungani yebo cha mina wena thina nina yena bona lona
+    lezi lezo leyo lesi lowo leli lelo labo laba ngoba kepha kanti phansi phezulu ngiyabonga sawubona"""),
+"af": _folded("""
+    die van is en het in te om wat nie dit op met dat vir as se hulle jy was na kan aan hy sal daar baie maar jou sy
+    by toe een uit ons al gaan so af ek hom my haar ook deur oor meer tot soos moet sou teen wanneer terwyl hierdie
+    daardie wees word hul julle nog net reeds dus want omdat of hoe waar waarom wie watter ja nee asseblief dankie
+    saam"""),
+# Ethiopic script: Amharic and Tigrinya, told apart by the words below (_ethiopic_langs); text of neither stays both.
+"am": _folded("""
+    ላይ ውስጥ ወደ ወይም ወይ ጋር ሲሆን ግን ይህ ያ እንደ ነው ናቸው ናት ነበር ነበሩ በኋላ ብቻ በላይ እስከ ያለ ያሉ ይህም ይህን እንኳን ሌላ ሌሎች
+    እነዚህ በዚህ ከዚህ ለዚህ አሁን ቢሆንም እንዲሁም ከዚያ በኩል ሆኖም እና እናም በጣም ምንም ሁሉ ማን ምን የት መቼ እንዴት ለምን ስንት
+    እኔ አንተ አንቺ እሱ እሷ እኛ እናንተ እነሱ እርስዎ በፊት መካከል ስለ ብዙ"""),
+"ti": _folded("""
+    ናይ ኣብ አብ እቲ ካብ ናብ እዩ እዮም እያ ኢዩ ወይ ድማ ከም እዚ ምስ ነቲ እቶም እታ እተን ግን ግና እውን ዘሎ ከኣ ኸኣ እኳ ኣብቲ
+    ናይቲ ካብቲ ልዕሊ ዋላ ይኹን ብዛዕባ ስለ ቅድሚ ድሕሪ ክሳብ ክሳዕ እዞም እዛ ኣብዚ ከምኡ ከምኡውን ኣዝዩ ጥራይ እምበር ኩሉ ገለ
+    መንጎ ነይሩ ኣሎ ኣላ ኣለዉ ኣለዎ ሕጂ ስለዚ እንታይ መን ኣበይ መዓስ ከመይ ንሱ ንሳ ንሳቶም ኣነ ንሕና ንስኻ ንስኺ ብዘይካ ብዘይ ነዚ
+    በዚ በቲ ነቶም ነታ ካብቶም ናብቲ የለን ኣይኮነን እሞ ደኣ"""),
 }
-STOPWORDS = frozenset().union(*STOP.values())
 # Function words of a new language that are also content words, names or abbreviations of another ("come" and "dove"
 # in English, Spanish "come"; Turkish "kim", "ben"; Polish "bo", single "u", "w", "z"; Dutch "door", "met", "van", the
 # Thai "wat"): they do not vote for their language, and are dropped only in text that language alone is best
@@ -310,12 +377,38 @@ _WEAK = {
     "tr": _folded("kim ben ki var bile sen beni yani daha az sana ama"),
     "pl": _folded("u w z bo ci ale maja nam mu coś ile po od"),
     "nl": _folded("door met van wat heel ben dank"),
+    # African languages: English words ("pale", "lake", "wake", "can", "take", "game", "shine", "won", "fun", "kale",
+    # "tan"), names ("Yao", "Mimi", "Ana", "Amma", "Yana"), words of another supported language a language has enough
+    # other evidence without (Swahili "ya", "la", "na"; Afrikaans "die", "van", "het", all of Dutch), and words the
+    # African languages share. A function word of another language that is the commonest evidence of this one votes
+    # for both, as "son" does for French and Spanish: Yoruba "ni", "si", "ti", "mi", "le" (Spanish, Italian, French
+    # words too), Swahili "na", "ya" (Polish, Spanish), Hausa "da", "ne" (Portuguese, Italian, French), Afrikaans
+    # "nie" (Polish), Hausa "yake" (Swahili); a tie keeps both languages. Measured on FLORES-200 devtest
+    # (tools/african_probe.py): no sentence of the ten older Latin languages changes language (one Polish sentence
+    # in 1012 gets a tie with Swahili), while Swahili goes from 52 % to 95 % told, Hausa 21 % to 69 %, Yoruba 61 %
+    # to 84 %.
+    "sw": _folded("la cha ni si au kama tu hata hawa yule ile pale lake wake yake yao mimi sisi hadi bila "
+                  "basi pia nje nini nani je kuwa kuna haya sawa kati wale wangu kule ule"),
+    "ha": _folded("a na ya su ce mai ko yi sun mu ku ni kai ke ka za zan don in an ga kan bisa game har "
+                  "sai ma wa me ina yana tana suna amma can nan take aka ana fa to ita bayan babu shine muna kuna "
+                  "duk suka nawa"),
+    "yo": _folded("won fun kan ma ju lori emi tani yin kini iwo"),
+    "so": _folded("ku ka in ay la si ah ama kan tan mar kale sida kala badan ma aan wax kuwa kaas lakin"),
+    "zu": _folded("uma nje nini cha bona mina nina yena lona kube kuya labo laba"),
+    "af": _folded("die van is en het in te om wat dit op met dat as se was na kan aan sal daar maar jou by toe een uit "
+                  "ons al gaan so af my haar ook deur oor meer tot moet teen wanneer word nog net reeds dus want omdat "
+                  "of hoe waar waarom wie ja nee ek"),
 }
 # The other way round: words that tell the language but stay words. The Spanish forms of "ir" ("va", "van", "vas",
 # "voy") are function words of French and Italian here, and without them "Irma va a la escuela" was French or Italian
 # (no Spanish stems, no verb forms); as function words they would be dropped from a question, and "¿Cómo va Javier?"
 # meets "fue" through them (see word_lemmas).
 _VOTE_ONLY = {"es": _folded("va van vas voy")}
+_AM_ONLY, _TI_ONLY = STOP["am"] - STOP["ti"], STOP["ti"] - STOP["am"]
+# Every function word, for checks that do not know the language (a Latin word in Chinese text, the sides of "aka"):
+# of the African languages only the words that are no word or name elsewhere ("game", "can", "Yao" stay words).
+STOPWORDS = frozenset().union(*(words - (_WEAK.get(lang, frozenset()) if lang in _TWO_WORDS else frozenset())
+                                for lang, words in STOP.items()))
 _VOTERS = {lang: (words | _VOTE_ONLY.get(lang, frozenset())) - _WEAK.get(lang, frozenset())
            for lang, words in STOP.items()}
 
@@ -547,7 +640,133 @@ def _bengali_stem(word: str) -> str:
     return word
 
 
-_DEFAULT_LANG = {"latin": "en", "cyrillic": "ru", "arabic": "ar", "devanagari": "hi", "bengali": "bn"}
+# Amharic (unreleased): a light stemmer of our own, from the grammar (no stemmer for it is free to bundle: HornMorpho
+# is GPL-3). An Ethiopic letter is a consonant and a vowel order (ለ lä, ሉ lu, ሊ li, ላ la, ሌ le, ል lə, ሎ lo, ሏ lwa), and
+# a suffix that begins with a vowel merges into the last letter: ቤት (house) + -ኦች = ቤቶች, ልጅ (child) + -ኤ (my) = ልጄ.
+# Amharic writes h and the glottal stop with several letters of one sound (ሀ ሐ ኀ, አ ዐ; ሃ and ኣ are the same vowel
+# there): the stem merges them; Tigrinya keeps them apart, so fold() does not.
+# Two kinds of keys. Sure ones (stems, like Snowball's): the word without a glued preposition (በአዲስ, in Addis: አዲስ;
+# the word as written stays a key too, since a noun may begin with በ ለ ከ የ), the plural (ቤቶች, ልጆች) and a plural
+# possessive (ቤታችን, our house). Unsure ones, compared as same-root words (_DERIV_WEIGHT, never recalling a fact
+# alone): the clitics -ም and -ን, a one-letter possessive or article, which cannot be told from a word's own last letter
+# (ልጄ, my child, but በሬ is an ox, not a door, በር; ዓለም is the world, not አለ, "there is"), and the plural or article
+# of a noun that ends in a vowel (ውሾች, dogs, of ውሻ; ቡናው, the coffee; ጓደኛዬ, my friend).
+_AM_ROW = {**{0x1210 + k: 0x1200 + k for k in range(8)}, **{0x1280 + k: 0x1200 + k for k in range(8)},
+           **{0x12D0 + k: 0x12A0 + k for k in range(8)}}
+_AM_PREFIXES = ("እንደ", "እስከ", "ስለ", "ወደ", "የ", "በ", "ለ", "ከ")  # like, until, about, to; of, in, for, from
+_AM_POSSESSIVE_PL = ("ቸው", "ችን", "ችሁ")  # their, our, your (plural), after a merged -a: ቤታቸው, ቤታችን
+_ETHIOPIC = range(0x1200, 0x135B)  # the syllables; marks, punctuation and numerals follow
+# eight-letter blocks that hold labiovelars (ቈ ቘ ኈ ኰ ዀ ጐ), not the eight orders of one consonant
+_LABIOVELAR = frozenset({0x1248, 0x1258, 0x1288, 0x12B0, 0x12C0, 0x1310})
+
+
+def _order(c: str) -> int:
+    """Vowel order of an Ethiopic syllable letter (0 ä, 1 u, 2 i, 3 a, 4 e, 5 ə or none, 6 o, 7 wa); -1 otherwise."""
+    o = ord(c)
+    if o not in _ETHIOPIC or o - (o - 0x1200) % 8 in _LABIOVELAR:
+        return -1
+    return (o - 0x1200) % 8
+
+
+def _with_order(c: str, order: int) -> str:
+    return chr(ord(c) - _order(c) + order)
+
+
+def _amharic_merge(word: str) -> str:
+    out = []
+    for c in word:
+        o = _AM_ROW.get(ord(c), ord(c))
+        out.append(chr(o - 3) if o in (0x1203, 0x12A3) else chr(o))  # ሃ = ሀ, ኣ = አ
+    return "".join(out)
+
+
+def _am_unprefixed(word: str) -> str:
+    for prefix in _AM_PREFIXES:
+        if word.startswith(prefix) and len(word) - len(prefix) >= 2:
+            return word[len(prefix):]
+    return word
+
+
+def _am_plural(word: str) -> str:
+    if len(word) >= 4 and word.endswith("ዎች"):  # after a vowel: ቡናዎች
+        return word[:-2]
+    if len(word) >= 3 and word[-1] == "ች" and _order(word[-2]) == 6:  # ቤቶች -> ቤት, ልጆች -> ልጅ
+        return word[:-2] + _with_order(word[-2], 5)
+    return word
+
+
+def _am_sure(word: str) -> str:
+    """A plural possessive after a merged -a (ቤታችን -> ቤት; ቤቶቻችን -> ቤቶች), then the plural."""
+    if len(word) >= 4 and word[-2:] in _AM_POSSESSIVE_PL and _order(word[-3]) == 3:
+        word = word[:-3] + _with_order(word[-3], 5)
+    return _am_plural(word)
+
+
+def _all_syllables(word: str) -> bool:
+    """Ethiopic syllables only (labiovelars too: ጓደኛ); the rules change only letters whose order they know."""
+    return all(ord(c) in _ETHIOPIC for c in word)
+
+
+@lru_cache(maxsize=65536)
+def _amharic_stem(word: str) -> str:
+    """The sure stem: letters of one sound merged, a glued preposition, a plural possessive and the plural undone."""
+    word = _amharic_merge(word)
+    return _am_sure(_am_unprefixed(word)) if _all_syllables(word) else word
+
+
+@lru_cache(maxsize=65536)
+def _amharic_keys(word: str) -> frozenset:
+    """Sure keys: the stem, and the word's own suffixes undone without a prefix taken off (በሬዎች, oxen: በሬ)."""
+    merged = _amharic_merge(word)
+    if not _all_syllables(merged):
+        return frozenset({merged})
+    return frozenset({_amharic_stem(word), _am_sure(merged)})
+
+
+@lru_cache(maxsize=65536)
+def _amharic_roots(word: str) -> frozenset:
+    """Unsure keys (see above), with and without a glued preposition."""
+    merged = _amharic_merge(word)
+    if not _all_syllables(merged):
+        return frozenset()
+    out = set()
+    for base in {merged, _am_unprefixed(merged)}:
+        forms = [base]
+        for _ in range(2):  # -ን then -ም: ቤቱንም, "and the house (object)"; not the -ን of -ችን (our)
+            if len(base) >= 3 and base[-1] in "ምን" and not base.endswith("ችን"):
+                base = base[:-1]
+                forms.append(base)
+        for form in list(forms):
+            last = form[-1]
+            if len(form) >= 4 and form[-2:] in _AM_POSSESSIVE_PL:
+                forms.append(form[:-2])  # after a vowel: መኪናችን, our car
+            elif len(form) >= 3 and last in "ህሽውዬ":
+                forms.append(form[:-1])  # your ቤትህ ቤትሽ; the, after a vowel, ቡናው; my, after a vowel, ጓደኛዬ
+            elif len(form) >= 2 and _order(last) in (1, 4, 7) and not _vowel_carrier(last):
+                forms.append(form[:-1] + _with_order(last, 5))  # the, his ቤቱ, ልጆቹ; my ልጄ; her ቤቷ
+        for form in forms:
+            plural = _am_plural(form)
+            out.add(plural)
+            if plural != form and form[-1] == "ች" and _order(form[-2]) == 6:  # a noun ending in -a: ውሾች, ውሻ
+                out.add(form[:-2] + _with_order(form[-2], 3))
+    return frozenset(f for f in out if len(f) >= 2)
+
+
+def _vowel_carrier(c: str) -> bool:
+    """ሀ አ ወ የ rows: a final ሁ ኡ ዉ ዩ is mostly the word's own vowel, not a suffix."""
+    o = ord(c) - _order(c)
+    return o in (0x1200, 0x12A0, 0x12C8, 0x12E8)
+
+
+def _ethiopic_langs(words: list[str]) -> tuple[str, ...]:
+    """Amharic or Tigrinya, by the function words only one of them has; both when none tells or they tie."""
+    am = sum(w in _AM_ONLY for w in words)
+    ti = sum(w in _TI_ONLY for w in words)
+    return ("am",) if am > ti else ("ti",) if ti > am else ("am", "ti")
+
+
+_DEFAULT_LANG = {"latin": "en", "cyrillic": "ru", "arabic": "ar", "devanagari": "hi", "bengali": "bn",
+                 "ethiopic": "am"}
 
 
 @lru_cache(maxsize=65536)
@@ -561,6 +780,8 @@ def stem(word: str, lang: str | None = None) -> str:
         return _arabic_light(word)
     if lang == "bn":
         return _bengali_stem(word)
+    if lang == "am":
+        return _amharic_stem(word)
     stemmer = _STEMMERS.get(lang)
     return fold(_snowball(stemmer, word, lang)) if stemmer else word
 
@@ -610,19 +831,20 @@ def _native_stems(written: str, lang: str) -> tuple[str, ...]:
 
 @lru_cache(maxsize=65536)
 def _native_keys(written: str, lang: str) -> frozenset:
-    """Keys of a word of a _NATIVE language stemmed as written, folded afterwards; and, when it has ı or ł, the word
+    """Keys of a word of a _NATIVE language stemmed as written, folded afterwards; and, when it has ı, ł or a Hausa
+    hooked letter (_KEPT), the word
     and its stems as FTS5 indexed them (unicode61 drops accents but keeps those letters), so the prefix query reaches
     "toplantı" and "szkoła" in the index although the comparison form is "toplanti", "szkola"."""
     stems_ = _native_stems(written, lang)
     keys = {fold(s) for s in stems_}
-    if "ı" in written or "ł" in written:
+    if _KEPT.search(written):
         keys |= {_fold_text(s, dotless=False) for s in (written, *stems_)}
     return frozenset(keys)
 
 
 @lru_cache(maxsize=65536)
 def _undotted(written: str, langs: tuple[str, ...]) -> frozenset:
-    """A word with ı or ł and its stems in *langs* as FTS5 indexed them (unicode61 drops accents but keeps those
+    """A word with a _KEPT letter (ı, ł, ɓ ɗ ƙ ƴ) and its stems in *langs* as FTS5 indexed them (unicode61 drops accents but keeps those
     letters), for text of any language: "Işık" in an English question has to reach "ışık" in the index, as a Turkish
     one does through _native_keys; the comparison form stays "isik"."""
     stems_ = () if is_identifier(written) else tuple(
@@ -650,8 +872,10 @@ def _keys(word: str, langs: tuple[str, ...], written: str = "", determined: bool
             keys.add(possessive)
         if written:
             keys |= _native_keys(written, lang)
-    if written and ("ı" in written or "ł" in written) and _NATIVE.isdisjoint(langs):
+    if written and _KEPT.search(written) and _NATIVE.isdisjoint(langs):
         keys |= _undotted(written, langs)  # a _NATIVE language in langs added these through _native_keys
+    if "am" in langs:
+        keys |= _amharic_keys(word)
     if "ar" in langs:
         if "ar" in _STEMMERS:
             keys.add(fold(_STEMMERS["ar"].stemWord(word)))
@@ -1420,13 +1644,13 @@ class Analysis:
     suffix_words: frozenset | None = None  # German words the compound dictionary knows nothing of (None: all)
 
 
-def _stop(word: str, script: str, votes: dict, sentence: bool) -> bool:
+def _stop(word: str, script: str, votes: dict, sentence: bool, ethiopic: tuple = ("am", "ti")) -> bool:
     """A function word of the text's language. For Latin script that language is told by the other words: "son" in
     "where does my son study" is a word, in "il boit son café" French "his". A word that is the only evidence decides
     only in a sentence ("Ana come carne todos los días"), not in a short message ("son", "bisa"): there, with no other
     evidence, the English list applies, as it did to all Latin text before 0.5.0."""
-    if script != "latin":
-        return any(word in STOP[lang] for lang in _SCRIPT_LANGS.get(script, ()))
+    if script != "latin":  # Ethiopic: the lists of the language the text is in (ገና is Christmas in Amharic)
+        return any(word in STOP[lang] for lang in (ethiopic if script == "ethiopic" else _SCRIPT_LANGS.get(script, ())))
     others = {lang: votes[lang] - (word in _VOTERS[lang]) for lang in LATIN}
     best = max(others.values())
     if best:
@@ -1440,7 +1664,8 @@ def _stop(word: str, script: str, votes: dict, sentence: bool) -> bool:
 
 @lru_cache(maxsize=1024)
 def analyze(text: str) -> Analysis:
-    lowered = _CONTROL.sub(" ", unicodedata.normalize("NFC", text or "")).lower().replace("’", "'")
+    # ፡ is the Ethiopic word space, still written between words without a space
+    lowered = _CONTROL.sub(" ", unicodedata.normalize("NFC", text or "")).lower().replace("’", "'").replace("፡", " ")
     groups = []
     for token in lowered.split():
         token = _ELISION.sub("", _strip_edges(token))
@@ -1450,6 +1675,9 @@ def analyze(text: str) -> Analysis:
     # by "on".
     latin = [fold(g.split("-")[0]) for g in groups if word_script(g) == "latin" and _letters_only(g) and g.split("-")[0]]
     votes = {lang: sum(w in _VOTERS[lang] for w in latin) for lang in LATIN}
+    for lang in _TWO_WORDS:  # one word of a language with no stemmer does not decide: "Kanye albums" is no Zulu
+        if votes[lang] < 2:
+            votes[lang] = 0
     best = max(votes.values())
     if best:
         langs, determined = tuple(lang for lang in LATIN if votes[lang] == best), True
@@ -1468,6 +1696,7 @@ def analyze(text: str) -> Analysis:
     ru_forms = _RU_FORM_GROUPS and russian and _ru_text(lowered, {fold(g) for g in groups})
     # German compounds are split, and German or Spanish verb forms get their lemmas, only in text of that language
     german = determined and "de" in langs and "en" not in langs
+    ethiopic = _ethiopic_langs([fold(g) for g in groups if word_script(g) == "ethiopic"])
     forms_lang = "" if not _LEMMA_FORMS else "de" if german else         "es" if determined and "es" in langs and "en" not in langs else ""  # "he went": English as much as Spanish
     heads, compound_mods, lemma_keys = set(), set(), set()
     # Japanese spelling variants, and kanji kept as written: decided for the whole text, so every word of it folds as
@@ -1480,15 +1709,19 @@ def analyze(text: str) -> Analysis:
         raw, parts = _resolve_hyphen(group, langs, determined) if "-" in group else (group, [])
         extra += parts
         word, script, ident = fold_word(raw), word_script(raw), is_identifier(raw)
+        if not word:  # nothing but marks folding drops (a lone Ethiopic gemination mark)
+            continue
         if ident and compounds and "-" in raw and _letters_only(raw):
             ident = False  # "week-end", "sexta-feira", "rendez-vous": a compound word, not a host name
         unsegmented = UNSEGMENTED.search(raw) is not None
-        word_langs = () if ident or unsegmented else langs if script == "latin" else _SCRIPT_LANGS.get(script, ())
-        is_stop = not ident and not unsegmented and _stop(word, script, votes, len(latin) >= 4)
-        written = _written(raw) if word_langs and (not _NATIVE.isdisjoint(word_langs) or "ı" in raw or "ł" in raw) \
+        word_langs = () if ident or unsegmented else langs if script == "latin" else ethiopic if script == "ethiopic"             else _SCRIPT_LANGS.get(script, ())
+        is_stop = not ident and not unsegmented and _stop(word, script, votes, len(latin) >= 4, ethiopic)
+        written = _written(raw) if word_langs and (not _NATIVE.isdisjoint(word_langs) or _KEPT.search(raw)) \
             else word
         written = "" if written == word else written  # only a word whose letters folding changed is stemmed twice
-        word_keys = _keys(word, word_langs, written, determined) if word_langs else frozenset({word})
+        # an Ethiopic letter is a syllable: ልጅ (child) is a stem of two
+        word_keys = _keys(word, word_langs, written, determined or script == "ethiopic") if word_langs \
+            else frozenset({word})
         forms = _ru_form_keys(word) - word_keys if ru_forms and script == "cyrillic" and not ident else frozenset()
         if forms:
             word_keys |= forms
@@ -1498,8 +1731,10 @@ def analyze(text: str) -> Analysis:
             bag.add(piece)
             keys |= _keys(piece, word_langs, "", determined) if word_langs and _letters_only(piece) else {piece}
         root_lang = "" if is_stop or ident or unsegmented or "-" in word else \
-            "en" if script == "latin" and english else "ru" if script == "cyrillic" and russian else ""
-        word_roots_ = word_roots(word, stem(word, root_lang), root_lang) - word_keys if root_lang else frozenset()
+            "en" if script == "latin" and english else "ru" if script == "cyrillic" and russian else \
+            "am" if script == "ethiopic" and "am" in ethiopic else ""
+        word_roots_ = (_amharic_roots(word) if root_lang == "am" else word_roots(word, stem(word, root_lang), root_lang)) \
+            - word_keys if root_lang else frozenset()
         if root_lang:
             roots |= {(root_lang, r) for r in word_roots_}
             lang_keys |= {(root_lang, k) for k in word_keys}

@@ -507,6 +507,40 @@ A word matches another when they share its plain form or its stem in the languag
   `сколько`, `почему` …) are left out of a query's terms, like English `what` / `which` / `how`, but kept in facts.
 - **Names** in Latin script are matched as written (and with an English `'s`): `Jean` is not mentioned by `jeans`.
   Names in other scripts carry their inflections (`Маши` mentions `Маша`, `لإيرما` mentions `إيرما`).
+- **African languages** (unreleased):
+  - **Hausa letters**: the hooked letters `ɓ ɗ ƙ ƴ` compare as `b d k y`, which is how keyboards without them type
+    them. A store that holds one of them scans the facts word by word, so `kwallon kafa` finds `ƙwallon ƙafa`, and a
+    word with a hook is still found as written. The scan runs for Hausa questions and questions of undetermined
+    language, not for one read as English or Spanish (`Who plays kwallon kafa?`), as with Polish `ł`.
+  - **Function words**: Swahili, Hausa, Yoruba, Somali, Zulu and Afrikaans are told by their function words. The
+    lists start from stopwords-iso and are pruned by hand ([licence](LICENSES/stopwords-iso-MIT.txt)). None of these
+    languages has a stemmer, so their words compare as written. One of their words does not decide a short message
+    (`Kanye albums`, `Sana güveniyorum` stay of undetermined language and keep their stems): it takes two. Words that
+    are English words, names or words of another language (`game`, `can`, `lake`, `Yao`, `Mimi`, `Wale`, Indonesian
+    `suka`) do not vote.
+  - **Ethiopic script**: Amharic and Tigrinya, told apart by their function words (spaCy's lists,
+    [licence](LICENSES/spaCy-MIT.txt)). `ሠ`/`ሰ` and `ፀ`/`ጸ` fold everywhere; Amharic also merges `ሀ ሐ ኀ` and
+    `አ ዐ`, which Tigrinya keeps apart. `፡` separates words, and Ethiopic words are matched by scanning, as Arabic is.
+  - **Amharic stemmer**: a light one of the plugin's own, since HornMorpho is GPL-3. Sure stems undo a glued
+    preposition (`በአዲስ` → `አዲስ`), the plural (`ቤቶች` → `ቤት`, `ልጆች` → `ልጅ`) and a plural possessive (`ቤታችን`). A
+    one-letter possessive or article, the clitics `-ም`/`-ን` and the forms of vowel-final nouns (`ልጄ`, `ቡናው`, `ውሾች`)
+    count as same-root words: 0.6, and never a recall on their own, since `በሬ` (ox) is no `በር` (door).
+  - **Measured** on FLORES-200 devtest and MasakhaNER with `tools/african_probe.py` (data not bundled):
+    - **Older languages**: no sentence of the ten older Latin languages changes language, except one Polish sentence
+      in 1,012 that now ties with Swahili. Their retrieval is unchanged.
+    - **Telling the language**: Swahili is told in 95 % of sentences, Somali 93 %, Yoruba 84 %, Hausa 69 %, Zulu
+      51 % (34 % stay undetermined, since Zulu glues most grammar to its words). Afrikaans is told in only 3 %: it
+      shares most function words with Dutch and is read as Dutch, with Dutch stems.
+    - **False recall**: a question whose sentence the store does not hold recalls something less often. Swahili goes
+      from 99 % to 47 %, Somali 95 % to 44 %, Zulu 80 % to 22 %, Yoruba 96 % to 76 %, Amharic 95 % to 70 % and Hausa
+      96 % to 84 %. Over the same runs the right fact is recalled at most 2.4 points less often.
+    - **Hausa without hooks**: four words typed without the hooks find their sentence first in 64 % of cases (was
+      50 %), and in the top five in 90 % (was 74 %).
+    - **The cost**: four words copied from a sentence find it first 0.3–3.7 points less often, because the function
+      words they shared with it no longer count.
+    - **Names**: MasakhaNER name words written with a capital and dropped as function words stay at 0.1–0.6 % (they
+      were 0.1–0.8 %, through the other languages' lists). Amharic has 1.5 %: `እስከ` (until), `በፊት` (before), which
+      the dataset tags inside dates.
 - **Chinese, Japanese, Korean, Thai** (no spaces between words): character n-grams, bigrams for Chinese, Japanese and
   Korean, trigrams for Thai. Grammar weighs less: Chinese function characters (的 是 了), Japanese particles (は が を
   に の), Thai function words (ของ ที่ และ); a message that is only a filler (はい, 네, โอเค) recalls nothing. Chinese

@@ -567,7 +567,9 @@ CHANGED_DECISIONS = (TESTS / "test_holographic_screen_gaps.py",
                      # the H6 letters drawn as Latin ones, as cases of the faster rewrite (0.31.2)
                      TESTS / "test_holographic_screen_backtracking.py",
                      # prompt extraction phrasing added by this PR
-                     TESTS / "test_holographic_prompt_extraction.py")
+                     TESTS / "test_holographic_prompt_extraction.py",
+                     # the lookalike-letter attacks of both checks, with the rewrite done once (0.31.6)
+                     TESTS / "test_holographic_screen_plain_once.py")
 
 
 def _differences(texts, ref=REF):

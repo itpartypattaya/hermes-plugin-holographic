@@ -1,4 +1,4 @@
-"""African languages (unreleased): Hausa hooked letters typed as plain ones; Swahili, Hausa, Yoruba, Somali, Zulu and
+"""African languages (0.33.0): Hausa hooked letters typed as plain ones; Swahili, Hausa, Yoruba, Somali, Zulu and
 Afrikaans told by their function words; Amharic and Tigrinya in Ethiopic script, Amharic with a light stemmer.
 Measured on FLORES-200 and MasakhaNER by tools/african_probe.py."""
 

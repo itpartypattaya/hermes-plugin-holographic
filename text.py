@@ -111,7 +111,7 @@ def word_script(word: str) -> str:
 _SCAN_SCRIPTS = frozenset({"arabic", "devanagari", "bengali", "indic", "ethiopic"})
 _SCRIPT_LANGS = {"cyrillic": ("ru",), "arabic": ("ar",), "devanagari": ("hi",), "bengali": ("bn",),
                  "ethiopic": ("am", "ti")}
-# Swahili, Hausa, Yoruba, Somali, Zulu and Afrikaans (unreleased) are told by their function words only (_EVIDENCE):
+# Swahili, Hausa, Yoruba, Somali, Zulu and Afrikaans (0.33.0) are told by their function words only (_EVIDENCE):
 # text without one is not stemmed or read in them.
 LATIN = ("en", "es", "fr", "pt", "id", "de", "it", "tr", "pl", "nl", "sw", "ha", "yo", "so", "zu", "af")
 # Latin text of no determined language is stemmed in every language of LATIN but these, which need their own letters
@@ -318,7 +318,7 @@ STOP = {
     wordt worden werd heeft heb hebt hebben had hadden kan kun kunt kunnen moet moeten moest wil wilt willen zal zullen
     zou in op aan bij met van voor naar uit over onder tot om door te tegen zonder na er hier daar nu zo heel veel meer
     ja nee oké ok bedankt dank hallo hoi doei graag z'n zo'n"""),
-# African languages (unreleased). Written folded: no tones, Hausa hooks as plain letters, Yoruba underdots dropped.
+# African languages (0.33.0). Written folded: no tones, Hausa hooks as plain letters, Yoruba underdots dropped.
 # Started from stopwords-iso (MIT, LICENSES/stopwords-iso-MIT.txt; its African lists come from dohliam's
 # more-stoplists, CC BY 3.0 / Apache-2.0, counted on a story corpus, so nouns and verbs were taken out by hand) and
 # spaCy's Amharic and Tigrinya lists (MIT, LICENSES/spaCy-MIT.txt), checked against how often a word occurs in FLORES-200 dev text
@@ -640,7 +640,7 @@ def _bengali_stem(word: str) -> str:
     return word
 
 
-# Amharic (unreleased): a light stemmer of our own, from the grammar (no stemmer for it is free to bundle: HornMorpho
+# Amharic (0.33.0): a light stemmer of our own, from the grammar (no stemmer for it is free to bundle: HornMorpho
 # is GPL-3). An Ethiopic letter is a consonant and a vowel order (ለ lä, ሉ lu, ሊ li, ላ la, ሌ le, ል lə, ሎ lo, ሏ lwa), and
 # a suffix that begins with a vowel merges into the last letter: ቤት (house) + -ኦች = ቤቶች, ልጅ (child) + -ኤ (my) = ልጄ.
 # Amharic writes h and the glottal stop with several letters of one sound (ሀ ሐ ኀ, አ ዐ; ሃ and ኣ are the same vowel

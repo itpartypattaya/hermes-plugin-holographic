@@ -507,7 +507,7 @@ A word matches another when they share its plain form or its stem in the languag
   `сколько`, `почему` …) are left out of a query's terms, like English `what` / `which` / `how`, but kept in facts.
 - **Names** in Latin script are matched as written (and with an English `'s`): `Jean` is not mentioned by `jeans`.
   Names in other scripts carry their inflections (`Маши` mentions `Маша`, `لإيرما` mentions `إيرما`).
-- **African languages** (unreleased):
+- **African languages** (0.33.0):
   - **Hausa letters**: the hooked letters `ɓ ɗ ƙ ƴ` compare as `b d k y`, which is how keyboards without them type
     them. A store that holds one of them scans the facts word by word, so `kwallon kafa` finds `ƙwallon ƙafa`, and a
     word with a hook is still found as written. The scan runs for Hausa questions and questions of undetermined

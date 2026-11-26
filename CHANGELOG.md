@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.31.6 — 2026-11-26
+
+### Fixed
+- **The screen is fast again on long text in other alphabets.** 0.31.5 rewrote lookalike letters as Latin ones three
+  times per screened text instead of once, so recall on a megabyte of Russian prose took 3.5 s instead of 2.4 s; it
+  now takes about 0.6 s. Every decision is the same. hermes-dreaming, which screens whole nights of messages with a
+  copy of `screen.py`, gets it with its next vendoring. No change to defaults, schema or network behaviour.
+
 ## 0.31.5 — 2026-11-26
 
 ### Fixed

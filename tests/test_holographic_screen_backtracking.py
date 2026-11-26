@@ -20,6 +20,7 @@ The screen must answer such texts in a time that grows with their length, and de
 
 import random
 import re
+import sys
 import time
 import unicodedata
 
@@ -97,6 +98,28 @@ def _letter_corpus():
         yield "".join(rng.choice(LETTER_PIECES) for _ in range(rng.randint(1, 10)))
 
 
+_DIACRITIC = re.compile("[̀-ͯ]")
+
+
 def test_letters_drawn_as_latin_ones_are_rewritten_as_before():
+    # 0.31.7: a combining diacritic belongs to its word (a Latin letter put in place of a lookalike composes with it), so
+    # only text with none after normalization is rewritten exactly as the old pattern did; every result is its own
+    # rewrite, which the screens rely on since 0.31.6
     for text in [*LETTER_CASES, *_letter_corpus()]:
-        assert screen._plain_letters(text) == old_plain_letters(text), text
+        plain = screen._plain_letters(text)
+        assert screen._plain_letters(plain) == plain, text
+        if not _DIACRITIC.search(unicodedata.normalize("NFKC", text)):
+            assert plain == old_plain_letters(text), text
+
+
+def test_every_mark_that_composes_with_a_latin_letter_is_a_word_diacritic():
+    # the word pattern keeps U+0300-U+036F inside a word; a mark outside the block that composed with a Latin letter would
+    # split the word again and let a lookalike after it through
+    for cp in range(sys.maxunicode + 1):
+        parts = unicodedata.decomposition(chr(cp)).split()
+        if len(parts) == 2 and not parts[0].startswith("<"):
+            base = chr(int(parts[0], 16))
+            while (d := unicodedata.decomposition(base)) and not d.startswith("<"):
+                base = chr(int(d.split()[0], 16))
+            if base.isascii() and base.isalpha():
+                assert _DIACRITIC.fullmatch(chr(int(parts[1], 16))), hex(cp)

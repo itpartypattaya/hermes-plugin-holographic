@@ -11,6 +11,7 @@
 # checked arm with the off arm of the same stamp.
 set -eu
 OUT=$1
+mkdir -p "$OUT"  # the probe makes only the last level of its --out
 HERE=results/issue121/text-embedding-3-small/scripts
 test -n "$OPENAI_API_KEY" && test -n "$HERMES_AGENT_REPO"
 export EMB_URL=http://127.0.0.1:1250/v1 EMB_MODEL=text-embedding-3-small

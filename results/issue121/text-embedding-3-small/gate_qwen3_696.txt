@@ -1,0 +1,17 @@
+$ python tools/mcnemar_gate.py --pair check_margin results/issue121/text-embedding-3-small/off/provenance_multi_coff_on.jsonl results/issue121/text-embedding-3-small/off/provenance_contrast_en_coff_on.jsonl results/issue121/text-embedding-3-small/off/provenance_contrast_ru_coff_on.jsonl results/issue121/text-embedding-3-small/off/provenance_contrast_zh_coff_on.jsonl results/issue121/text-embedding-3-small/off/provenance_household_test_coff_on.jsonl results/issue121/text-embedding-3-small/off/provenance_household_dev_coff_on.jsonl results/issue121/text-embedding-3-small/off/provenance_synthetic_zh_coff_on.jsonl results/issue121/text-embedding-3-small/qwen3/provenance_multi_c0.5_on.jsonl results/issue121/text-embedding-3-small/qwen3/provenance_contrast_en_c0.5_on.jsonl results/issue121/text-embedding-3-small/qwen3/provenance_contrast_ru_c0.5_on.jsonl results/issue121/text-embedding-3-small/qwen3/provenance_contrast_zh_c0.5_on.jsonl results/issue121/text-embedding-3-small/qwen3/provenance_household_test_c0.5_on.jsonl results/issue121/text-embedding-3-small/qwen3/provenance_household_dev_c0.5_on.jsonl results/issue121/text-embedding-3-small/qwen3/provenance_synthetic_zh_c0.5_on.jsonl
+
+
+== check_margin off (default) vs 0.5 (proposal) | margin 1.0 | checker Qwen/Qwen3-Reranker-0.6B, instruction sha256 5336bc93ae7c30960c4f5940de5a98826fe2ecee05c549a846897344d7b73b72 | rows 696 real | git_sha 67229de5886bf802887cf88c4ef53162d2400a1f
+   check      hit5  noise  confused
+     0.5  584/696    159        46
+     off  575/696    159        46
+paired misses: b=9 (rescued at 0.5), c=0 (lost at 0.5), exact McNemar p=0.0039
+gained targets in the top five (9): multi/nl 18 -> python; contrast_en/contrast_en p4q1 -> dina_flat; contrast_en/contrast_en p5q0 -> marina_night; household/en q067 -> irina_walk; household/ru q056 -> shoes_rule; household/en q022 -> pavel_bd; household/en q037 -> andrey_run; household/zh q037 -> andrey_run; synthetic_zh/en X2 -> 2
+lost targets in the top five (0): -
+check: 62 calls in 1068 turns, {'no': 48, 'yes': 14}, slowest 2304.8 ms
+  dev rows included: report them beside the test pool; they do not decide
+  PASS  no target lost
+  PASS  noise not higher (159 <= 159)
+  PASS  confusion not higher (46 <= 46)
+  PASS  pooled McNemar p < 0.05 (0.004)
+  => gate PASSES on these files

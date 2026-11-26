@@ -1,0 +1,15 @@
+$ python tools/mcnemar_gate.py --pair check_margin results/issue121/provenance_synthetic_zh_{coff,c0.5}_on.jsonl
+
+== check_margin off (default) vs 0.5 (proposal) | margin 1.0 | checker Qwen/Qwen3-Reranker-0.6B, instruction sha256 5336bc93ae7c30960c4f5940de5a98826fe2ecee05c549a846897344d7b73b72 | rows 36 real | git_sha 31de6eb5af2ae3366f1be32c3b847f338cbf2a7c
+   check      hit5  noise  confused
+     0.5   11/36      1         5
+     off   11/36      1         5
+paired misses: b=0 (rescued at 0.5), c=0 (lost at 0.5), exact McNemar p=1.0000
+gained targets in the top five (0): -
+lost targets in the top five (0): -
+check: 3 calls in 48 turns, {'no': 3}, slowest 121.0 ms
+  PASS  no target lost
+  PASS  noise not higher (1 <= 1)
+  PASS  confusion not higher (5 <= 5)
+  FAIL  pooled McNemar p < 0.05 (1.000)
+  => gate DOES NOT PASS on these files

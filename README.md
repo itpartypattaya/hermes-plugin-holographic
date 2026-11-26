@@ -1177,6 +1177,19 @@ gate refuses mixed runs, so pass `--modes off`. One `endpoint`, one `git_sha`, o
 per comparison, and inside a pair only the margin may differ — a pair whose query, kind, split or targets
 disagree is refused instead of reported.
 
+`embeddings.RECALL_CHECK_MARGIN` (#121) is a measurement, unset by default and not a setting: with rerank off, a fact
+that stands out at that lower margin but not at the recall margin is offered on meaning only when the check in
+`recall_check.py` says yes, one question a turn about the closest such fact. The default check is the cross-encoder
+at `rerank_url`: yes when its score is above the middle of `rerank_scale` (0 for `logit`, 0.5 for `unit`). With
+rerank on, the value changes nothing. With the value set, the message and one fact go to the checker's endpoint,
+which gets nothing today while rerank is off. `tools/provenance_probe.py --modes off --emb on --endpoint <url>` runs
+the two arms, `--recall-check-margin off` and
+`--recall-check-margin 0.5 --check-model <model> --check-instruction <file>`: both keep the ordinary `margin`, every
+row and file name carries `check_margin` (`_coff`, `_c0.5`), the checked arm's rows the checker's model and the
+sha256 of its instruction, and every row the check's calls, outcome, raw score and time on that turn.
+`tools/mcnemar_gate.py --pair check_margin <files>` pairs the two arms; `--pair margin` and `--pair embed_text`
+refuse two runs that differ in `check_margin`.
+
 Original plugin by dusterbloom (hermes-agent PR #2351); its history is in hermes-agent
 (`git log -- plugins/memory/holographic`). MIT licence. The bundled language data live in `dictionaries/` (the list
 with sources in its `__init__.py`, rebuilt by the scripts in `tools/`); the Traditional → Simplified Chinese table in `cjk_fold.py` is

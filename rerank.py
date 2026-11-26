@@ -243,10 +243,12 @@ class Rescorer:
         self.last_status = f"failed: {why}"
         self._failed(why)
 
-    def scores(self, query: str, documents: list[str]) -> list[tuple[int, float]] | None:
+    def scores(self, query: str, documents: list[str], single: bool = False) -> list[tuple[int, float]] | None:
         """``(index, relevance_score)`` pairs of *documents* in descending relevance, top_k at most; None when the
         call must not be made (a secret in *query*), or failed (logged; paused). The caller keeps the current order
-        on None; the score is the cross-encoder's own logit (not in [0, 1]) — order-only unless the caller blends."""
+        on None; the score is the cross-encoder's own logit (not in [0, 1]) — order-only unless the caller blends.
+        *single*: one document is sent all the same — the caller reads its score, not an order (recall_check.py, the
+        check of embeddings.RECALL_CHECK_MARGIN)."""
         if not documents:
             self.last_status = "not_called"
             return None
@@ -268,7 +270,7 @@ class Rescorer:
             # a failure for the run's zero-failed-calls budget, not a neutral skip.
             self.last_status = f"failed: {self.status()}"
             return None
-        if len(documents) == 1:
+        if len(documents) == 1 and not single:
             # One sendable document: nothing to reorder, the window cannot drop the only candidate
             # (a cut judged from the top always keeps the top) and the blend of a single score is
             # the same either way — so no call is made and the trivial rank comes back (PR #10, point 9).

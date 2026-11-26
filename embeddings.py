@@ -97,6 +97,11 @@ MIN_VECTORS_FOR_Z = 20
 # arm of a measurement and puts it back. Not to be switched on before that measurement passes its gate.
 EMBED_TEXTS = ("content", "content+keywords")
 EMBED_TEXT = "content"
+# A measurement, like EMBED_TEXT (None, the default, changes nothing; issue #121): before a turn, with rerank off, a fact
+# that stands out at this lower margin but not at RECALL_MARGIN is offered on meaning only on the yes of the check in
+# recall_check.py, the cross-encoder at rerank_url by default. No check to ask: RECALL_MARGIN alone, as before.
+# tools/provenance_probe.py sets it for one run (--recall-check-margin) and puts it back.
+RECALL_CHECK_MARGIN: float | None = None
 
 
 def vector_text(content: str, tags: str | None) -> str:

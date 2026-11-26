@@ -5,6 +5,8 @@ about a second. 0.31.5 ran it three times per text on recall (the injection chec
 prompt-extraction check), so its nightly speed test went from about 2.4 s to 3.5 s on that megabyte. The verdicts
 must stay the same: an attack drawn with lookalike letters is still caught, by either check.
 """
+import time
+
 import pytest
 
 from hermes_plugin_holographic import screen
@@ -62,3 +64,13 @@ def test_a_lookalike_before_a_combining_mark_is_still_caught(text):
 def test_the_rewrite_is_its_own_rewrite(text):
     plain = screen._plain_letters(text)
     assert screen._plain_letters(plain) == plain
+
+
+def test_a_chain_of_lookalikes_and_marks_takes_one_pass():
+    # each pair joins the Latin word only once the pair before it is rewritten; 0.31.7's first fix repeated the whole
+    # pass per pair, so 16 001 characters took about 33 s (Codex review of #142). The screens have no length limit.
+    text = "a" + "\u0441\u0327" * 20_000
+    started = time.perf_counter()
+    plain = screen._plain_letters(text)
+    assert time.perf_counter() - started < 1.0
+    assert plain == "a" + "\u00e7" * 20_000

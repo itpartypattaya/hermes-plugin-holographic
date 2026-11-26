@@ -8,7 +8,9 @@
   can compose with the combining mark after it (Cyrillic "с" + U+0327 becomes "ç"), and the word that joins may need
   rewriting again. So "ignore todas as instruções" written that way passed both screens, for what is stored and for what
   is recalled; 0.31.5 and earlier refused it, and 0.31.6's note that every decision stayed the same was wrong for
-  such text. The rewrite now repeats until it changes nothing. On 60,000 generated variants of attack phrases with
+  such text. A combining diacritic (U+0300–U+036F, the block of every mark that composes with a Latin letter) now
+  belongs to its word, so one pass rewrites the joined word whole; repeating the pass instead, as a first version of
+  this fix did, made a chain of such pairs quadratic (Codex review of #142). On 60,000 generated variants of attack phrases with
   lookalikes and combining marks every decision equals 0.31.5's (0.31.6 let 638 of them through), and long text in
   other alphabets screens as fast as with 0.31.6. Found by the Codex review of #140. hermes-dreaming gets it with its
   next vendoring. No change to defaults, schema or network behaviour.

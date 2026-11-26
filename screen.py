@@ -986,10 +986,13 @@ _RE_LATIN_END = re.compile(r"[A-Za-z]\W*\Z")
 # Latin letter the Cyrillic and Greek letters drawn as Latin ones. A word of Cyrillic alone stays as it is.
 _CONFUSABLE = str.maketrans("аеорсухіјѕԁԛԝАВЕКМНОРСТХІЈЅΑΒΕΗΙΚΜΝΟΡΤΧΥΖοα",
                             "aeopcyxijsdqwABEKMHOPCTXIJSABEHIKMNOPTXYZoa")
-# A word is a run of letters; only one with a Latin letter in it is rewritten. The Latin letter is looked for in the
-# word found, not by the pattern: `[^\W\d_]*[A-Za-z][^\W\d_]*` tried at each letter of a word without one ran to its
-# end, so 12 000 CJK characters took 1.8 s (Codex review of hermes-dreaming#39, 0.31.2).
-_RE_WORD_LETTERS = re.compile(r"[^\W\d_]+")
+# A word is a run of letters and combining diacritics; only one with a Latin letter in it is rewritten. The Latin letter
+# is looked for in the word found, not by the pattern: `[^\W\d_]*[A-Za-z][^\W\d_]*` tried at each letter of a word
+# without one ran to its end, so 12 000 CJK characters took 1.8 s (Codex review of hermes-dreaming#39, 0.31.2). The
+# diacritics (U+0300-U+036F) belong to the word because a Latin letter put in place of a lookalike composes with the
+# one after it: Cyrillic "с" + U+0327 becomes "ç", and the lookalikes after the mark are then in that Latin word too.
+# Every mark that composes with a Latin letter is in that block (unicodedata, checked by the tests).
+_RE_WORD_LETTERS = re.compile(r"(?:[^\W\d_]|[\u0300-\u036f])+")
 _RE_A_LATIN_LETTER = re.compile(r"[A-Za-z]")
 
 
@@ -1001,19 +1004,15 @@ def _latin_lookalikes(match: re.Match) -> str:
 def _plain_letters(text: str) -> str:
     """*text* with letters drawn as Latin ones written as those (_CONFUSABLE); *text* itself when it has none.
 
-    The result is its own rewrite, which the screens rely on: they rewrite a text once (0.31.6). A Latin letter put in
-    place of a lookalike can compose with the combining mark after it (Cyrillic "с" + U+0327 becomes "ç"), and the word
-    that joins may hold lookalikes no earlier word did, so normalizing and rewriting repeat until neither changes."""
+    The result is its own rewrite, which the screens rely on: they rewrite a text once (0.31.6). 0.31.6 took a single
+    pass as final and missed a lookalike before a combining mark; 0.31.7 repeated the pass until nothing changed, which
+    a chain of such pairs made quadratic (Codex review of #142). With the marks inside the word one pass is enough, and
+    a last normalization composes what the rewrite put next to its marks."""
     if text.isascii():
         return text
     text = unicodedata.normalize("NFKC", text)
-    while True:
-        plain = _RE_WORD_LETTERS.sub(_latin_lookalikes, text)
-        if plain == text:
-            return plain
-        text = unicodedata.normalize("NFKC", plain)
-        if text == plain:
-            return plain
+    plain = _RE_WORD_LETTERS.sub(_latin_lookalikes, text)
+    return plain if plain == text else unicodedata.normalize("NFKC", plain)
 
 
 # Quoted spans are reported text ("the test case contains 'ignore previous instructions'"), not instructions.

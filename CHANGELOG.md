@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+### Fixed
+- **False recall in scripts without capitals and unsegmented scripts** (README, Search quality):
+  - **Hindi, Arabic, Bengali, Hebrew, Amharic, Tigrinya**: one common word shared with several facts no longer
+    recalls them, as in English; a shared word counts as a possible name only when it is a word of a declared
+    entity's name or alias, not of a name the store only guessed (a quoted `«पानी»`, water). A name the store does
+    not know, shared alone with facts that all hold it, no longer recalls (by decision: `«מה דניאל לומד?»` needs
+    Daniel as an entity). Hindi, Arabic, Bengali, Amharic and
+    Tigrinya also get their commonest missing function words (Hindi `कि`, `लेकिन`, `क्योंकि`; Arabic `عندما`,
+    `هناك`; Bengali `মধ্যে`, `পারে`).
+  - **Japanese, Korean, Thai**: a query's character n-grams weigh by how rare they are in the store, as words do,
+    and a Japanese gram of hiragana alone by half; Chinese keeps its weights. A gram no fact holds (a question word,
+    `어디`, `どこ`) weighs as the rarest gram of the message some fact holds, so a question about a topic every fact
+    holds still recalls (`«레온은 어디에 살아요?»`). Known limit: in a store of under about 30 facts, grammar a message
+    shares with every fact still recalls them, as before.
+  - FLORES-200 devtest, gate (`tools/african_probe.py`), false recall for a question the store holds no fact for:
+    Hindi 87 % → 43 %, Arabic 80 % → 44 %, Bengali 81 % → 43 %, Amharic 70 % → 45 %, Tigrinya 63 % → 33 %,
+    Japanese 98 % → 46 %, Korean 90 % → 38 %, Thai 75 % → 48 %; the right fact recalled as before (Bengali 100 % →
+    99.7 %). Japanese and Korean pay about 15 ms per gate at 2,000 facts for counting their grams. The new
+    function words cost Hindi 1.2 points of four copied words found first (90.8 % → 89.6 %); Hindi verb forms
+    (`जाता`, `करने`) stayed words: as function words they cost 3.3 points for 0.7 of false recall.
+
 ### Changed
 - **Hausa, Yoruba, Amharic** (README, Languages → African languages): more of their commonest words tell the language.
   - **Hausa**: `a`, `ko`, `yi`, `mai` vote, and `iya`, `masu`, `mafi`, `wajen`, `kasance` are function words. Told

@@ -101,7 +101,7 @@ In `config.yaml` under `plugins.hermes-memory-store`:
 | `temporal_decay_half_life` | `0` | Days; `0` turns recency decay off. Age counts from when the fact's current version was recorded: feedback, keywords and tags do not make a fact younger |
 | `hrr_dim` | `1024` | HRR vector dimensions |
 | `hrr_weight` | `0.3` | Weight of the HRR term in search ranking |
-| `prefetch_min_coverage` | `0.3` | Share of a message's informative words (rarer words weigh more) a fact must match to be recalled before the turn; a fact sharing one word of a longer message is recalled only when no other fact holds that word or it may be a name (capitalized inside the sentence, or in a script without capitals) |
+| `prefetch_min_coverage` | `0.3` | Share of a message's informative words (rarer words weigh more) a fact must match to be recalled before the turn; a fact sharing one word of a longer message is recalled only when no other fact holds that word or it may be a name (capitalized inside the sentence; in a script without capitals, a word of a declared entity's name) |
 | `prefetch_clause_coverage` | `off` | **Experimental.** `on`: a message that asks two separate questions (Russian or English) gives each of them a second look at the facts the coverage gate left out, so the answer to the shorter question is not lost. Only for a fact that holds two words of its question and names the person that question is about. Not in the setup wizard; a value it does not recognise reads as off. See [Two questions in one message](#two-questions-in-one-message-experimental) |
 | `graph_expansion` | `off` | `on`: search adds facts one co-occurrence edge out of the entities the message names, as discoveries in the tail of the result list. Off by default until it is measured on a real store; not in the setup wizard, and a value it does not recognise reads as off. See [docs/memory-graph.md](docs/memory-graph.md) |
 | `prefetch_repeat_turns` | `6` | A fact recalled before a turn is not injected again for this many turns of the session |
@@ -797,8 +797,18 @@ What it does not do: find a fact through a synonym or another root that no keywo
 drive" and "to run a company". One shared word is not enough when other facts hold it too: "What day is today?" recalls
 none of the facts that happen "every day" (0.17.8), but when one fact alone says "through the week", "How's the
 weather this week?" still recalls it, as "wifi password?" recalls the one fact about a password: one word cannot tell
-the two apart. In a script without capitals (Hebrew, Hindi, Arabic) a name cannot be told from a common word, so
-there one shared word recalls as it did. Stems are search keys, not lemmas: an irregular form can miss (`ponies` / `pony`). A
+the two apart. In a script without capitals (Hebrew, Hindi, Arabic, Bengali, Ethiopic) a name cannot be told from a
+common word, so there a shared word counts as a name only when it is a word of a declared entity's name or alias
+(unreleased; a word the store only guessed as a name, such as a quoted «पानी», water, does not count): «מה דניאל לומד?»
+recalls the facts about Daniel when Daniel is an entity, and one shared common word recalls nothing. Until then any
+word counted as a possible name, and on FLORES-200 one shared common word recalled something for 87 % of Hindi and
+80 % of Arabic questions about facts the store does not hold (43 % and 44 % now; the right fact as before). Japanese,
+Korean and Thai, compared by character n-grams, weigh a gram by how rare it is in the store, and a Japanese gram of
+hiragana alone by half (unreleased): grammar such as して, ます, 있습니다 recalls a fact on its own less often (false
+recall Japanese 98 % → 46 %, Korean 90 % → 38 %, Thai 75 % → 48 %). A gram no fact holds, such as a question word
+(어디, どこ), weighs as the rarest gram of the message that some fact holds, so «레온은 어디에 살아요?» still recalls the
+facts about Leon when all of them name him; the price is a small store (under about 30 facts), where grammar a
+message shares with every fact is the rarest thing it shares and recalls them, as before. Stems are search keys, not lemmas: an irregular form can miss (`ponies` / `pony`). A
 negation counts for the whole clause up to a "but" ("likes cats but not dogs" is detail, not a conflict), not for a
 single word. `auto_extract` recognises English, Russian, Chinese and French phrasing. French covers a sentence that
 opens with a preference (`Je préfère…`, `J'aime…`, `J'adore…`, `J'utilise…`, `Je n'aime pas / plus…`, `Je n'utilise

@@ -721,6 +721,7 @@ class EntityMixin:
                 index: dict[str, list[tuple]] = {}
                 names: dict[int, list[str]] = {}
                 forms: set[str] = set()
+                safe: set[str] = set()
                 if self._keyed():
                     for row in self._conn.execute("SELECT ea.entity_id, ea.alias FROM entity_aliases ea "
                                                   "JOIN entities e ON e.entity_id = ea.entity_id"):
@@ -736,6 +737,8 @@ class EntityMixin:
                         if len(key) > 1 or (key and row["entity_type"] == "declared"):
                             # each word as written too, as text.name_lemmas spells a first form: «алена» of «Алёна»
                             written = tuple(w.text.replace("ё", "е") for w in analyze(name).words)
+                            safe.update(written)
+                            safe.update(k for word_forms, _ in key for k in word_forms)
                             # a one-word name with a capital that matches by its keys (not a Latin one, matched
                             # as written) is mentioned in lower case only as written: «марк», not «мире» of «Мира» (H9)
                             capital = len(key) == 1 and not key[0][1] and _is_capitalized(name.strip())
@@ -744,7 +747,7 @@ class EntityMixin:
                         glued = name.strip().lower()
                         if UNSEGMENTED.search(glued) and len(glued) >= 2 and (len(key) > 1 or row["entity_type"] == "declared"):
                             index.setdefault("", []).append((int(row["entity_id"]), glued))  # "" = substring names
-                cached = self._entry["entities"] = (version, index, frozenset(forms))
+                cached = self._entry["entities"] = (version, index, frozenset(forms), frozenset(safe))
             return cached[1]
 
     def known_name_forms(self) -> frozenset:
@@ -756,6 +759,15 @@ class EntityMixin:
         with self._lock:
             self._known_entities()
             return self._entry["entities"][2]
+
+    def safe_name_forms(self) -> frozenset:
+        """The words, as written and by their keys, of the names safe to match in free text (the index above:
+        multi-word names, and one-word names only when declared): «דניאל» of a declared «דניאל», which has no keys
+        (Hebrew names are not inflected), «मीरा» and its stems. A guessed one-word name such as a quoted «पानी» is
+        none of them. Cached with the index."""
+        with self._lock:
+            self._known_entities()
+            return self._entry["entities"][3]
 
     def mentioned_entity_ids(self, text: str) -> set[int]:
         """Known entities whose name (or alias) occurs in *text* as a run of words: a Latin-script name as written

@@ -320,6 +320,20 @@ _EXTRACT_CATEGORIES = (
       re.compile(r'\bI\s+(?:always|never|usually)\s+\S', re.IGNORECASE),
       re.compile(r'(?:^|\s)я\s+(?:предпочитаю|люблю|использую|пользуюсь|обычно|всегда|никогда|не\s+ем|не\s+пью)\s+\S', re.IGNORECASE),
       re.compile(r'(?:^|\s)мо[йяеи]\s+любим\w+\s+\S', re.IGNORECASE),
+      # Russian «мне нравится» (after the per-language precedent of French #92): first person only — «ему / ей /
+      # тебе нравится» is somebody else's, and a bare «нравится» has no owner. «мне не нравится» is a lasting
+      # dislike, as «не ем» is. What follows has to be named: an object, or a «когда»-clause («мне нравится, когда
+      # тесты зелёные» is a lasting preference); a bare «мне нравится, спасибо» says nothing. A pointer object
+      # («мне нравится это») is a reply, taken out by the Russian branch of _RE_REACTION, as the French and Spanish
+      # replies are.
+      re.compile(r'(?:^|\s)мне\s+(?:очень\s+|больше\s+)?(?:не\s+)?нрав(?:ится|ятся)(?:\s+\S|\s*,\s*когда\b)', re.IGNORECASE),
+      # «мне удобнее / удобней …»: a comparative preference about the person, no subject needed («так удобнее»);
+      # unlike «нравится» it may end the sentence («Мне так удобнее.») and stay a preference.
+      re.compile(r'(?:^|\s)мне\s+(?:так\s+|ведь\s+)?удобн(?:ее|ей)(?:\s+\S|\s*[.!?…]*\s*$)', re.IGNORECASE),
+      # «мне лучше …»: the same comparative preference («лучше всего работается утром» is covered by «лучше\s+\S»,
+      # «Мне так лучше.» ends the sentence). Impersonal advice («Лучше писать тесты до кода») and third person
+      # («Ему лучше …») have no «мне» and are not matched.
+      re.compile(r'(?:^|\s)мне\s+(?:так\s+|ведь\s+)?лучше(?:\s+\S|\s*[.!?…]*\s*$)', re.IGNORECASE),
       _FR_EXTRACT[0],
       # Chinese, Traditional and Simplified (after itpartypattaya/hermes-plugin-holographic#2 by au61987ai-code). The
       # sentence must open with the preference — "I" or no subject — so "你喜歡什麼" (what do YOU like) and "他喜歡吃辣"
@@ -333,6 +347,10 @@ _EXTRACT_CATEGORIES = (
       re.compile(r'\bthe\s+project\s+(?:uses|needs|requires)\s+\S', re.IGNORECASE),
       re.compile(r'(?:^|\s)мы\s+(?:решили|договорились|выбрали)\s+\S', re.IGNORECASE),
       re.compile(r'(?:^|\s)в\s+проекте\s+(?:используем|используется|нужен|нужна|нужно)\s+\S', re.IGNORECASE),
+      # Russian «давай + we-verb» (a future decision, after the per-language precedent of French #92): a proposal
+      # to do the thing together commits the project, as "we decided" does. Only the first-person plural, so
+      # «давай сделаешь» (an order to the assistant) and «давай я сделаю» (the speaker alone) are not matched.
+      re.compile(r'(?:^|\s)давай\s+(?:сделаем|используем|выберем|возьмём|оставим|напишем|добавим|попробуем|будем)\s+\S', re.IGNORECASE),
       _FR_EXTRACT[1],
       # Chinese: an explicit deciding subject ("你必須先備份" is an order to the assistant, not a decision), or the
       # project / its rules as the subject, as "the project uses …" is in English.
@@ -360,6 +378,16 @@ _RE_REACTION = re.compile(
     r'(?:it|(?:this|that|these|those)(?:\s+[^\W\d_]+)?)' + _REACTION_END +
     r'|(?:^|\s)я\s+(?:тоже\s+|очень\s+)?(?:предпочитаю|люблю|использую)\s+'
     r'(?:это|то|такое|(?:этот|эта|это|эти|тот|та|те)\s+[^\W\d_]+)' + _REACTION_END +
+    # Russian «мне нравится это», «мне не нравится этот формат», or a bare «мне нравится, спасибо»: a reply to
+    # the assistant, like "me gusta eso" in Spanish. «мне нравится тёмная тема» names its object and is kept; so is
+    # «мне нравится, когда …» (a lasting preference, not a reply) — the lookahead keeps the comma out of the reaction
+    # unless «когда» follows it, and the comma branch of the extract pattern stores the whole clause.
+    r'|(?:^|\s)мне\s+(?:очень\s+|больше\s+)?(?:не\s+)?нрав(?:ится|ятся)(?!\s*,\s*когда\b)'
+    r'(?:\s+(?:это|то|такое|(?:этот|эта|это|эти|тот|та|те)\s+[^\W\d_]+))?' + _REACTION_END +
+    # «мне лучше этот вариант», «мне лучше то, что ты предложил»: choosing among the assistant's options, like the
+    # «нравится» replies. Unlike «нравится», a bare «Мне лучше.» says nothing against anyone — it stays a preference
+    # — so the demonstrative object is required here, not optional.
+    r'|(?:^|\s)мне\s+(?:так\s+|ведь\s+)?лучше\s+(?:это|то|такое|(?:этот|эта|это|эти|тот|та|те)\s+[^\W\d_]+)' + _REACTION_END +
     # French: any run of adverbs ("je n'aime pas du tout ça", "j'aime aussi cette proposition"), then "ça / cela /
     # ceci", "ce / cet / cette / ces" and at most one word, or nothing ("J'aime bien, merci"), up to the end of the
     # clause; or "celui-ci / celle-là" with a passing "pour le moment" at most ("Je préfère celui-ci pour le moment").

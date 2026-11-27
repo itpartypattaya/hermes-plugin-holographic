@@ -333,14 +333,14 @@ STOP = {
     ngapi
     je ee kuna ilikuwa alikuwa walikuwa ilikuwa asante tafadhali sawa"""),
 "ha": _folded("""
-    da a na ya ta ba su ne ce mai ko yi kuma cikin wani wasu sun suka yana tana suna shi ita mu ku ni kai ke ka
+    da a na ya ta ba su ne ce ko yi kuma cikin wani wasu sun suka yana tana suna shi ita mu ku ni kai ke ka
     za zai zan zata zasu don domin saboda amma sai idan in inda yadda haka wannan wancan waɗannan waɗanda wanda daga
     zuwa ga kan bisa game tare har kafin bayan yayin lokacin cewa wai fa kuwa ma nan can yanzu babu akwai shine shi
     yake take muna kuna nake ake aka ana an duk dukka kowa komai kome me mece wane wace wa ina yaushe nawa to madalla
-    nagode sannu"""),
+    nagode sannu iya masu mafi wajen kasance"""),
 "yo": _folded("""
     ni ti si won awon ati lati fun pe mo re wa ko bi ki ba kan naa yii eyi pelu sugbon nitori nigba tabi lori ninu
-    sinu maa ma le gbogbo pupo opolopo oun emi iwo awa yin mi ju kini tani nibo nigbawo bawo eelo"""),
+    sinu maa ma le gbogbo pupo opolopo oun emi iwo awa yin mi ju kini tani nibo nigbawo bawo eelo to o"""),
 "so": _folded("""
     oo waa ayaa ku ka in uu ay soo la iyo ee ah si ugu waxa waxaa waxay wuxuu waxuu ayuu ayay aad kale inuu inay
     inaad markii marka isku uga lagu laga loo loogu sida sidoo kala inta ilaa iyada isaga iyaga aniga adiga annaga
@@ -361,7 +361,8 @@ STOP = {
 "am": _folded("""
     ላይ ውስጥ ወደ ወይም ወይ ጋር ሲሆን ግን ይህ ያ እንደ ነው ናቸው ናት ነበር ነበሩ በኋላ ብቻ በላይ እስከ ያለ ያሉ ይህም ይህን እንኳን ሌላ ሌሎች
     እነዚህ በዚህ ከዚህ ለዚህ አሁን ቢሆንም እንዲሁም ከዚያ በኩል ሆኖም እና እናም በጣም ምንም ሁሉ ማን ምን የት መቼ እንዴት ለምን ስንት
-    እኔ አንተ አንቺ እሱ እሷ እኛ እናንተ እነሱ እርስዎ በፊት መካከል ስለ ብዙ"""),
+    እኔ አንተ አንቺ እሱ እሷ እኛ እናንተ እነሱ እርስዎ በፊት መካከል ስለ ብዙ በ ከ የ ለ ይችላል ይችላሉ ያለው ያላቸው ደግሞ ሆኖ ተብሎ የሆነ
+    ሊሆን ከሆነ ድረስ ሁሉም አሉ ብዙውን አንዳንድ አንዱ ስር"""),
 "ti": _folded("""
     ናይ ኣብ አብ እቲ ካብ ናብ እዩ እዮም እያ ኢዩ ወይ ድማ ከም እዚ ምስ ነቲ እቶም እታ እተን ግን ግና እውን ዘሎ ከኣ ኸኣ እኳ ኣብቲ
     ናይቲ ካብቲ ልዕሊ ዋላ ይኹን ብዛዕባ ስለ ቅድሚ ድሕሪ ክሳብ ክሳዕ እዞም እዛ ኣብዚ ከምኡ ከምኡውን ኣዝዩ ጥራይ እምበር ኩሉ ገለ
@@ -386,13 +387,16 @@ _WEAK = {
     # "nie" (Polish), Hausa "yake" (Swahili); a tie keeps both languages. Measured on FLORES-200 devtest
     # (tools/african_probe.py): no sentence of the ten older Latin languages changes language (one Polish sentence
     # in 1012 gets a tie with Swahili), while Swahili goes from 52 % to 95 % told, Hausa 21 % to 69 %, Yoruba 61 %
-    # to 84 %.
+    # to 84 %. Unreleased: Hausa "a", "ko", "yi" vote, and Hausa "mai" (a name too: «Mai ko?» is about Mai) and
+    # Yoruba "lo", "se", "je", "fi" vote as search words (_VOTE_ONLY): Hausa 69 % to 91 %, Yoruba 84 % to 92 %, one
+    # more Polish and one Portuguese sentence tied. Hausa
+    # "ya" and Yoruba "o" stay weak: as votes they tie Turkish, Portuguese and Polish sentences.
     "sw": _folded("la cha ni si au kama tu hata hawa yule ile pale lake wake yake yao mimi sisi hadi bila "
                   "basi pia nje nini nani je kuwa kuna haya sawa kati wale wangu kule ule"),
-    "ha": _folded("a na ya su ce mai ko yi sun mu ku ni kai ke ka za zan don in an ga kan bisa game har "
+    "ha": _folded("ya na su ce sun mu ku ni kai ke ka za zan don in an ga kan bisa game har "
                   "sai ma wa me ina yana tana suna amma can nan take aka ana fa to ita bayan babu shine muna kuna "
                   "duk suka nawa"),
-    "yo": _folded("won fun kan ma ju lori emi tani yin kini iwo"),
+    "yo": _folded("won fun kan ma ju lori emi tani yin kini iwo to o"),
     "so": _folded("ku ka in ay la si ah ama kan tan mar kale sida kala badan ma aan wax kuwa kaas lakin"),
     "zu": _folded("uma nje nini cha bona mina nina yena lona kube kuya labo laba"),
     "af": _folded("die van is en het in te om wat dit op met dat as se was na kan aan sal daar maar jou by toe een uit "
@@ -403,7 +407,9 @@ _WEAK = {
 # "voy") are function words of French and Italian here, and without them "Irma va a la escuela" was French or Italian
 # (no Spanish stems, no verb forms); as function words they would be dropped from a question, and "¿Cómo va Javier?"
 # meets "fue" through them (see word_lemmas).
-_VOTE_ONLY = {"es": _folded("va van vas voy")}
+# Yoruba verbs as common as function words, lọ (go), ṣe (do), jẹ (be, eat), fi (use, put), tell the language as
+# they stay search words.
+_VOTE_ONLY = {"es": _folded("va van vas voy"), "yo": _folded("lo se je fi"), "ha": _folded("mai")}
 _AM_ONLY, _TI_ONLY = STOP["am"] - STOP["ti"], STOP["ti"] - STOP["am"]
 # Every function word, for checks that do not know the language (a Latin word in Chinese text, the sides of "aka"):
 # of the African languages only the words that are no word or name elsewhere ("game", "can", "Yao" stay words).

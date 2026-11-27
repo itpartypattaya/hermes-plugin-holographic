@@ -235,6 +235,24 @@ STOP = {
     той только том ты у уже хотя чего чей чем что чтобы чье чья эта эти это этот я ага ок окей спасибо привет пожалуйста
     да нет ладно хорошо понял поняла давай конечно просто вообще кстати понятно ясно угу кого кому чему чем ведь вон
     чём всё моё твоё своё нём"""),
+# Ukrainian and Belarusian (unreleased): dropped only in text told to be in them (_cyrillic_langs), never in Russian
+"uk": _folded("""
+    а або адже але аж б би бо був була були було бути в вам вас ваш ваша ваше ваші вже ви від він вона вони воно все
+    всі всього всіх де для до дуже є ж же з за зараз зі і із її їй їм їх й його йому коли кого кому крім лише між
+    мене мені ми мій мною моє моя мої на навіть над нам нами нас наш наша наше наші не неї нею ні ніж ним ними них
+    нього о об ось от по під після поки при про проте саме свій своє своя свої себе собі та так також там те теж ти
+    тим тих то тобі тобто той тому треба тут у уже усе усі хоча хто це цей ці цим цих цього цю ця чи чий чия чиє чиї
+    чим чого що щоб щось як якщо можна може буде будуть
+    ок окей дякую привіт будь ласка гаразд добре зрозумів зрозуміла давай звісно звичайно просто взагалі зрозуміло
+    ясно ага угу я"""),
+"be": _folded("""
+    а або але аж б бо бы быў была былі было быць вам вас ваш ваша вашы ужо ўжо вы да дзе для з за зараз і й ім іх
+    яго ёй ёю яе каб калі каго каму акрамя толькі паміж мяне мне мной мы мой мая маё мае на нават над нам намі
+    нас наш наша нашы не ні чым ён яна яно яны аб па пад пасля пакуль пры пра праз сам свой свая сваё свае сябе сабе
+    так таксама там тое той тая тыя ты табе цябе таму трэба тут у ў усё ўсё усе ўсе хоць хто гэта гэты гэтая гэтае
+    гэтыя гэтага гэтай гэтаму гэтым гэтых гэту ці чый чаго што як
+    ад ёсць будзе будуць можна можа ок дзякуй прывітанне ласка добра зразумеў зразумела давай вядома проста наогул
+    дарэчы ясна ага угу я"""),
 "es": _folded("""
     a al algo alguna algunas alguno algunos algún ante antes como cómo con contra cual cuál cuales cuando cuándo cuanto
     cuánto cuanta cuánta cuantos cuántos cuantas cuántas de del desde donde dónde adónde durante e el él ella ellas ellos
@@ -418,7 +436,7 @@ _AM_ONLY, _TI_ONLY = STOP["am"] - STOP["ti"], STOP["ti"] - STOP["am"]
 # Every function word, for checks that do not know the language (a Latin word in Chinese text, the sides of "aka"):
 # of the African languages only the words that are no word or name elsewhere ("game", "can", "Yao" stay words).
 STOPWORDS = frozenset().union(*(words - (_WEAK.get(lang, frozenset()) if lang in _TWO_WORDS else frozenset())
-                                for lang, words in STOP.items()))
+                                for lang, words in STOP.items() if lang not in ("uk", "be")))
 _VOTERS = {lang: (words | _VOTE_ONLY.get(lang, frozenset())) - _WEAK.get(lang, frozenset())
            for lang, words in STOP.items()}
 
@@ -427,6 +445,11 @@ _VOTERS = {lang: (words | _VOTE_ONLY.get(lang, frozenset())) - _WEAK.get(lang, f
 # out of a query's terms only, never out of a fact's words, duplicate or conflict checks.
 QUERY_ONLY_STOP = _folded("""какой какая какое какие какого какому каким каком какую каких какими каков который которая
     которое которые которого которой которому которым котором которую которых сколько куда откуда почему зачем""")
+# ... and their Ukrainian and Belarusian counterparts (unreleased), only in a query told to be in one of them: «КОТРА»
+# may name an agency in a Russian one
+_SLAVIC_QUERY_ONLY = _folded("""який яка яке які якого якої якому якій яким якими яких яку якою котрий
+    котра котре котрі котрого скільки куди звідки чому навіщо
+    якая якое якія якога якой якім якіх якую якімі колькі куды адкуль чаму навошта""")
 
 NEGATORS = _folded("""nicht kein keine keinen keinem keiner nie niemals nichts
     not no never nobody nothing cannot don't doesn't didn't isn't aren't wasn't weren't won't can't
@@ -434,6 +457,7 @@ NEGATORS = _folded("""nicht kein keine keinen keinem keiner nie niemals nichts
     ningún ninguna ninguno ne pas jamais aucun aucune non não nem nenhum nenhuma tidak tak bukan belum jangan لا لم لن
     ليس ليست नहीं न मत না নয় নেই নি nessuno nessuna niente nulla değil yok hiç asla hayır nigdy nic żaden żadna żadne
     nikt niet geen nooit niets niemand""")  # not Italian "mai" (never): French "mai" (May)
+NEGATORS = NEGATORS | _folded("ні ніколи немає ніхто ніщо ніколі няма нішто")  # Ukrainian, Belarusian (unreleased)
 
 
 # Function words a claim still needs ("with sugar" / "without sugar"), and conjunctions after which a negation belongs
@@ -442,6 +466,8 @@ CLAIM_WORDS = _folded("with without avec sans con sin com sem dengan tanpa mit o
                       "senza ile olmadan z ze bez met zonder")
 CONTRASTIVE = _folded("but however pero sino mais mas porém tapi tetapi namun aber sondern jedoch لكن बल्कि लेकिन किंतु "
                       "কিন্তু но però tuttavia invece bensì ama fakat ancak lakin ale lecz jednak maar echter")
+CLAIM_WORDS = CLAIM_WORDS | _folded("з із зі")  # Ukrainian, Belarusian (unreleased); "без" is above
+CONTRASTIVE = CONTRASTIVE | _folded("але проте однак аднак")
 
 
 def _greeting_key(text: str) -> str:
@@ -456,6 +482,9 @@ GREETINGS = frozenset(_greeting_key(g) for g in """
     thankyou|thanksalot|thankssomuch|
     доброеутро|добрыйдень|добрыйвечер|спокойнойночи|добройночи|утро|привет|приветик|всемпривет|здравствуй|здравствуйте|
     какдела|спасибо|спасибобольшое|благодарю|
+    привіт|вітаю|всімпривіт|доброгоранку|добрийранок|добрийдень|добрийвечір|надобраніч|як справи|дякую|
+    дуже дякую|щиро дякую|
+    прывітанне|добры дзень|добрай раніцы|добры вечар|дабранач|як справы|дзякуй|вялікі дзякуй|
     早上好|早安|上午好|中午好|下午好|晚上好|晚安|你好|您好|大家好|嗨|谢谢|多谢|非常感谢|
     hola|buenos días|buen día|buenas|buenas tardes|buenas noches|hola a todos|qué tal|gracias|muchas gracias|mil gracias|
     bonjour|bonsoir|salut|coucou|bonne nuit|bonne journée|bonne soirée|bonjour à tous|salut à tous|ça va|merci|
@@ -515,6 +544,9 @@ COURTESY = frozenset(_greeting_key(g) for g in """
     как твой день|как настроение|что нового|как сам|как сама|как твоя неделя|как прошла неделя|как выходные|
     как прошли выходные|с пятницей|с праздником|с выходными|с днём рождения|с днем рождения|поздравляю|
     сладких снов|спи спокойно|и тебе|и вам|взаимно|у меня всё хорошо|у меня все хорошо|нормально|
+    привіт|вітаю|дякую|дуже дякую|будь ласка|добре|гаразд|зрозуміло|бувай|до зустрічі|на добраніч|гарного дня|
+    як справи|у мене все добре|прывітанне|дзякуй|вялікі дзякуй|калі ласка|зразумела|бывай|да сустрэчы|да заўтра|
+    дабранач|добрага дня|як справы|
     buongiorno|buonasera|buonanotte|buon pomeriggio|ciao|salve|ehi|grazie|grazie mille|mille grazie|grazie tante|
     molte grazie|prego|di niente|figurati|perfetto|ottimo|benissimo|bene|va bene|d'accordo|capito|certo|sì|tutto bene|
     tutto ok|come stai|come va|come state|sto bene|anche tu|anche a te|altrettanto|arrivederci|a dopo|a domani|a presto|
@@ -775,6 +807,262 @@ def _ethiopic_langs(words: list[str]) -> tuple[str, ...]:
     return ("am",) if am > ti else ("ti",) if ti > am else ("am", "ti")
 
 
+# -- Ukrainian and Belarusian (unreleased) ---------------------------------------------------------------------------
+# Cyrillic text is Russian unless its words say otherwise. A word says a text is not in a language when it has a letter
+# that language does not write, or is a common function word of another of the three that is no word of it: Ukrainian
+# has no ы э ё ъ, Belarusian no и щ ъ ї є ґ, Russian no і ї є ґ ў and no apostrophe inside a word. Russian text is told
+# from the others by such words as «что», «это», «из», «и», Ukrainian by «що», «це», «від», Belarusian by «што», «гэта».
+# A text is Ukrainian or Belarusian only when at least two of its words rule out Russian (_CYRILLIC_MIN) and more of
+# them do than rule out that language; a tie stays Russian. So one Ukrainian word in a Russian message changes nothing
+# («Київ посетил турист», «Як», a yak, «настроілі» typed on a Ukrainian layout), and a short Ukrainian message with one
+# telling word stays Russian, as all Cyrillic was before. Names do not vote: a word written with a capital inside a
+# sentence («Поеду в Київ», «Ковальчук»), unless the whole word is in capitals; nor do words in quotes («сказал
+# "дякую ще"»). An apostrophe is no evidence: Russian writes it for ъ where a keyboard has none («под’езд»), as
+# Ukrainian and Belarusian write it in «м'ясо», «сям'я».
+_CYRILLIC = ("ru", "uk", "be")
+_CYRILLIC_MIN = 2
+_NOT_LETTERS = {"ru": re.compile("[іїєґў]"), "uk": re.compile("[ыэёъў]"), "be": re.compile("[ищъїєґ]")}
+_NOT_WORDS = {
+    # Ukrainian and Belarusian words spelled with letters Russian has; none is a Russian word
+    "ru": _folded("""що це цей ця цю цих цього цьому цим який яка яке якого якому якою якщо вона воно вони його йому
+        нього свого ми ви вже ще або дуже треба можна був була було були бути будемо будеш будуть хоче хоча можу можемо
+        мають тобто отже проте адже але аби хто чому куди щось хтось десь вчора трохи мене також теж лише щоб чи
+        тепер мого твого нашого вашого кожен кожна кожного багато чого поки спочатку завжди дякую як
+        што гэта гэты гэтая гэтага гэтым гэтай ён яно таксама ёсць няма сёння учора твая яго яе трэба дзе
+        чаму куды адкуль будзе будуць каб ужо яшчэ пра праз пасля таму мяне цябе табе сябе можа нават цяпер тады вось
+        дзякуй"""),
+    # Russian and Belarusian words spelled with letters Ukrainian has; none is a Ukrainian word
+    "uk": _folded("""что это как он она оно они его ее её или где кто когда еще ещё только очень тоже нет есть если
+        чтобы этот эта эти этим этих этого этому из даже здесь сейчас теперь потом тогда нужно надо можно нельзя
+        сегодня вчера хорошо спасибо пожалуйста привет конечно вообще кстати понятно чему чем ведь мне меня тебя
+        себя им него нее была будет может всех тот вот но или и к ко со под после между около кроме также лишь
+        куда откуда почему зачем сколько какой какая какое какие которая такой свой мой твой
+        што гэта гэтага яна яно ён яго яе трэба дзе чаму каб ужо пра праз пасля таму мяне цябе табе сябе можа нават
+        цяпер тады вось дзякуй будзе"""),
+    # Russian and Ukrainian words spelled with letters Belarusian has; none is a Belarusian word
+    "be": _folded("""что это как он она оно его ее её где кто когда еще ещё только очень тоже нет уже есть если чтобы
+        этот эта даже здесь сейчас теперь потом тогда надо нужно можно сегодня вчера хорошо был будет может вот но
+        от под про по до к со в во об все весь всё всех тот меня тебя тебе себя чего
+        це цей ця цю цього цьому цим яка яке вона воно його йому нього свого вже дуже треба був була було будуть хоче
+        можу тобто отже проте хтось десь вчора мене також теж лише тепер кожен багато чого із зі під між після
+        через де"""),
+}
+
+
+def _cyrillic_langs(words, names: frozenset = frozenset()) -> tuple[str, ...]:
+    """Russian, Ukrainian or Belarusian, by the folded Cyrillic *words* that rule a language out (see above), leaving
+    out *names*; ("uk", "be") when both are ahead of Russian by as much; ("ru",) when nothing tells."""
+    against = dict.fromkeys(_CYRILLIC, 0)
+    for word in words:
+        if word in names:
+            continue
+        for lang in _CYRILLIC:
+            if word in _NOT_WORDS[lang] or _NOT_LETTERS[lang].search(word):
+                against[lang] += 1
+    best = min(against["uk"], against["be"])
+    if against["ru"] < _CYRILLIC_MIN or against["ru"] <= best:
+        return ("ru",)
+    return tuple(lang for lang in ("uk", "be") if against[lang] == best)
+
+
+def _maybe_not_russian(lowered: str, words) -> bool:
+    """Could a Cyrillic text be other than Russian: a letter or a word that rules Russian out (_cyrillic_langs counts
+    them only then, so Russian text costs one search and one set check)."""
+    return _NOT_LETTERS["ru"].search(lowered) is not None or not _NOT_WORDS["ru"].isdisjoint(words)
+
+
+_SENTENCE_END = re.compile(r"[.!?…]['\"»”)]*$")
+
+
+_QUOTE_MAX = 3  # a quote of up to this many words is a name or a word a Russian text quotes, not speech
+_QUOTED = re.compile(r'«[^»]*»|„[^“”]*[“”]|“[^”]*”|"[^"]*"')
+
+
+def _non_voting(text: str) -> frozenset:
+    """Folded Cyrillic words that do not tell the language of a text: names, written with a capital and not
+    beginning a sentence («Поеду в Київ»; not a word all in capitals: a text in capitals would lose its every vote),
+    and the words of a short quote («сказал "дякую ще"»)."""
+    out = {fold(_strip_edges(w).lower()) for q in _QUOTED.findall(text) if len(q.split()) <= _QUOTE_MAX
+           for w in q.split()}
+    start = True
+    for token in text.split():
+        word = _strip_edges(token)
+        if word and not start and word[0].isupper() and not word.isupper() and word_script(word) == "cyrillic":
+            out.add(fold(word.lower()))
+        start = _SENTENCE_END.search(token) is not None or (start and not word)
+    return frozenset(out)
+
+
+# Light stemmers of Ukrainian and Belarusian (Snowball has none, and its Russian stemmer leaves most of their endings:
+# «лікарні», «працює», «школі» stay as written). Endings are tried in Snowball's order (a gerund; else, after a
+# reflexive -ся that leaves a verb or an adjective, an adjective, a verb, a noun ending), each the longest that leaves
+# two letters. Where one ending is two (Ukrainian «зарплати» is a noun, «читати» a verb; Belarusian «чытае» a verb,
+# «новае» an adjective, «працаю» a noun, «чытаю» a verb), both stems are keys. Measured on hand-made sets of words
+# with their forms: two forms of one word share a sure key in 89 % (Ukrainian) and 83 % (Belarusian) of pairs on the
+# 99 and 72 words the rules were written on, and in 80 % and 90 % on 25 and 20 words held out, against 37 % and 35 %
+# with the Russian stemmer; Belarusian о / а pairs meet as same-root words (_slavic_roots). Different words of the sets share a key only when they share a root («праца» / «працую»),
+# and Belarusian «хаце» (hut) / «хацець» (to want).
+_SLAVIC_VOWEL = re.compile("[аеєиіїоуюяёыэ]")  # a stem keeps a vowel: «квіти» is no «кв» + «іти»
+
+
+def _endings(words: str) -> tuple:
+    return tuple(sorted(set(words.split()), key=len, reverse=True))
+
+
+def _cut(word: str, endings: tuple, before: str | None = None) -> tuple[str | None, str]:
+    """(the word without the longest of *endings* that leaves two letters, and, with *before*, follows one of those
+    letters; that ending), or (None, "")."""
+    for e in endings:
+        if word.endswith(e) and len(word) - len(e) >= 2 and (before is None or word[-len(e) - 1] in before) \
+                and _SLAVIC_VOWEL.search(word, 0, len(word) - len(e)):
+            return word[:-len(e)], e
+    return None, ""
+
+
+def _longest(word: str, groups: tuple) -> tuple[str | None, str]:
+    best: tuple[str | None, str] = (None, "")
+    for endings, before in groups:
+        stem_, e = _cut(word, endings, before)
+        if stem_ is not None and len(e) > len(best[1]):
+            best = (stem_, e)
+    return best
+
+
+_UK_GERUND = _endings("вши вшись ючи учи ачи ячи")
+_UK_ADJ = _endings("ими іми ього ого ьому ому ьої ої ій ий ім им их іх ою ьою")
+_UK_VERB = ((_endings("ти ть в ла ло ли й йте ймо"), "ая"), (_endings("ю є єш ємо єте ють"), "аяуюії"),
+            (_endings("ити іти ить іть ив ів ила іла или іли ило іло имо імо ите іте иш іш ять ать уть ють ую ує уєш "
+                      "уємо уєте ують"), None),
+            (_endings("ув ула ули уло ути уть"), "н"))  # повернув, повернути
+_UK_NOUN = _endings("ами ями ьми има ах ях ам ям ові еві єві ів їв ей ою ею єю ом ем єм а я о е є и і ї у ю ь")
+
+
+@lru_cache(maxsize=65536)
+def _ukrainian(word: str) -> tuple[str, frozenset]:
+    """(the stem, other sure keys) of a folded Ukrainian word."""
+    if len(word) <= 2:
+        return word, frozenset()
+    extras = set()
+    stem_, e = _cut(word, _UK_GERUND)
+    w, kind = word, "gerund"
+    if stem_ is None:
+        if w.endswith(("ся", "сь")) and len(w) > 4 and (
+                _longest(w[:-2], _UK_VERB)[0] is not None or _cut(w[:-2], _UK_ADJ)[0] is not None):
+            w = w[:-2]
+        # the first of an adjective, a verb, a noun ending that fits; none: the word as it is
+        kind, stem_, e = next(((k, st, en) for k, (st, en) in (
+            ("adj", _cut(w, _UK_ADJ)), ("verb", _longest(w, _UK_VERB)), ("noun", _cut(w, _UK_NOUN)))
+            if st is not None), ("none", w, ""))
+        if kind == "verb":
+            if e in ("ти", "ити", "іти"):
+                extras.add(w[:-1])  # a noun in -ти: «зарплати», «діти», «кредити»
+            if stem_.endswith(("ува", "юва")) and len(stem_) >= 5:
+                stem_ = stem_[:-2]  # «працювати», «працював» / «працює»
+        if kind in ("verb", "noun") and e in ("ю", "ять") and len(stem_) >= 4 and stem_[-1] == "л" \
+                and stem_[-2] in "бпвмф":
+            extras.add(stem_[:-1])  # «люблю», «куплять» / «любити», «купити»
+        if kind == "none" and len(w) >= 5 and w.endswith("ок"):
+            extras.add(w[:-2] + "к")  # «ранок» / «ранку»
+        if kind == "noun" and e == "ь" and len(w) >= 6 and w.endswith("ень"):
+            extras.add(w[:-3] + "н")  # «вересень» / «вересня»
+    stem_ = stem_.rstrip("ь'ʼ")
+    return stem_, frozenset(x.rstrip("ь'ʼ") for x in extras) - {stem_}
+
+
+_BE_GERUND = _endings("ўшы ўшыся ючы учы ачы ячы")
+_BE_ADJ = _endings("ымі імі ага яга аму яму ым ім ых іх ая яя ае яе ыя ія ую юю ой")
+_BE_VERB = ((_endings("ць ў ла ло лі ём ем еш еце"), "аяе"), (_endings("ю е еш ем еце юць"), "аеёіоуыэюя"),
+            (_endings("іць ыць іў ыў іла ыла ілі ылі іло ыло ім ым іце ыце іш ыш уць юць"), None))
+_BE_NOUN = _endings("амі ямі ьмі ыма іма ах ях ам ям ой ёй ай яй ою ёю аю яю ом ём ем оў ёў аў яў ей ы і а я о е у ю ь")
+_BE_VERB_FORM = {"ае": "е", "яе": "е", "ую": "ю", "юю": "ю"}  # an adjective ending that may be a verb's
+
+
+def _be_norm(stem_: str) -> str:
+    """A Belarusian stem as it is compared: дз at the end is д («горадзе» / «горад»); a first ў is у, as it is
+    written after a consonant («ва ўніверсітэце» / «з універсітэта»). Unstressed о and ё are written а and е
+    (akanye: «горад» / «гарады», «робіць» / «рабіць»), which is left to the same-root keys (_slavic_roots): written
+    alike they would join «кот» (cat) and «кат» (executioner), «нос» and «нас»."""
+    if stem_.endswith("дз"):
+        stem_ = stem_[:-1]
+    if stem_.startswith("ў"):
+        stem_ = "у" + stem_[1:]
+    return stem_.rstrip("ь'ʼ")
+
+
+@lru_cache(maxsize=65536)
+def _belarusian(word: str) -> tuple[str, frozenset]:
+    """(the stem, other sure keys) of a folded Belarusian word."""
+    if len(word) <= 2:
+        return _be_norm(word), frozenset()
+    extras = set()
+    w = word[:-3] + "ць" if word.endswith("цца") and len(word) > 5 else word  # -ць + -ся: «вучыцца»
+    stem_, e = _cut(w, _BE_GERUND)
+    kind = "gerund"
+    if stem_ is None:
+        if w.endswith("ся") and len(w) > 4 and (
+                _longest(w[:-2], _BE_VERB)[0] is not None or _cut(w[:-2], _BE_ADJ)[0] is not None):
+            w = w[:-2]
+        # the first of an adjective, a verb, a noun ending that fits; none: the word as it is
+        kind, stem_, e = next(((k, st, en) for k, (st, en) in (
+            ("adj", _cut(w, _BE_ADJ)), ("verb", _longest(w, _BE_VERB)), ("noun", _cut(w, _BE_NOUN)))
+            if st is not None), ("none", w, ""))
+        if kind == "adj" and e in _BE_VERB_FORM:
+            extras.add(w[:-len(_BE_VERB_FORM[e])])  # «чытае», «працую»
+        if kind == "verb":
+            if e in ("ю", "ў", "ць") and w[-len(e) - 1] in "ая":
+                extras.add(w[:-len(e) - 1])  # a noun's «працаю», «білетаў»; the plural «гавораць»
+            if stem_.endswith(("ава", "ява")) and len(stem_) >= 5:
+                stem_ = stem_[:-3] + ("у" if stem_[-3] == "а" else "ю")  # «працаваць» / «працуе»
+        if kind in ("verb", "noun") and e in ("ю", "яць") and len(stem_) >= 4 and stem_[-1] == "л" \
+                and stem_[-2] in "бпвмф":
+            extras.add(stem_[:-1])  # «люблю», «куплю»
+        if kind == "none" and len(w) >= 5 and w.endswith(("ак", "ок")):
+            extras.add(w[:-2] + "к")  # «панядзелак» / «панядзелка»
+    stem_ = _be_norm(stem_)
+    return stem_, frozenset(_be_norm(x) for x in extras) - {stem_}
+
+
+_SLAVIC_STEMS = {"uk": _ukrainian, "be": _belarusian}
+_UK_ALTERNATION = re.compile(r"і([^аеєиіїоуюяь']+)$")  # і of a closed last syllable, often о elsewhere: «кіт» / «кота»
+_MUTATIONS = {"uk": {"ц": ("к",), "з": ("г",), "с": ("х",)}, "be": {"ц": ("к", "т"), "з": ("г",), "с": ("х",)}}
+# ... and the other way, from the form that keeps the consonant to the one that changes it: a question's «донькою» must
+# search the index for the fact's «доньці», which no prefix of «доньк» reaches
+_UNMUTATIONS = {lang: {c: tuple(m for m, cs in table.items() if c in cs) for c in set().union(*table.values())}
+                for lang, table in _MUTATIONS.items()}
+_UK_ALTERNATION_O = re.compile(r"о([^аеєиіїоуюяь']+)$")  # the о of «кота», «школа»: «кіт», «шкіл» elsewhere
+
+
+_AKANYE_MAX = 3  # Belarusian stems with more а than this get no о spellings (each is a key and an FTS prefix)
+
+
+@lru_cache(maxsize=65536)
+def _slavic_roots(word: str, lang: str) -> frozenset:
+    """Unsure keys of a Ukrainian or Belarusian word, compared at _DERIV_WEIGHT as roots are: a consonant the dative
+    and locative change back («доньці» / «донька», «кнізе» / «кніга», «хаце» / «хата»), in Ukrainian the о of
+    other forms of a word whose last syllable has і («кіт» / «кота», «шкіл» / «школа», «рік» / «року»), in Belarusian
+    the stem with о and ё written а and е, and with one а written о (akanye: «гарады» / «горад»): a word whose
+    stressed о is unstressed in another form. Each change also the other way («донька» gets «доньц», «кота» «кіт»):
+    these keys are what the FTS index is searched for (Term.fts_extra), so a fact that has only the other spelling is
+    found, not only scored once something else found it."""
+    stem_, _ = _SLAVIC_STEMS[lang](word)
+    out = set()
+    if lang == "be":
+        plain = stem_.replace("о", "а").replace("ё", "е")
+        out.add(plain)
+        if plain.count("а") <= _AKANYE_MAX:
+            out |= {plain[:i] + "о" + plain[i + 1:] for i, c in enumerate(plain) if c == "а"}
+    if len(stem_) >= 3 and stem_[-1] in _MUTATIONS[lang] and word[-1] in "іеы":
+        out |= {stem_[:-1] + c for c in _MUTATIONS[lang][stem_[-1]]}
+    if len(stem_) >= 3 and stem_[-1] in _UNMUTATIONS[lang]:
+        out |= {stem_[:-1] + c for c in _UNMUTATIONS[lang][stem_[-1]]}
+    if lang == "uk" and len(stem_) >= 3:
+        if m := _UK_ALTERNATION.search(stem_):
+            out.add(stem_[:m.start()] + "о" + m.group(1))
+        if m := _UK_ALTERNATION_O.search(stem_):
+            out.add(stem_[:m.start()] + "і" + m.group(1))
+    return frozenset(r for r in out if len(r) >= _MIN_STEM and r != stem_)
+
+
 _DEFAULT_LANG = {"latin": "en", "cyrillic": "ru", "arabic": "ar", "devanagari": "hi", "bengali": "bn",
                  "ethiopic": "am"}
 
@@ -792,6 +1080,8 @@ def stem(word: str, lang: str | None = None) -> str:
         return _bengali_stem(word)
     if lang == "am":
         return _amharic_stem(word)
+    if lang in _SLAVIC_STEMS:
+        return _SLAVIC_STEMS[lang](word)[0]
     stemmer = _STEMMERS.get(lang)
     return fold(_snowball(stemmer, word, lang)) if stemmer else word
 
@@ -886,6 +1176,9 @@ def _keys(word: str, langs: tuple[str, ...], written: str = "", determined: bool
         keys |= _undotted(written, langs)  # a _NATIVE language in langs added these through _native_keys
     if "am" in langs:
         keys |= _amharic_keys(word)
+    for lang in ("uk", "be"):
+        if lang in langs:
+            keys |= _SLAVIC_STEMS[lang](word)[1]
     if "ar" in langs:
         if "ar" in _STEMMERS:
             keys.add(fold(_STEMMERS["ar"].stemWord(word)))
@@ -1652,15 +1945,18 @@ class Analysis:
     mods: frozenset = frozenset()  # keys of the parts before them
     lemma_keys: frozenset = frozenset()  # (language, key or lemma stem) of the words of determined German / Spanish
     suffix_words: frozenset | None = None  # German words the compound dictionary knows nothing of (None: all)
+    cyrillic: tuple = ("ru",)  # the language of its Cyrillic words: Russian, Ukrainian or Belarusian (_cyrillic_langs)
 
 
-def _stop(word: str, script: str, votes: dict, sentence: bool, ethiopic: tuple = ("am", "ti")) -> bool:
+def _stop(word: str, script: str, votes: dict, sentence: bool, ethiopic: tuple = ("am", "ti"),
+          cyrillic: tuple = ("ru",)) -> bool:
     """A function word of the text's language. For Latin script that language is told by the other words: "son" in
     "where does my son study" is a word, in "il boit son café" French "his". A word that is the only evidence decides
     only in a sentence ("Ana come carne todos los días"), not in a short message ("son", "bisa"): there, with no other
     evidence, the English list applies, as it did to all Latin text before 0.5.0."""
-    if script != "latin":  # Ethiopic: the lists of the language the text is in (ገና is Christmas in Amharic)
-        return any(word in STOP[lang] for lang in (ethiopic if script == "ethiopic" else _SCRIPT_LANGS.get(script, ())))
+    if script != "latin":  # Ethiopic, Cyrillic: the lists of the language the text is in (ገና is Christmas in Amharic)
+        return any(word in STOP[lang] for lang in (
+            ethiopic if script == "ethiopic" else cyrillic if script == "cyrillic" else _SCRIPT_LANGS.get(script, ())))
     others = {lang: votes[lang] - (word in _VOTERS[lang]) for lang in LATIN}
     best = max(others.values())
     if best:
@@ -1683,7 +1979,9 @@ def analyze(text: str) -> Analysis:
     # Latin language by function words (ties keep every tied language; none found: all of LATIN; _WEAK words do not
     # vote). A hyphenated word votes with its first part only: "est-ce" is French by "est", "carry-on" is not French
     # by "on".
-    latin = [fold(g.split("-")[0]) for g in groups if word_script(g) == "latin" and _letters_only(g) and g.split("-")[0]]
+    scripts = [word_script(g) for g in groups]  # each group's script, once
+    latin = [fold(g.split("-")[0]) for g, sc in zip(groups, scripts)
+             if sc == "latin" and _letters_only(g) and g.split("-")[0]]
     votes = {lang: sum(w in _VOTERS[lang] for w in latin) for lang in LATIN}
     for lang in _TWO_WORDS:  # one word of a language with no stemmer does not decide: "Kanye albums" is no Zulu
         if votes[lang] < 2:
@@ -1706,7 +2004,11 @@ def analyze(text: str) -> Analysis:
     ru_forms = _RU_FORM_GROUPS and russian and _ru_text(lowered, {fold(g) for g in groups})
     # German compounds are split, and German or Spanish verb forms get their lemmas, only in text of that language
     german = determined and "de" in langs and "en" not in langs
-    ethiopic = _ethiopic_langs([fold(g) for g in groups if word_script(g) == "ethiopic"])
+    ethiopic = _ethiopic_langs([fold(g) for g, sc in zip(groups, scripts) if sc == "ethiopic"])
+    # Russian, Ukrainian or Belarusian (_cyrillic_langs), looked at only when a letter or word could rule Russian out
+    cyrillic_words = [fold(g) for g, sc in zip(groups, scripts) if sc == "cyrillic"]
+    cyrillic = _cyrillic_langs(cyrillic_words, _non_voting(text)) \
+        if cyrillic_words and _maybe_not_russian(lowered, cyrillic_words) else ("ru",)
     forms_lang = "" if not _LEMMA_FORMS else "de" if german else         "es" if determined and "es" in langs and "en" not in langs else ""  # "he went": English as much as Spanish
     heads, compound_mods, lemma_keys = set(), set(), set()
     # Japanese spelling variants, and kanji kept as written: decided for the whole text, so every word of it folds as
@@ -1724,8 +2026,9 @@ def analyze(text: str) -> Analysis:
         if ident and compounds and "-" in raw and _letters_only(raw):
             ident = False  # "week-end", "sexta-feira", "rendez-vous": a compound word, not a host name
         unsegmented = UNSEGMENTED.search(raw) is not None
-        word_langs = () if ident or unsegmented else langs if script == "latin" else ethiopic if script == "ethiopic"             else _SCRIPT_LANGS.get(script, ())
-        is_stop = not ident and not unsegmented and _stop(word, script, votes, len(latin) >= 4, ethiopic)
+        word_langs = () if ident or unsegmented else langs if script == "latin" else ethiopic if script == "ethiopic" \
+            else cyrillic if script == "cyrillic" else _SCRIPT_LANGS.get(script, ())
+        is_stop = not ident and not unsegmented and _stop(word, script, votes, len(latin) >= 4, ethiopic, cyrillic)
         written = _written(raw) if word_langs and (not _NATIVE.isdisjoint(word_langs) or _KEPT.search(raw)) \
             else word
         written = "" if written == word else written  # only a word whose letters folding changed is stemmed twice
@@ -1741,9 +2044,12 @@ def analyze(text: str) -> Analysis:
             bag.add(piece)
             keys |= _keys(piece, word_langs, "", determined) if word_langs and _letters_only(piece) else {piece}
         root_lang = "" if is_stop or ident or unsegmented or "-" in word else \
-            "en" if script == "latin" and english else "ru" if script == "cyrillic" and russian else \
+            "en" if script == "latin" and english else \
+            ("ru" if russian else "") if script == "cyrillic" and cyrillic == ("ru",) else \
+            cyrillic[0] if script == "cyrillic" and len(cyrillic) == 1 else \
             "am" if script == "ethiopic" and "am" in ethiopic else ""
-        word_roots_ = (_amharic_roots(word) if root_lang == "am" else word_roots(word, stem(word, root_lang), root_lang)) \
+        word_roots_ = (_amharic_roots(word) if root_lang == "am" else _slavic_roots(word, root_lang)
+                       if root_lang in _SLAVIC_STEMS else word_roots(word, stem(word, root_lang), root_lang)) \
             - word_keys if root_lang else frozenset()
         if root_lang:
             roots |= {(root_lang, r) for r in word_roots_}
@@ -1778,7 +2084,8 @@ def analyze(text: str) -> Analysis:
     return Analysis(tuple(words), frozenset(bag), frozenset(keys), folded, langs,
                     german=german, determined=determined, roots=frozenset(roots), lang_keys=frozenset(lang_keys), seamed=zh_seamed(folded),
                     dutch=_NL_COMPOUNDS and determined and "nl" in langs and "en" not in langs, heads=frozenset(heads),
-                    mods=frozenset(compound_mods), lemma_keys=frozenset(lemma_keys), suffix_words=unknown)
+                    mods=frozenset(compound_mods), lemma_keys=frozenset(lemma_keys), suffix_words=unknown,
+                    cyrillic=cyrillic)
 
 
 def _primary_stem(word: str, lang: str, written: str) -> str:
@@ -1828,6 +2135,11 @@ _RU_NAME_CASES = (("ью", ("ь",)), ("ою", ("а",)), ("ею", ("я", "^")), (
 # The names whose stem drops a vowel in its other forms, by that stem. Only these: a rule for every final pair of
 # consonants made «Марек» of «Марка» and «Петер» of «Петра» (Codex review).
 _RU_NAME_DROPPED = {"льв": "лев", "павл": "павел", "любв": "любовь"}
+# Ukrainian and Belarusian case endings with a letter Russian does not write, so no Russian word has them (unreleased):
+# «Оксані», «Марії», «Алесі» (dative, locative), «Петрові», «Андрієві», «Андрієм», «Марією». «Петра», «Оксану»,
+# «Оксаною» are read by the Russian endings above.
+_UK_BE_NAME_CASES = (("ові", ("", "о")), ("еві", ("", "ь")), ("єві", ("й",)), ("єм", ("й",)), ("єю", ("я",)),
+                     ("ї", ("я",)), ("і", ("а", "я", "")))
 
 
 @lru_cache(maxsize=65536)
@@ -1852,6 +2164,9 @@ def name_lemmas(word: str) -> frozenset:
                 out.add(stem_ + first)
             elif stem_ in _RU_NAME_DROPPED:
                 out.add(_RU_NAME_DROPPED[stem_])
+    for ending, firsts in _UK_BE_NAME_CASES:  # every ending that fits: «Любові» is «-і» of «Любов», «Петрові» «-ові»
+        if word.endswith(ending) and len(word) > len(ending):
+            out |= {word[:-len(ending)] + first for first in firsts}
     return frozenset(out)
 
 
@@ -2615,9 +2930,11 @@ def _term_key(w: Word) -> str | None:
 def query_terms(text: str) -> list[Term]:
     """Distinct informative terms of a natural-language query, in order of appearance."""
     seen, terms = set(), []
-    for w in analyze(text).words:
+    analysis = analyze(text)
+    slavic = analysis.cyrillic != ("ru",)  # Ukrainian or Belarusian: their question words are no terms either
+    for w in analysis.words:
         key = _term_key(w)
-        if key is None:
+        if key is None or slavic and w.text in _SLAVIC_QUERY_ONLY:
             continue
         tokens = tuple(w.text.translate(FTS_OPERATORS).split())
         single = len(tokens) == 1

@@ -400,7 +400,8 @@ A word matches another when they share its plain form or its stem in the languag
   a `ge-` that Snowball takes off (`gezin`, family, is not `zin`, sense). Polish needs snowballstemmer 3.1 or newer
   (current Hermes installs 3.1.1); with 2.x Polish words compare as written and the rest of Polish (function words,
   greetings) works.
-- **Which language**: the script decides for Cyrillic, Arabic, Devanagari and Bengali. Latin text is English, Spanish,
+- **Which language**: the script decides for Arabic, Devanagari and Bengali; Cyrillic text is Russian unless its
+  letters and function words say Ukrainian or Belarusian (see below, unreleased). Latin text is English, Spanish,
   French, Portuguese, Indonesian, German, Italian, Turkish, Polish or Dutch by the function words it uses ("the", "el",
   "le", "o", "yang", "der", "il", "bir", "się", "het"). Text with none of them is stemmed in English, Spanish, French,
   Portuguese, Indonesian and German, and in Turkish, Polish or Dutch only when it has their letters (`ı ğ ş`; `ą ę ł ń
@@ -543,6 +544,52 @@ A word matches another when they share its plain form or its stem in the languag
       Hausa is told in 91 % (was 69 %), Yoruba 92 % (was 84 %); false recall goes to 80 % for Hausa and 63 % for
       Yoruba. Hausa `ya` and Yoruba `ó` do not vote, being Turkish, Portuguese and Polish words too. The probe covers
       all 26 languages of the plugin; none of the others moved.
+- **Ukrainian and Belarusian** (unreleased): until now every Cyrillic text was read as Russian, with Russian stems
+  and function words.
+  - **Telling them apart**: a word rules a language out by a letter it does not write (Ukrainian has no `ы э ё ъ`,
+    Belarusian no `и щ ъ ї є ґ`, Russian no `і ї є ґ ў` and no apostrophe inside a word) or by being a common function
+    word of another of the three (`что`, `из`, `и`; `що`, `від`; `што`, `гэта`). A text is Ukrainian or Belarusian only
+    when at least two of its words rule out Russian and more of them do than rule out that language; a tie stays
+    Russian. So one Ukrainian word changes nothing in a Russian message (`Київ посетил турист`, `Як` about a yak,
+    `настроілі` typed on a Ukrainian layout), and a short Ukrainian or Belarusian message with one telling word is read
+    as Russian, as all Cyrillic was before. Names do not vote (a word with a capital inside a sentence, unless it is
+    all in capitals), nor do the words of a quote of up to three (`Поеду в Київ`, `Он сказал «дякую ще»`), nor an
+    apostrophe, which Russian writes for `ъ` (`под’езд`). `Яна` (a Russian name, Belarusian "she"), `де` (Ukrainian
+    "where", the "de" of Spanish names) and `й` (as in `2-й`) do not vote either. Russian text reads exactly as
+    before; one with a Ukrainian letter in a name still gets no Russian same-root words, as before.
+  - **Function words** of each are dropped in its text only, as Russian ones are; question words (`який`, `скільки`,
+    `чому`; `які`, `колькі`, `чаму`) are left out of the terms of a Ukrainian or Belarusian query (not a Russian
+    one: `КОТРА` may name an agency) and kept in facts. The lists are not in the language-blind stopword set, so
+    `Иван aka Ласка` keeps its alias. Greetings and thanks
+    (`Привіт!`, `Дякую, гарного дня!`, `Дзякуй`) ask nothing.
+  - **Stems**: Snowball has no Ukrainian or Belarusian stemmer, and its Russian one leaves most of their endings
+    (`лікарні`, `працює`, `школі` stay as written). A light suffix stripper of the plugin's own for each: on hand-made
+    sets of words with their forms, two forms of one word share a key in 80–90 % of pairs, against 35–37 % with the
+    Russian stemmer. Where one ending can be two (`зарплати` a noun, `читати` a verb; Belarusian `чытае` a verb,
+    `новае` an adjective), both stems are keys; a first `ў`/`у` compare alike. Belarusian unstressed `о`/`а`
+    (`горад` / `гарады`), a consonant the dative changes (`доньці` / `донька`, `кнізе` / `кніга`) and the Ukrainian
+    `і` of a closed syllable (`кіт` / `кота`, `рік` / `року`) count as same-root words: 0.6, never a recall alone, so
+    `кот` (cat) does not recall `кат` (executioner). The other spellings are searched in the index too, either way,
+    so `гарады` finds `горад`, `донькою` finds `доньці`, `кота` finds `кіт` and `кніга` finds `кнізе`.
+  - **Names** in a Ukrainian or Belarusian case with a letter Russian lacks share their first form (`Оксані`,
+    `Марії`, `Андрієм`, `Алесі`).
+  - **Measured** on FLORES-200 devtest (`tools/african_probe.py`, which now covers 28 languages):
+    - **Russian is unchanged** in every number: 1,012 of 1,012 sentences stay Russian (none gets Ukrainian or
+      Belarusian), and so do their beginnings of 2 to 8 words; search and recall measure as before. The analysis and
+      query terms of all 2,009 Russian FLORES sentences and of the test suite's Russian strings are identical to
+      0.33.0's. None of the other 25 languages moved.
+    - **Telling the language**: 98.4 % of Ukrainian and 99.2 % of Belarusian sentences (all were Russian before).
+      A short message says less, since it takes two telling words: of the first three words of a sentence 39 %
+      (Ukrainian) and 29 % (Belarusian) are told, 5 % and 3 % tie the two, and the rest is read as Russian, as
+      before. With one telling word enough, 70 % and 62 % were told, but one Ukrainian word turned a Russian message
+      Ukrainian (`Київ посетил турист` lost its Russian stems): Russian comes first.
+    - **False recall** for a question whose fact the store does not hold: Ukrainian 82 % → 49 %, Belarusian
+      58 % → 54 %; the right fact is recalled 99.3 % and 99.0 % of the time (was 100 %).
+    - **The cost**: four words copied from a sentence find it first 1.2 (Ukrainian) and 1.5 (Belarusian) points
+      less often (97.4 %, 97.7 %), since the function words they shared with it no longer count; the stems cost
+      nothing there (measured with Russian stems in their place: the same).
+  - **Left Russian-only**: the experimental Russian case forms (`_RU_FORMS`), the borrowed-word table (`телеграмі` is
+    not one of its forms), the sensitive-data patterns of `screen.py`, and splitting a message into two questions.
     - **Names**: MasakhaNER name words written with a capital and dropped as function words stay at 0.1–0.6 % (they
       were 0.1–0.8 %, through the other languages' lists). Amharic has 1.5 %: `እስከ` (until), `በፊት` (before), which
       the dataset tags inside dates; 2.6 % unreleased, with `ከ`, `በ`, `ለ` of the same dates.

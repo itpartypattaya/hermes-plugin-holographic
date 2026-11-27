@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+### Added
+- **Ukrainian and Belarusian** (README, Languages → Ukrainian and Belarusian): Cyrillic text was all read as Russian.
+  - **Told apart** from Russian and from each other by letters (`і ї є ґ ў`, `ы э ё ъ`, `и щ`) and function words
+    (`що`, `від`; `што`, `гэта`; `что`, `из`). It takes two words that rule out Russian, more than rule out the
+    other language; names, short quotes and apostrophes do not vote. So one Ukrainian word leaves a Russian message
+    Russian (`Київ посетил турист`, `Он сказал «дякую ще»`, `Под’езд`, `Як` about a yak), and a short Ukrainian
+    message with one telling word is read as Russian, as before.
+  - **Function words, question words, greetings** of both, used only in their own text (`КОТРА` stays a search
+    word of a Russian query, `Иван aka Ласка` keeps its alias).
+  - **Light stemmers** of the plugin's own (Snowball has none): on hand-made sets, two forms of one word share a key
+    in 80–90 % of pairs, against 35–37 % with the Russian stemmer used before. A first Belarusian `ў`/`у` compare
+    alike; Belarusian `о`/`а` (`горад` / `гарады`), dative consonant changes (`донькою` / `доньці`) and the
+    Ukrainian `і`/`о` alternation (`кота` / `кіт`) are same-root words (0.6), so `кот` does not recall `кат`; both
+    spellings are searched in the index, so a fact with only the other one is found.
+  - **Names**: Ukrainian and Belarusian case endings with a letter Russian lacks (`Оксані`, `Марії`, `Андрієм`,
+    `Любові`).
+  - **Russian**: analysis and query terms of all 2,009 FLORES-200 Russian sentences, of their 2- and 4-word
+    beginnings and of the 1,174 Russian strings of the test suite are identical to before.
+  - **Measured** on FLORES-200 devtest (`tools/african_probe.py` now covers Russian, Ukrainian and Belarusian
+    detection): Ukrainian told in 98.4 % of sentences, Belarusian 99.2 %, no Russian sentence read as either.
+    False recall Ukrainian 82 % → 49 %, Belarusian 58 % → 54 %; the right fact recalled 99.3 % / 99.0 % (was
+    100 %). Four words copied from a sentence find it first 1.2 / 1.5 points less often, as their function words
+    no longer count. Russian and the other 25 languages measure as before.
+
 ### Fixed
 - **False recall in scripts without capitals and unsegmented scripts** (README, Search quality):
   - **Hindi, Arabic, Bengali, Hebrew, Amharic, Tigrinya**: one common word shared with several facts no longer

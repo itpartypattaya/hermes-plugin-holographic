@@ -1017,7 +1017,7 @@ class FactRetriever:
         grams, zh = query_grams(query or ""), is_chinese(query or "")
         gram_kept = []
         if grams and candidates and not zh:
-            # Japanese, Korean, Thai (unreleased): a gram most facts hold (して, ます; 있습, 니다) says as little as a
+            # Japanese, Korean, Thai (0.33.1): a gram most facts hold (して, ます; 있습, 니다) says as little as a
             # common word, so grams weigh by how rare they are in the store, as words do. A gram no fact holds (a
             # question word, 어디서, どこ) weighs as the rarest gram of the message that some fact holds: weighed as the
             # rarest of the whole store, it outweighed a topic every fact shares, and «레온은 어디에 살아요?» (where
@@ -1111,7 +1111,7 @@ class FactRetriever:
             # with everything that happens every day and is about none of it. A message of that word alone ("Lena?")
             # is about it, and so is one that may name someone inside the sentence ("What is Dina studying?" of
             # "Dina takes a pottery course"; in German any capitalized word; in a script without capitals, such as
-            # Hebrew or Hindi, a word of a declared entity's name: unreleased, since any word let one shared common word
+            # Hebrew or Hindi, a word of a declared entity's name: 0.33.1, since any word let one shared common word
             # recall, 87 % of Hindi and 80 % of Arabic questions about facts the store does not hold recalled one); a
             # known entity's facts the message mentions come by the entity (prefetch).
             matched = [t for t, s in strength.items() if s]

@@ -1,6 +1,6 @@
 """Multilingual quality: stores of everyday facts in English, Russian, Chinese (0.4.2) and Spanish, Hindi, Arabic,
 French, Bengali, Portuguese, Indonesian (0.5.0), Japanese, Korean, Thai, German (0.6.0), Italian, Turkish, Polish, Dutch
-(unreleased), labelled questions, chit-chat that must recall nothing, entity probes and a contradiction on write.
+(0.11.0), labelled questions, chit-chat that must recall nothing, entity probes and a contradiction on write.
 Thresholds are the measured level, so a change that makes a language worse fails here."""
 
 from __future__ import annotations

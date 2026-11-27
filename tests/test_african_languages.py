@@ -197,7 +197,7 @@ def test_english_words_and_names_stay_search_words(text, word):
 
 @pytest.mark.parametrize("word", ["Word", "sal", "deur", "toe", "teen", "gaan"])
 def test_afrikaans_words_that_are_english_or_dutch_ones_stay_words_where_the_language_is_unknown(word):
-    """They vote for Afrikaans (unreleased) but are no language-blind function word: a Latin word in Chinese text, the
+    """They vote for Afrikaans (0.33.1) but are no language-blind function word: a Latin word in Chinese text, the
     sides of "aka"."""
     assert fold(word.lower()) in dict(query_grams(f"这是{word}吗"))
 
@@ -362,7 +362,7 @@ def test_a_turkish_either_or_keeps_turkish():
     assert "tr" in analyze("Ya geldi ya gelmedi, bilmiyorum").langs
 
 
-# -- Afrikaans and Dutch, Zulu prefixes (unreleased) -----------------------------------------------------------------
+# -- Afrikaans and Dutch, Zulu prefixes (0.33.1) -----------------------------------------------------------------
 # Before: Afrikaans was told in 3 % of FLORES-200 sentences. Its commonest words (die, is, het, wat, om, dat) are Dutch
 # too and voted for Dutch only, so Afrikaans text was read as Dutch (Dutch stems, Afrikaans grammar words kept as search
 # words). Zulu glues its grammar to the word and has few free function words: a third of its sentences were of no

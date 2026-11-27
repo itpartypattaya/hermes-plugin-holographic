@@ -1,5 +1,5 @@
 """Scripts without capitals and unsegmented scripts recall a fact by what a question is about, not by its grammar
-(unreleased).
+(0.33.1).
 
 - Hindi, Arabic, Hebrew, Bengali, Amharic have no capitals to tell a name by. One common word shared with several
   facts no longer recalls them, as in English ("What day is today?"); a word of a declared entity's name still does.

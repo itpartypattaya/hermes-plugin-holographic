@@ -1,4 +1,4 @@
-"""Italian, Turkish, Polish, Dutch (unreleased): Snowball stems loaded when the installed snowballstemmer has them,
+"""Italian, Turkish, Polish, Dutch (0.11.0): Snowball stems loaded when the installed snowballstemmer has them,
 Turkish İ / ı and apostrophes, Italian elision, Polish word forms and ł, the Dutch 's, detection between neighbouring
 languages, function words and courtesy messages that recall nothing."""
 
@@ -229,7 +229,7 @@ def test_weak_words_are_function_words_of_their_language():
 
 
 
-# Before (unreleased): Turkish "ve" (and), its commonest word, voted for Italian too ("ve", there), and Turkish
+# Before 0.33.1: Turkish "ve" (and), its commonest word, voted for Italian too ("ve", there), and Turkish
 # postpositions and determiners were no function words, so a fifth of Turkish sentences tied with Italian or were of no
 # language. Polish "w" (in) and "z" (with), its commonest words, did not vote, being initials elsewhere.
 

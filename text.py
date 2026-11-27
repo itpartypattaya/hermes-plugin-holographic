@@ -249,7 +249,7 @@ STOP = {
     той только том ты у уже хотя чего чей чем что чтобы чье чья эта эти это этот я ага ок окей спасибо привет пожалуйста
     да нет ладно хорошо понял поняла давай конечно просто вообще кстати понятно ясно угу кого кому чему чем ведь вон
     чём всё моё твоё своё нём"""),
-# Ukrainian and Belarusian (unreleased): dropped only in text told to be in them (_cyrillic_langs), never in Russian
+# Ukrainian and Belarusian (0.33.1): dropped only in text told to be in them (_cyrillic_langs), never in Russian
 "uk": _folded("""
     а або адже але аж б би бо був була були було бути в вам вас ваш ваша ваше ваші вже ви від він вона вони воно все
     всі всього всіх де для до дуже є ж же з за зараз зі і із її їй їм їх й його йому коли кого кому крім лише між
@@ -323,7 +323,7 @@ STOP = {
     আছেন নেই না নয় হ্যাঁ ঠিক আচ্ছা ধন্যবাদ হ্যালো নমস্কার প্রতি করে করেন করা করছে যায় খুব এর এ তে র মধ্যে করার পারে
     পারেন তবে এমনকি হয়েছে হয়েছিল রয়েছে করতে আরও কোনও কোনো হলো হল তা গেছে তাই সাধারণত প্রায় যখন থাকতে থাকে রাখতে
     বিভিন্ন এখন তখন যদি কারণ উপর মত মতো অনেক সব সকল"""),
-# Italian, Turkish, Polish, Dutch (unreleased). Left out: everyday English words ("go", "one", "ten", "pod", Turkish
+# Italian, Turkish, Polish, Dutch (0.11.0). Left out: everyday English words ("go", "one", "ten", "pod", Turkish
 # "size") and the name Mia (Italian "mia", my). Words that are also content words, names or abbreviations elsewhere are
 # listed but do not tell the language (_WEAK).
 "it": _folded("""
@@ -423,11 +423,11 @@ _WEAK = {
     # "nie" (Polish), Hausa "yake" (Swahili); a tie keeps both languages. Measured on FLORES-200 devtest
     # (tools/african_probe.py): no sentence of the ten older Latin languages changes language (one Polish sentence
     # in 1012 gets a tie with Swahili), while Swahili goes from 52 % to 95 % told, Hausa 21 % to 69 %, Yoruba 61 %
-    # to 84 %. Unreleased: Hausa "a", "ko", "yi" vote, and Hausa "mai" (a name too: «Mai ko?» is about Mai) and
+    # to 84 %. 0.33.1: Hausa "a", "ko", "yi" vote, and Hausa "mai" (a name too: «Mai ko?» is about Mai) and
     # Yoruba "lo", "se", "je", "fi" vote as search words (_VOTE_ONLY): Hausa 69 % to 91 %, Yoruba 84 % to 92 %, one
     # more Polish and one Portuguese sentence tied. Hausa
     # "ya" and Yoruba "o" stay weak: as votes they tie Turkish, Portuguese and Polish sentences.
-    # Unreleased: the Afrikaans words Dutch shares vote for both (see _AF_ARTICLE), Afrikaans 3 % to 74 % told, and
+    # 0.33.1: the Afrikaans words Dutch shares vote for both (see _AF_ARTICLE), Afrikaans 3 % to 74 % told, and
     # no Dutch sentence ties with it.
     "sw": _folded("la cha ni si au kama tu hata hawa yule ile pale lake wake yake yao mimi sisi hadi bila "
                   "basi pia nje nini nani je kuwa kuna haya sawa kati wale wangu kule ule"),
@@ -445,7 +445,7 @@ _WEAK = {
 # meets "fue" through them (see word_lemmas).
 # Yoruba verbs as common as function words, lọ (go), ṣe (do), jẹ (be, eat), fi (use, put), tell the language as
 # they stay search words.
-# Unreleased: more words that tell Turkish, Polish, Dutch and Afrikaans. As function words (dropped) they cost
+# 0.33.1: more words that tell Turkish, Polish, Dutch and Afrikaans. As function words (dropped) they cost
 # retrieval: on FLORES-200 four words copied from a Dutch sentence found it first 0.7 points less often, Polish 0.3.
 # Turkish "ve" (and) no longer votes for Italian (_WEAK).
 _VOTE_ONLY = {"es": _folded("va van vas voy"), "yo": _folded("lo se je fi"), "ha": _folded("mai"),
@@ -489,7 +489,7 @@ _IT_CLITICS = frozenset({"lo", "la", "li", "le", "ne"})
 # out of a query's terms only, never out of a fact's words, duplicate or conflict checks.
 QUERY_ONLY_STOP = _folded("""какой какая какое какие какого какому каким каком какую каких какими каков который которая
     которое которые которого которой которому которым котором которую которых сколько куда откуда почему зачем""")
-# ... and their Ukrainian and Belarusian counterparts (unreleased), only in a query told to be in one of them: «КОТРА»
+# ... and their Ukrainian and Belarusian counterparts (0.33.1), only in a query told to be in one of them: «КОТРА»
 # may name an agency in a Russian one
 _SLAVIC_QUERY_ONLY = _folded("""який яка яке які якого якої якому якій яким якими яких яку якою котрий
     котра котре котрі котрого скільки куди звідки чому навіщо
@@ -501,7 +501,7 @@ NEGATORS = _folded("""nicht kein keine keinen keinem keiner nie niemals nichts
     ningún ninguna ninguno ne pas jamais aucun aucune non não nem nenhum nenhuma tidak tak bukan belum jangan لا لم لن
     ليس ليست नहीं न मत না নয় নেই নি nessuno nessuna niente nulla değil yok hiç asla hayır nigdy nic żaden żadna żadne
     nikt niet geen nooit niets niemand""")  # not Italian "mai" (never): French "mai" (May)
-NEGATORS = NEGATORS | _folded("ні ніколи немає ніхто ніщо ніколі няма нішто")  # Ukrainian, Belarusian (unreleased)
+NEGATORS = NEGATORS | _folded("ні ніколи немає ніхто ніщо ніколі няма нішто")  # Ukrainian, Belarusian (0.33.1)
 
 
 # Function words a claim still needs ("with sugar" / "without sugar"), and conjunctions after which a negation belongs
@@ -510,7 +510,7 @@ CLAIM_WORDS = _folded("with without avec sans con sin com sem dengan tanpa mit o
                       "senza ile olmadan z ze bez met zonder")
 CONTRASTIVE = _folded("but however pero sino mais mas porém tapi tetapi namun aber sondern jedoch لكن बल्कि लेकिन किंतु "
                       "কিন্তু но però tuttavia invece bensì ama fakat ancak lakin ale lecz jednak maar echter")
-CLAIM_WORDS = CLAIM_WORDS | _folded("з із зі")  # Ukrainian, Belarusian (unreleased); "без" is above
+CLAIM_WORDS = CLAIM_WORDS | _folded("з із зі")  # Ukrainian, Belarusian (0.33.1); "без" is above
 CONTRASTIVE = CONTRASTIVE | _folded("але проте однак аднак")
 
 
@@ -558,7 +558,7 @@ GREETINGS = frozenset(_greeting_key(g) for g in """
     fijne dag""".split("|"))
 
 
-# Pieces a courtesy message is made of in English and Russian (and, unreleased, Italian, Turkish, Polish and Dutch),
+# Pieces a courtesy message is made of in English and Russian (and, since 0.11.0, Italian, Turkish, Polish and Dutch),
 # beyond the whole greetings above: thanks, sign-offs,
 # reactions, "how are you"-questions and the words that pad them ("today", "there", "so much"). A message whose every
 # clause is a run of these pieces ("Hi, good morning!", "Thanks a lot, that's all for now", "Good morning! How are you
@@ -851,7 +851,7 @@ def _ethiopic_langs(words: list[str]) -> tuple[str, ...]:
     return ("am",) if am > ti else ("ti",) if ti > am else ("am", "ti")
 
 
-# -- Ukrainian and Belarusian (unreleased) ---------------------------------------------------------------------------
+# -- Ukrainian and Belarusian (0.33.1) ---------------------------------------------------------------------------
 # Cyrillic text is Russian unless its words say otherwise. A word says a text is not in a language when it has a letter
 # that language does not write, or is a common function word of another of the three that is no word of it: Ukrainian
 # has no ы э ё ъ, Belarusian no и щ ъ ї є ґ, Russian no і ї є ґ ў and no apostrophe inside a word. Russian text is told
@@ -2200,7 +2200,7 @@ _RU_NAME_CASES = (("ью", ("ь",)), ("ою", ("а",)), ("ею", ("я", "^")), (
 # The names whose stem drops a vowel in its other forms, by that stem. Only these: a rule for every final pair of
 # consonants made «Марек» of «Марка» and «Петер» of «Петра» (Codex review).
 _RU_NAME_DROPPED = {"льв": "лев", "павл": "павел", "любв": "любовь"}
-# Ukrainian and Belarusian case endings with a letter Russian does not write, so no Russian word has them (unreleased):
+# Ukrainian and Belarusian case endings with a letter Russian does not write, so no Russian word has them (0.33.1):
 # «Оксані», «Марії», «Алесі» (dative, locative), «Петрові», «Андрієві», «Андрієм», «Марією». «Петра», «Оксану»,
 # «Оксаною» are read by the Russian endings above.
 _UK_BE_NAME_CASES = (("ові", ("", "о")), ("еві", ("", "ь")), ("єві", ("й",)), ("єм", ("й",)), ("єю", ("я",)),

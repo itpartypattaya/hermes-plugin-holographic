@@ -1,4 +1,4 @@
-"""Ukrainian and Belarusian (unreleased): Cyrillic text is told as Russian, Ukrainian or Belarusian by its letters and
+"""Ukrainian and Belarusian (0.33.1): Cyrillic text is told as Russian, Ukrainian or Belarusian by its letters and
 function words, and Ukrainian and Belarusian words get their own stems and function words instead of Russian ones.
 Russian text must read exactly as before. Measured on FLORES-200 by tools/african_probe.py."""
 

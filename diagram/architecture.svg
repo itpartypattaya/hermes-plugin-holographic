@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 700">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 750">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap');
     text { font-family: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'DejaVu Sans Mono', monospace; }
@@ -35,50 +35,45 @@
   <rect width="100%" height="100%" fill="url(#grid)"/>
 
   <text x="30" y="38" class="title">holographic: how it fits into Hermes Agent</text>
-  <text x="30" y="56" class="subtitle">One SQLite file per profile (or per user, or per chat). Offline by default: no API key, no network, no model calls. Search by meaning is an optional online add-on.</text>
+  <text x="30" y="56" class="subtitle">One SQLite file per profile (or per user, chat or thread). Offline by default: no API key, no network, no model calls. Search by meaning is an optional online add-on.</text>
 
-  <!-- column regions -->
   <rect x="30" y="103" width="230" height="2" rx="1" fill="#fbbf24" opacity="0.7"/>
   <text x="42" y="96" class="region" fill="#fbbf24">Hermes Agent core</text>
   <rect x="290" y="103" width="240" height="2" rx="1" fill="#34d399" opacity="0.7"/>
-  <text x="302" y="96" class="region" fill="#34d399">provider · __init__.py</text>
+  <text x="302" y="96" class="region" fill="#34d399">provider · __init__.py · screen.py</text>
   <rect x="560" y="103" width="260" height="2" rx="1" fill="#22d3ee" opacity="0.7"/>
-  <text x="572" y="96" class="region" fill="#22d3ee">retrieval.py · text.py · store.py · history.py</text>
+  <text x="572" y="96" class="region" fill="#22d3ee">retrieval · text · store · history · entities</text>
   <rect x="860" y="103" width="290" height="2" rx="1" fill="#a78bfa" opacity="0.7"/>
   <text x="872" y="96" class="region" fill="#a78bfa">$HERMES_HOME/memory_store.db</text>
 
-  <!-- arrows row 1 -->
-  <line x1="260" y1="160" x2="288" y2="160" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
-  <text x="274" y="152" class="label" text-anchor="middle">msg</text>
-  <line x1="290" y1="196" x2="262" y2="196" stroke="#60a5fa" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-open)"/>
-  <text x="275" y="212" class="label" text-anchor="middle">≤ 8</text>
-  <line x1="530" y1="160" x2="558" y2="160" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
-  <text x="544" y="152" class="label" text-anchor="middle">terms</text>
-  <line x1="560" y1="196" x2="532" y2="196" stroke="#60a5fa" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-open)"/>
-  <text x="546" y="212" class="label" text-anchor="middle">ranked</text>
-  <line x1="820" y1="170" x2="858" y2="170" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
-  <text x="839" y="162" class="label" text-anchor="middle">MATCH</text>
-  <text x="839" y="184" class="label" text-anchor="middle">or scan</text>
-
-  <!-- arrows row 2 -->
-  <line x1="260" y1="330" x2="288" y2="330" stroke="#fb7185" stroke-width="1.5" marker-end="url(#arrow-rose)"/>
-  <text x="274" y="322" class="label" text-anchor="middle">write</text>
-  <line x1="530" y1="330" x2="558" y2="330" stroke="#fb7185" stroke-width="1.5" marker-end="url(#arrow-rose)"/>
-  <text x="544" y="322" class="label" text-anchor="middle">valid</text>
-  <line x1="820" y1="330" x2="858" y2="330" stroke="#fb7185" stroke-width="1.5" marker-end="url(#arrow-rose)"/>
-  <text x="839" y="322" class="label" text-anchor="middle">commit</text>
-
-  <!-- arrows row 3 -->
-  <line x1="260" y1="500" x2="288" y2="500" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <text x="274" y="492" class="label" text-anchor="middle">action</text>
-  <line x1="530" y1="500" x2="558" y2="500" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <text x="544" y="492" class="label" text-anchor="middle">trust</text>
-  <line x1="820" y1="500" x2="858" y2="500" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <text x="839" y="492" class="label" text-anchor="middle">read</text>
+  <!-- arrows -->
+  <line x1="260" y1="170" x2="288" y2="170" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <text x="274" y="162" class="label" text-anchor="middle">msg</text>
+  <line x1="290" y1="206" x2="262" y2="206" stroke="#60a5fa" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-open)"/>
+  <text x="276" y="222" class="label" text-anchor="middle">≤ 8</text>
+  <line x1="530" y1="170" x2="558" y2="170" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <text x="544" y="162" class="label" text-anchor="middle">terms</text>
+  <line x1="560" y1="206" x2="532" y2="206" stroke="#60a5fa" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-open)"/>
+  <text x="546" y="222" class="label" text-anchor="middle">ranked</text>
+  <line x1="820" y1="180" x2="858" y2="180" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <text x="839" y="172" class="label" text-anchor="middle">MATCH</text>
+  <text x="839" y="196" class="label" text-anchor="middle">or scan</text>
+  <line x1="260" y1="365" x2="288" y2="365" stroke="#fb7185" stroke-width="1.5" marker-end="url(#arrow-rose)"/>
+  <text x="274" y="357" class="label" text-anchor="middle">write</text>
+  <line x1="530" y1="365" x2="558" y2="365" stroke="#fb7185" stroke-width="1.5" marker-end="url(#arrow-rose)"/>
+  <text x="544" y="357" class="label" text-anchor="middle">valid</text>
+  <line x1="820" y1="365" x2="858" y2="365" stroke="#fb7185" stroke-width="1.5" marker-end="url(#arrow-rose)"/>
+  <text x="839" y="357" class="label" text-anchor="middle">commit</text>
+  <line x1="260" y1="535" x2="288" y2="535" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="274" y="527" class="label" text-anchor="middle">action</text>
+  <line x1="530" y1="535" x2="558" y2="535" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="544" y="527" class="label" text-anchor="middle">trust</text>
+  <line x1="820" y1="535" x2="858" y2="535" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="839" y="527" class="label" text-anchor="middle">read</text>
 
   <!-- row 1: before a turn -->
-  <rect x="30" y="120" width="230" height="130" rx="6" fill="#0f172a"/>
-  <rect x="30" y="120" width="230" height="130" rx="6" fill="rgba(59,130,246,0.3)" stroke="#60a5fa" stroke-width="1.5"/>
+  <rect x="30" y="120" width="230" height="150" rx="6" fill="#0f172a"/>
+  <rect x="30" y="120" width="230" height="150" rx="6" fill="rgba(59,130,246,0.3)" stroke="#60a5fa" stroke-width="1.5"/>
   <text x="145" y="142" class="name" text-anchor="middle">Memory manager</text>
   <text x="145" y="162" class="sub" text-anchor="middle">prefetch(message)</text>
   <text x="145" y="176" class="sub" text-anchor="middle">before each turn;</text>
@@ -86,136 +81,147 @@
   <text x="145" y="204" class="sub" text-anchor="middle">as data, not instructions;</text>
   <text x="145" y="218" class="sub" text-anchor="middle">sync_turn after it: fact</text>
   <text x="145" y="232" class="sub" text-anchor="middle">vectors catch up (if on)</text>
-
-  <rect x="290" y="120" width="240" height="130" rx="6" fill="#0f172a"/>
-  <rect x="290" y="120" width="240" height="130" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <rect x="290" y="120" width="240" height="150" rx="6" fill="#0f172a"/>
+  <rect x="290" y="120" width="240" height="150" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
   <text x="410" y="142" class="name" text-anchor="middle">Relevance gate</text>
   <text x="410" y="162" class="sub" text-anchor="middle">greetings recall nothing</text>
   <text x="410" y="176" class="sub" text-anchor="middle">≥ 30 % of the words (IDF)</text>
-  <text x="410" y="190" class="sub" text-anchor="middle">identifiers must match</text>
-  <text x="410" y="204" class="sub" text-anchor="middle">no repeat for 6 turns</text>
-  <text x="410" y="218" class="sub" text-anchor="middle">screen: no secret, no instruction</text>
-  <text x="410" y="232" class="sub" text-anchor="middle">+ 1 by meaning, + 2 of entities</text>
-
-  <rect x="560" y="120" width="260" height="130" rx="6" fill="#0f172a"/>
-  <rect x="560" y="120" width="260" height="130" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="410" y="190" class="sub" text-anchor="middle">one shared common word: not enough</text>
+  <text x="410" y="204" class="sub" text-anchor="middle">ja, ko, th: rarer grams weigh more</text>
+  <text x="410" y="218" class="sub" text-anchor="middle">identifiers must match</text>
+  <text x="410" y="232" class="sub" text-anchor="middle">no repeat for 6 turns</text>
+  <text x="410" y="246" class="sub" text-anchor="middle">screen: no secret, no instruction</text>
+  <text x="410" y="260" class="sub" text-anchor="middle">+ 1 by meaning, + 2 of entities</text>
+  <rect x="560" y="120" width="260" height="150" rx="6" fill="#0f172a"/>
+  <rect x="560" y="120" width="260" height="150" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
   <text x="690" y="142" class="name" text-anchor="middle">Search</text>
   <text x="690" y="162" class="sub" text-anchor="middle">language → stems, folding</text>
   <text x="690" y="176" class="sub" text-anchor="middle">FTS5 prefix: Latin, Cyrillic</text>
   <text x="690" y="190" class="sub" text-anchor="middle">n-grams: CJK, Thai · jieba words</text>
-  <text x="690" y="204" class="sub" text-anchor="middle">word scan: Arabic, Indic, id, de,</text>
-  <text x="690" y="218" class="sub" text-anchor="middle">tr, pl, nl · keywords</text>
+  <text x="690" y="204" class="sub" text-anchor="middle">word scan: Arabic, Indic, Ethiopic,</text>
+  <text x="690" y="218" class="sub" text-anchor="middle">id, de, tr, pl, nl, ha · keywords</text>
   <text x="690" y="232" class="sub" text-anchor="middle">rank: overlap + HRR + trust (+ meaning)</text>
+  <text x="690" y="246" class="sub" text-anchor="middle">optional: one graph hop, a local</text>
+  <text x="690" y="260" class="sub" text-anchor="middle">reranker (both off by default)</text>
 
   <!-- row 2: writes -->
-  <rect x="30" y="270" width="230" height="140" rx="6" fill="#0f172a"/>
-  <rect x="30" y="270" width="230" height="140" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5"/>
-  <text x="145" y="292" class="name" text-anchor="middle">Model tool calls</text>
-  <text x="145" y="312" class="sub" text-anchor="middle">fact_store add · update</text>
-  <text x="145" y="326" class="sub" text-anchor="middle">change · end · correct · revert</text>
-  <text x="145" y="340" class="sub" text-anchor="middle">forget · alias · rename · split</text>
-  <text x="145" y="354" class="sub" text-anchor="middle">delete_entity · rebuild_entities</text>
-  <text x="145" y="368" class="sub" text-anchor="middle">fact_feedback (trust, confirmed)</text>
-  <text x="145" y="382" class="sub" text-anchor="middle">auto_extract, mirror after</text>
-  <text x="145" y="396" class="sub" text-anchor="middle">turns (off by default)</text>
-
-  <rect x="290" y="270" width="240" height="140" rx="6" fill="#0f172a"/>
-  <rect x="290" y="270" width="240" height="140" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
-  <text x="410" y="292" class="name" text-anchor="middle">Write validator</text>
-  <text x="410" y="312" class="sub" text-anchor="middle">refuses instructions,</text>
-  <text x="410" y="326" class="sub" text-anchor="middle">credentials, requests to send one,</text>
-  <text x="410" y="340" class="sub" text-anchor="middle">tool JSON, role markup, images,</text>
-  <text x="410" y="354" class="sub" text-anchor="middle">hidden characters, blobs</text>
-  <text x="410" y="368" class="sub" text-anchor="middle">subagents: read-only</text>
-  <text x="410" y="382" class="sub" text-anchor="middle">cron: explicit calls only</text>
-  <text x="410" y="396" class="sub" text-anchor="middle">(cron_writes)</text>
-
-  <rect x="560" y="270" width="260" height="140" rx="6" fill="#0f172a"/>
-  <rect x="560" y="270" width="260" height="140" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
-  <text x="690" y="292" class="name" text-anchor="middle">Store and check</text>
-  <text x="690" y="312" class="sub" text-anchor="middle">fact + its version history</text>
-  <text x="690" y="326" class="sub" text-anchor="middle">(who, where, said or inferred)</text>
-  <text x="690" y="340" class="sub" text-anchor="middle">entity links: a name a text gives</text>
-  <text x="690" y="354" class="sub" text-anchor="middle">is provisional, one someone gives</text>
-  <text x="690" y="368" class="sub" text-anchor="middle">is declared; answer lists similar</text>
-  <text x="690" y="382" class="sub" text-anchor="middle">facts, conflicts, past versions;</text>
-  <text x="690" y="396" class="sub" text-anchor="middle">the agent decides</text>
+  <rect x="30" y="290" width="230" height="150" rx="6" fill="#0f172a"/>
+  <rect x="30" y="290" width="230" height="150" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="145" y="312" class="name" text-anchor="middle">Model tool calls</text>
+  <text x="145" y="332" class="sub" text-anchor="middle">fact_store add · update · merge</text>
+  <text x="145" y="346" class="sub" text-anchor="middle">change · end · correct · revert</text>
+  <text x="145" y="360" class="sub" text-anchor="middle">forget · alias · rename · split</text>
+  <text x="145" y="374" class="sub" text-anchor="middle">delete_entity · rebuild_entities</text>
+  <text x="145" y="388" class="sub" text-anchor="middle">fact_feedback (trust, confirmed)</text>
+  <text x="145" y="402" class="sub" text-anchor="middle">fact_experience (experience: on)</text>
+  <text x="145" y="416" class="sub" text-anchor="middle">auto_extract; mirror of built-in</text>
+  <text x="145" y="430" class="sub" text-anchor="middle">memory writes (both off)</text>
+  <rect x="290" y="290" width="240" height="150" rx="6" fill="#0f172a"/>
+  <rect x="290" y="290" width="240" height="150" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+  <text x="410" y="312" class="name" text-anchor="middle">Write validator</text>
+  <text x="410" y="332" class="sub" text-anchor="middle">refuses instructions,</text>
+  <text x="410" y="346" class="sub" text-anchor="middle">credentials, requests to send one,</text>
+  <text x="410" y="360" class="sub" text-anchor="middle">tool JSON, role markup, images,</text>
+  <text x="410" y="374" class="sub" text-anchor="middle">hidden characters, blobs, the</text>
+  <text x="410" y="388" class="sub" text-anchor="middle">agent's step reports, overlong text</text>
+  <text x="410" y="402" class="sub" text-anchor="middle">subagents: read-only</text>
+  <text x="410" y="416" class="sub" text-anchor="middle">cron: explicit calls only</text>
+  <text x="410" y="430" class="sub" text-anchor="middle">(cron_writes)</text>
+  <rect x="560" y="290" width="260" height="150" rx="6" fill="#0f172a"/>
+  <rect x="560" y="290" width="260" height="150" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="690" y="312" class="name" text-anchor="middle">Store and check</text>
+  <text x="690" y="332" class="sub" text-anchor="middle">fact + its version history</text>
+  <text x="690" y="346" class="sub" text-anchor="middle">(who, where; said, inferred, confirmed)</text>
+  <text x="690" y="360" class="sub" text-anchor="middle">"tomorrow" gets its date (absolute_dates)</text>
+  <text x="690" y="374" class="sub" text-anchor="middle">entity links: a name a text gives</text>
+  <text x="690" y="388" class="sub" text-anchor="middle">is provisional, one someone gives</text>
+  <text x="690" y="402" class="sub" text-anchor="middle">is declared; answer lists similar</text>
+  <text x="690" y="416" class="sub" text-anchor="middle">facts, conflicts, past versions;</text>
+  <text x="690" y="430" class="sub" text-anchor="middle">the agent decides</text>
 
   <!-- row 3: reads -->
-  <rect x="30" y="440" width="230" height="130" rx="6" fill="#0f172a"/>
-  <rect x="30" y="440" width="230" height="130" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5"/>
-  <text x="145" y="462" class="name" text-anchor="middle">Recall tools</text>
-  <text x="145" y="482" class="sub" text-anchor="middle">search · probe · reason</text>
-  <text x="145" y="496" class="sub" text-anchor="middle">related · contradict</text>
-  <text x="145" y="510" class="sub" text-anchor="middle">history · list as_of a date</text>
-  <text x="145" y="524" class="sub" text-anchor="middle">entities · review · stats</text>
-  <text x="145" y="538" class="sub" text-anchor="middle">export · enrich</text>
-
-  <rect x="290" y="440" width="240" height="130" rx="6" fill="#0f172a"/>
-  <rect x="290" y="440" width="240" height="130" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
-  <text x="410" y="462" class="name" text-anchor="middle">Provider</text>
-  <text x="410" y="482" class="sub" text-anchor="middle">store per profile, or per user</text>
-  <text x="410" y="496" class="sub" text-anchor="middle">or chat (scope)</text>
-  <text x="410" y="510" class="sub" text-anchor="middle">min_trust everywhere</text>
-  <text x="410" y="524" class="sub" text-anchor="middle">thread-safe entry points</text>
-  <text x="410" y="538" class="sub" text-anchor="middle">recall indicator, recall_source</text>
-
-  <rect x="560" y="440" width="260" height="130" rx="6" fill="#0f172a"/>
-  <rect x="560" y="440" width="260" height="130" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
-  <text x="690" y="462" class="name" text-anchor="middle">Entities and vectors</text>
-  <text x="690" y="482" class="sub" text-anchor="middle">entity index + aliases; delete,</text>
-  <text x="690" y="496" class="sub" text-anchor="middle">rename, split ("X aka Y" is a hint)</text>
-  <text x="690" y="510" class="sub" text-anchor="middle">HRR: bind · unbind · bundle</text>
-  <text x="690" y="524" class="sub" text-anchor="middle">fact vectors from the embeddings</text>
-  <text x="690" y="538" class="sub" text-anchor="middle">API, per model and space</text>
+  <rect x="30" y="460" width="230" height="140" rx="6" fill="#0f172a"/>
+  <rect x="30" y="460" width="230" height="140" rx="6" fill="rgba(30,41,59,0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="145" y="482" class="name" text-anchor="middle">Recall tools</text>
+  <text x="145" y="502" class="sub" text-anchor="middle">search (explain: why found)</text>
+  <text x="145" y="516" class="sub" text-anchor="middle">probe · reason · related</text>
+  <text x="145" y="530" class="sub" text-anchor="middle">contradict · history</text>
+  <text x="145" y="544" class="sub" text-anchor="middle">list as_of a date</text>
+  <text x="145" y="558" class="sub" text-anchor="middle">entities · review · stats</text>
+  <text x="145" y="572" class="sub" text-anchor="middle">export · enrich</text>
+  <rect x="290" y="460" width="240" height="140" rx="6" fill="#0f172a"/>
+  <rect x="290" y="460" width="240" height="140" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="410" y="482" class="name" text-anchor="middle">Provider</text>
+  <text x="410" y="502" class="sub" text-anchor="middle">store per profile, user, chat</text>
+  <text x="410" y="516" class="sub" text-anchor="middle">or thread (scope)</text>
+  <text x="410" y="530" class="sub" text-anchor="middle">min_trust on every read</text>
+  <text x="410" y="544" class="sub" text-anchor="middle">thread-safe entry points</text>
+  <text x="410" y="558" class="sub" text-anchor="middle">recall indicator, recall_source</text>
+  <text x="410" y="572" class="sub" text-anchor="middle">recall_history: (changed date)</text>
+  <rect x="560" y="460" width="260" height="140" rx="6" fill="#0f172a"/>
+  <rect x="560" y="460" width="260" height="140" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="690" y="482" class="name" text-anchor="middle">Entities and vectors</text>
+  <text x="690" y="502" class="sub" text-anchor="middle">entity index + aliases; delete,</text>
+  <text x="690" y="516" class="sub" text-anchor="middle">rename, split ("X aka Y" is a hint)</text>
+  <text x="690" y="530" class="sub" text-anchor="middle">graph: one hop between entities</text>
+  <text x="690" y="544" class="sub" text-anchor="middle">named together (graph_expansion)</text>
+  <text x="690" y="558" class="sub" text-anchor="middle">HRR: bind · unbind · bundle</text>
+  <text x="690" y="572" class="sub" text-anchor="middle">fact vectors from the embeddings</text>
+  <text x="690" y="586" class="sub" text-anchor="middle">API, per model and space</text>
 
   <!-- optional embeddings endpoint -->
-  <rect x="560" y="600" width="260" height="60" rx="6" fill="#0f172a"/>
-  <rect x="560" y="600" width="260" height="60" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.2" stroke-dasharray="6,3"/>
-  <text x="690" y="621" class="name" text-anchor="middle">Embeddings API (optional)</text>
-  <text x="690" y="638" class="sub" text-anchor="middle">off by default · facts and messages,</text>
-  <text x="690" y="651" class="sub" text-anchor="middle">never what looks secret · your key</text>
-  <line x1="690" y1="598" x2="690" y2="572" stroke="#fbbf24" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow-amber)"/>
-  <text x="700" y="590" class="label">vectors</text>
+  <rect x="560" y="630" width="260" height="60" rx="6" fill="#0f172a"/>
+  <rect x="560" y="630" width="260" height="60" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.2" stroke-dasharray="6,3"/>
+  <text x="690" y="652" class="name" text-anchor="middle">Embeddings API (optional)</text>
+  <text x="690" y="668" class="sub" text-anchor="middle">off by default · facts and messages,</text>
+  <text x="690" y="682" class="sub" text-anchor="middle">never what looks secret · your key</text>
+  <line x1="690" y1="628" x2="690" y2="602" stroke="#fbbf24" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow-amber)"/>
+  <text x="700" y="620" class="label">vectors</text>
 
   <!-- database -->
   <g transform="translate(860, 120)">
-    <rect x="0" y="16" width="290" height="454" fill="#0f172a"/>
+    <rect x="0" y="16" width="290" height="464" fill="#0f172a"/>
     <ellipse cx="145" cy="16" rx="145" ry="16" fill="#0f172a"/>
-    <ellipse cx="145" cy="470" rx="145" ry="16" fill="#0f172a"/>
-    <rect x="0" y="16" width="290" height="454" fill="rgba(76,29,149,0.4)"/>
+    <ellipse cx="145" cy="480" rx="145" ry="16" fill="#0f172a"/>
+    <rect x="0" y="16" width="290" height="464" fill="rgba(76,29,149,0.4)"/>
     <ellipse cx="145" cy="16" rx="145" ry="16" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
-    <ellipse cx="145" cy="470" rx="145" ry="16" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
-    <line x1="0" y1="16" x2="0" y2="470" stroke="#a78bfa" stroke-width="1.5"/>
-    <line x1="290" y1="16" x2="290" y2="470" stroke="#a78bfa" stroke-width="1.5"/>
-    <text x="145" y="56" class="name" text-anchor="middle">SQLite, WAL</text>
-    <text x="145" y="72" class="sub" text-anchor="middle">owner-only (0600)</text>
-    <text x="145" y="102" class="name" text-anchor="middle">facts · facts_fts</text>
-    <text x="145" y="118" class="sub" text-anchor="middle">content · trust · counts · hrr_vector</text>
-    <text x="145" y="148" class="name" text-anchor="middle">fact_versions · fact_confirmations</text>
-    <text x="145" y="164" class="sub" text-anchor="middle">history, where and by whom</text>
+    <ellipse cx="145" cy="480" rx="145" ry="16" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+    <line x1="0" y1="16" x2="0" y2="480" stroke="#a78bfa" stroke-width="1.5"/>
+    <line x1="290" y1="16" x2="290" y2="480" stroke="#a78bfa" stroke-width="1.5"/>
+    <text x="145" y="52" class="name" text-anchor="middle">SQLite, WAL</text>
+    <text x="145" y="67" class="sub" text-anchor="middle">owner-only (0600)</text>
+    <text x="145" y="95" class="name" text-anchor="middle">facts · facts_fts</text>
+    <text x="145" y="110" class="sub" text-anchor="middle">content · trust · counts · hrr_vector</text>
+    <text x="145" y="138" class="name" text-anchor="middle">fact_versions · fact_versions_fts</text>
+    <text x="145" y="153" class="sub" text-anchor="middle">fact_confirmations · fact_merges</text>
+    <text x="145" y="166" class="sub" text-anchor="middle">version_names: history, by whom</text>
     <text x="145" y="194" class="name" text-anchor="middle">entities · entity_aliases</text>
-    <text x="145" y="210" class="sub" text-anchor="middle">fact_entities · memory_banks</text>
-    <text x="145" y="240" class="name" text-anchor="middle">forgotten · entity_tombstones</text>
-    <text x="145" y="256" class="sub" text-anchor="middle">keyed hashes, never the text</text>
-    <text x="145" y="286" class="name" text-anchor="middle">fact_embeddings</text>
-    <text x="145" y="302" class="sub" text-anchor="middle">empty unless search by meaning is on</text>
-    <text x="145" y="332" class="name" text-anchor="middle">meta</text>
-    <text x="145" y="348" class="sub" text-anchor="middle">schema · hrr_dim · entity rules</text>
-    <text x="145" y="386" class="note" text-anchor="middle">forget rewrites the file: freed pages</text>
-    <text x="145" y="400" class="note" text-anchor="middle">keep no copy; older versions keep</text>
-    <text x="145" y="414" class="note" text-anchor="middle">working on it: additive schema</text>
+    <text x="145" y="209" class="sub" text-anchor="middle">fact_entities · entity_relations</text>
+    <text x="145" y="222" class="sub" text-anchor="middle">memory_banks</text>
+    <text x="145" y="250" class="name" text-anchor="middle">forgotten · entity_tombstones</text>
+    <text x="145" y="265" class="sub" text-anchor="middle">keyed hashes, never the text</text>
+    <text x="145" y="293" class="name" text-anchor="middle">fact_embeddings</text>
+    <text x="145" y="308" class="sub" text-anchor="middle">empty unless search by meaning is on</text>
+    <text x="145" y="336" class="name" text-anchor="middle">memory_attempts · memory_outcomes</text>
+    <text x="145" y="351" class="sub" text-anchor="middle">memory_attempt_refs (experience on)</text>
+    <text x="145" y="379" class="name" text-anchor="middle">meta</text>
+    <text x="145" y="394" class="sub" text-anchor="middle">schema · hrr_dim · entity rules</text>
+    <text x="145" y="426" class="note" text-anchor="middle">forget rewrites the file: freed pages</text>
+    <text x="145" y="439" class="note" text-anchor="middle">keep no copy; older versions keep</text>
+    <text x="145" y="452" class="note" text-anchor="middle">working on it: additive schema</text>
   </g>
 
   <!-- legend -->
-  <line x1="30" y1="626" x2="58" y2="626" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
-  <text x="64" y="629" class="note">request</text>
-  <line x1="120" y1="626" x2="148" y2="626" stroke="#60a5fa" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-open)"/>
-  <text x="154" y="629" class="note">result</text>
-  <line x1="210" y1="626" x2="238" y2="626" stroke="#fb7185" stroke-width="1.5" marker-end="url(#arrow-rose)"/>
-  <text x="244" y="629" class="note">write</text>
-  <line x1="300" y1="626" x2="328" y2="626" stroke="#fbbf24" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow-amber)"/>
-  <text x="334" y="629" class="note">optional, online</text>
-  <text x="30" y="660" class="note">Every action honours min_trust; subagent and flush contexts read but never write.</text>
-  <text x="30" y="674" class="note">Recall: up to 5 facts by words, 1 by meaning alone (if on), 2 of entities the message names.</text>
+  <line x1="30" y1="640" x2="58" y2="640" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <text x="64" y="643" class="note">request</text>
+  <line x1="120" y1="640" x2="148" y2="640" stroke="#60a5fa" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-open)"/>
+  <text x="154" y="643" class="note">result</text>
+  <line x1="210" y1="640" x2="238" y2="640" stroke="#fb7185" stroke-width="1.5" marker-end="url(#arrow-rose)"/>
+  <text x="244" y="643" class="note">write</text>
+  <line x1="300" y1="640" x2="328" y2="640" stroke="#fbbf24" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow-amber)"/>
+  <text x="334" y="643" class="note">optional, online</text>
+  <text x="30" y="674" class="note">Subagent and flush contexts read but never write.</text>
+  <text x="30" y="688" class="note">Recall: up to 5 facts by words, 1 by meaning alone (if on),</text>
+  <text x="30" y="702" class="note">2 of entities the message names; with the reranker on, 5 in all.</text>
+  <text x="30" y="724" class="note">Version 0.33.1.</text>
 </svg>

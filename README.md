@@ -43,20 +43,31 @@ Dreaming 3.6.0 can read live summaries without another correction-text cache. Se
 
 ## How it works
 
-![Architecture: before each turn Hermes core sends the message through the relevance gate and search; writes pass a
-validator that refuses instructions and credentials and land in one SQLite transaction with the fact's history; recall
-and history tools read the same file; search by meaning is an optional online add-on](diagram/architecture.svg)
+![Architecture: before each turn Hermes core sends the message through the relevance gate and search (FTS5, n-grams,
+a word scan; a graph hop and a local reranker optional); writes pass a validator that refuses instructions, credentials
+and step reports and land in one SQLite transaction with the fact's history; recall and history tools read the same
+file; search by meaning is an optional online add-on](diagram/architecture.svg)
 
-![Recall before a turn: greetings recall nothing; the message's words become keys; 15 candidates come from FTS5,
-character n-grams or a word scan, reordered by meaning if that is on; a relevance gate, a repeat window and the screen
-decide; up to five facts by their words, one by meaning alone and two of named entities go into the turn as
-data](diagram/recall.svg)
+![Recall before a turn: the message's own words become keys; 15 candidates come from FTS5, character n-grams or a word
+scan, reordered by meaning if that is on; greetings recall nothing by words or meaning; a relevance gate (word coverage,
+one common word not enough, identifiers), a repeat window and the screen decide; up to five facts by their words, one by
+meaning alone and two of named entities go into the turn as data](diagram/recall.svg)
 
 The graph (`graph_expansion`, off by default) is one bounded hop: a fact that names two entities makes those entities
 neighbours, and a search walks a single hop out of the entities its words resolve to, so a fact about a neighbouring
 entity is reachable without sharing a word with the query. Hub entities — a namespace, a project every fact mentions —
 are never traversed, and inside `search()` a discovery only fills the tail of the result list, never displacing a text
 hit (a reranker run afterwards may reorder the pool). Bounds, measurements and repair: [docs/memory-graph.md](docs/memory-graph.md).
+
+**Standing rules belong in the built-in memory.** Recall is by relevance: a fact comes in when the message shares its
+words, a named entity or, with search by meaning on, its sense. A rule meant for every turn ("always answer in
+Russian", "never delete files without asking", "don't message Alice after 22:00") is easily missed by a message that
+needs it but says none of it ("write to her about the meeting"). Put such rules in Hermes' built-in memory
+(`MEMORY.md` / `USER.md`): it is in the system prompt on every turn. Holographic keeps the facts that are recalled
+when they matter. The core reads the built-in memory once, at the start of a session, so a rule added there holds from
+the next session on; it is small (2,200 and 1,375 characters by default, `memory_char_limit` / `user_char_limit`)
+and one per profile, so with `scope: user`, `chat` or `thread` a rule written there reaches every person and chat of
+the profile.
 
 ## Install
 
@@ -166,7 +177,8 @@ risk: [docs/two-topics.md](docs/two-topics.md).
   `possible_conflicts` (same subject, a different claim) and `past_versions`; the agent decides. Text that is not a
   fact (JSON, tool or chat-role markup, instruction-like phrasing, a credential with its value or a token whose shape
   alone says it is one — an API key prefix, a Telegram bot token (also inside a Bot API address), a JWT, a private key
-  (0.14.5) —; instructions and credentials in all eighteen languages of [Languages](#languages), also glued
+  (0.14.5) —; instructions and credentials in the eighteen languages of 0.15.1 (not the ten added in 0.33, see
+  [Languages](#languages)), also glued
   to Chinese text (0.15.1); an environment variable that holds a key, a token or a password, by its name — any in
   capitals ending like `…_KEY` or `…_TOKEN` and 310 popular ones of model and service providers — and an address
   with a password in it (0.15.2) —, an image (markdown or
@@ -383,9 +395,10 @@ How to see it:
 
 ## Languages
 
-![How a word is matched across languages: words, language, function words, keys, match; examples in eighteen languages
-that match (German compounds, Russian and English spellings of one word, Traditional and Simplified Chinese, Japanese
-spelling variants) and examples that do not](diagram/languages.svg)
+![How a word is matched across languages: words, language, function words, keys, match; examples in twenty-four of the
+twenty-eight languages that match (Ukrainian and Belarusian stems, Amharic plurals, Hausa hooked letters, German
+compounds, Russian and English spellings of one word, Traditional and Simplified Chinese, Japanese spelling variants) and
+examples that do not](diagram/languages.svg)
 
 A word matches another when they share its plain form or its stem in the language of the text:
 
@@ -896,9 +909,12 @@ counts: `Moi, je préfère le thé.` and `Oui, je préfère…` are not extracte
 (`J'aime bien ça`, `Je n'aime pas du tout ça`, `Je préfère celui-ci`, `On a choisi celle-là`), and so is a sentence
 that opens with `si`; a condition later in the sentence is not seen (`Nous avons décidé de partir si la météo le
 permet.` is stored, as its English equivalent is). The refusal of instruction-like text, of a
-credential with its value and of a request to send one covers all eighteen languages (0.15.1; English and Russian
-before). The
-main sets of all eighteen languages run in CI (`tests/test_holographic_languages.py`).
+credential with its value and of a request to send one covers the eighteen languages of 0.15.1 (English and Russian
+before). The ten added in 0.33 (Swahili, Hausa, Yoruba, Somali, Zulu, Afrikaans, Amharic, Tigrinya, Ukrainian,
+Belarusian) have no such phrases of their own yet: in Ukrainian and Belarusian a credential word shared with Russian
+(`пароль`) is caught, an instruction is not; a token whose shape gives it away is caught in any language. The main
+sets of those eighteen languages run in CI (`tests/test_holographic_languages.py`); the ten newer ones have their own
+(`tests/test_african_languages.py`, `tests/test_ukrainian_belarusian.py`).
 
 ## Search by meaning (optional, online)
 

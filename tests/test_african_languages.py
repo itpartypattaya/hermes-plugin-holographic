@@ -195,6 +195,13 @@ def test_english_words_and_names_stay_search_words(text, word):
     assert word not in _stops(text)
 
 
+@pytest.mark.parametrize("word", ["Word", "sal", "deur", "toe", "teen", "gaan"])
+def test_afrikaans_words_that_are_english_or_dutch_ones_stay_words_where_the_language_is_unknown(word):
+    """They vote for Afrikaans (unreleased) but are no language-blind function word: a Latin word in Chinese text, the
+    sides of "aka"."""
+    assert fold(word.lower()) in dict(query_grams(f"这是{word}吗"))
+
+
 def test_a_latin_word_in_chinese_text_is_not_taken_for_a_hausa_function_word():
     """The language-blind list (STOPWORDS) holds of the new languages only words that are no word elsewhere."""
     assert "game" in dict(query_grams("这是game吗"))

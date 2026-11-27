@@ -444,9 +444,16 @@ _VOTE_ONLY = {"es": _folded("va van vas voy"), "yo": _folded("lo se je fi"), "ha
     ander slegs sedert dikwels tans behalwe egter altyd sowat almal tydens sonder binne buite sodat alhoewel selfs
     mekaar verskeie mees eers""")}
 _AM_ONLY, _TI_ONLY = STOP["am"] - STOP["ti"], STOP["ti"] - STOP["am"]
+# Afrikaans words that vote though they are words of Dutch or English too (see _AF_OWN): Dutch function words, and
+# "word", "toe", "sal", "teen" ... They vote, but are no function word where the language is not known.
+_AF_SHARED = _folded("""
+    die is om wat dit daar jou toe ons word deur oor sal teen en in te aan tot meer moet waar of al gaan af wanneer hoe
+    het dat wie op ook maar ek""")
 # Every function word, for checks that do not know the language (a Latin word in Chinese text, the sides of "aka"):
-# of the African languages only the words that are no word or name elsewhere ("game", "can", "Yao" stay words).
-STOPWORDS = frozenset().union(*(words - (_WEAK.get(lang, frozenset()) if lang in _TWO_WORDS else frozenset())
+# of the African languages only the words that are no word or name elsewhere ("game", "can", "Yao", "Word", "Sal" stay
+# words).
+STOPWORDS = frozenset().union(*(words - (_WEAK.get(lang, frozenset()) | (_AF_SHARED if lang == "af" else frozenset())
+                                         if lang in _TWO_WORDS else frozenset())
                                 for lang, words in STOP.items()))
 _VOTERS = {lang: (words | _VOTE_ONLY.get(lang, frozenset())) - _WEAK.get(lang, frozenset())
            for lang, words in STOP.items()}
@@ -1712,7 +1719,8 @@ def _stop(word: str, script: str, votes: dict, sentence: bool, ethiopic: tuple =
 @lru_cache(maxsize=1024)
 def analyze(text: str) -> Analysis:
     # ፡ is the Ethiopic word space, still written between words without a space
-    lowered = _CONTROL.sub(" ", unicodedata.normalize("NFC", text or "")).lower().replace("’", "'").replace("፡", " ")
+    cased = _CONTROL.sub(" ", unicodedata.normalize("NFC", text or "")).replace("’", "'").replace("፡", " ")
+    lowered = cased.lower()
     groups = []
     for token in lowered.split():
         token = _ELISION.sub("", _strip_edges(token))
@@ -1732,7 +1740,13 @@ def analyze(text: str) -> Analysis:
     # elsewhere ("George W. Bush", "Gen Z", "from a to z"). Written alone in lower case before a word, as a preposition
     # is, they vote for Polish; "z" only beside other Polish evidence (a vote or a letter): "gen z trends" is no Polish.
     pl_evidence = bool(votes["pl"] or _EVIDENCE["pl"].search(lowered))
-    votes["pl"] += sum((a == "w" or a == "z" and pl_evidence) and b[:1].isalpha() for a, b in zip(opened, opened[1:]))
+    # As written: a capital "W" or "Z" only starts a sentence, before a word in lower case, and also needs that
+    # evidence ("W środę ..."): "George W Bush", "W hotels are nice", "a room at W hotel" are no Polish.
+    as_written = [token.lstrip(_OPENERS) for token in cased.split()]
+    starts = [True] + [token.endswith((".", "!", "?")) for token in as_written[:-1]]
+    votes["pl"] += sum((a == "w" or a == "z" and pl_evidence) and b[:1].isalpha()
+                       or a in ("W", "Z") and start and pl_evidence and b[:1].islower()
+                       for a, b, start in zip(as_written, as_written[1:], starts))
     if not (votes["sw"] or _SW_ANY & set(latin) or votes["en"] and not votes["zu"]):  # "Kuna ukungu", "Ukulele and"
         votes["zu"] += sum(len(w) >= 6 and w.startswith(_ZU_PREFIXES) and w not in STOP["zu"] for w in latin)
     votes["it"] += sum(a == "ve" and b in _IT_CLITICS for a, b in zip(latin, latin[1:]))  # "ve lo dico"

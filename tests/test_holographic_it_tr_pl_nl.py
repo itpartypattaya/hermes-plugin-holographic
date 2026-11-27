@@ -263,13 +263,15 @@ def test_old_languages_keep_their_words(text, lang):
 
 @pytest.mark.parametrize("text", [
     "Spotkanie w piątek z Anną", "Mieszkam w Warszawie od trzech lat", "Podczas spotkania omówiliśmy budżet",
+    "W środę idę do kina",  # a capital "W" that starts a sentence
 ])
 def test_polish_by_w_z_and_more_function_words(text):
     assert analyze(text).langs == ("pl",)
 
 
 @pytest.mark.parametrize("text", ["George W. Bush visited Warsaw", "Gen Z shoppers like TikTok", "from a to z",
-                                  "gen z trends", "w !"])
+                                  "gen z trends", "w !", "George W Bush", "W Edwards Deming", "W hotels are nice",
+                                  "Book a room at W hotel"])
 def test_w_and_z_as_initials_or_letters_are_no_polish(text):
     assert "pl" not in analyze(text).langs
 

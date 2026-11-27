@@ -313,6 +313,17 @@ def test_yoruba_common_verbs_vote_but_stay_search_words():
         assert word not in _stops(text)
 
 
+@pytest.mark.parametrize("query", ["Mai ko?", "Ko Mai?"])
+def test_a_name_that_is_a_hausa_word_still_finds_its_fact(store, query):
+    """Mai is a name (Vietnamese, Burmese) and a Hausa word (one who has, "mai kyau", good); "ko" is Hausa "or".
+    The two together make the message Hausa, and the name must stay a word to search by: «Mai ko?» found the fact
+    about Mai before Hausa "mai" and "ko" voted (Codex review of 0.33.1, 2026-11-27)."""
+    store.add_fact("Mai lives in Hanoi")
+    store.add_fact("The office is in Bangkok")
+    assert "mai" in [t.word for t in query_terms(query)]
+    assert _recalled(store, query) == ["Mai lives in Hanoi"]
+
+
 @pytest.mark.parametrize("text, word", [
     ("Musa yana iya karatu sosai kuma yana son makaranta", "iya"),
     ("Mutanen masu kudi suna zuwa kasuwa a cikin gari", "masu"),

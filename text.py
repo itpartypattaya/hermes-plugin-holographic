@@ -333,7 +333,7 @@ STOP = {
     ngapi
     je ee kuna ilikuwa alikuwa walikuwa ilikuwa asante tafadhali sawa"""),
 "ha": _folded("""
-    da a na ya ta ba su ne ce mai ko yi kuma cikin wani wasu sun suka yana tana suna shi ita mu ku ni kai ke ka
+    da a na ya ta ba su ne ce ko yi kuma cikin wani wasu sun suka yana tana suna shi ita mu ku ni kai ke ka
     za zai zan zata zasu don domin saboda amma sai idan in inda yadda haka wannan wancan waɗannan waɗanda wanda daga
     zuwa ga kan bisa game tare har kafin bayan yayin lokacin cewa wai fa kuwa ma nan can yanzu babu akwai shine shi
     yake take muna kuna nake ake aka ana an duk dukka kowa komai kome me mece wane wace wa ina yaushe nawa to madalla
@@ -387,8 +387,9 @@ _WEAK = {
     # "nie" (Polish), Hausa "yake" (Swahili); a tie keeps both languages. Measured on FLORES-200 devtest
     # (tools/african_probe.py): no sentence of the ten older Latin languages changes language (one Polish sentence
     # in 1012 gets a tie with Swahili), while Swahili goes from 52 % to 95 % told, Hausa 21 % to 69 %, Yoruba 61 %
-    # to 84 %. Unreleased: Hausa "a", "ko", "yi", "mai" vote and Yoruba "lo", "se", "je", "fi" vote as search words
-    # (_VOTE_ONLY): Hausa 69 % to 91 %, Yoruba 84 % to 92 %, one more Polish and one Portuguese sentence tied. Hausa
+    # to 84 %. Unreleased: Hausa "a", "ko", "yi" vote, and Hausa "mai" (a name too: «Mai ko?» is about Mai) and
+    # Yoruba "lo", "se", "je", "fi" vote as search words (_VOTE_ONLY): Hausa 69 % to 91 %, Yoruba 84 % to 92 %, one
+    # more Polish and one Portuguese sentence tied. Hausa
     # "ya" and Yoruba "o" stay weak: as votes they tie Turkish, Portuguese and Polish sentences.
     "sw": _folded("la cha ni si au kama tu hata hawa yule ile pale lake wake yake yao mimi sisi hadi bila "
                   "basi pia nje nini nani je kuwa kuna haya sawa kati wale wangu kule ule"),
@@ -408,7 +409,7 @@ _WEAK = {
 # meets "fue" through them (see word_lemmas).
 # Yoruba verbs as common as function words, lọ (go), ṣe (do), jẹ (be, eat), fi (use, put), tell the language as
 # they stay search words.
-_VOTE_ONLY = {"es": _folded("va van vas voy"), "yo": _folded("lo se je fi")}
+_VOTE_ONLY = {"es": _folded("va van vas voy"), "yo": _folded("lo se je fi"), "ha": _folded("mai")}
 _AM_ONLY, _TI_ONLY = STOP["am"] - STOP["ti"], STOP["ti"] - STOP["am"]
 # Every function word, for checks that do not know the language (a Latin word in Chinese text, the sides of "aka"):
 # of the African languages only the words that are no word or name elsewhere ("game", "can", "Yao" stay words).

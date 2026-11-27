@@ -539,8 +539,8 @@ A word matches another when they share its plain form or its stem in the languag
     - **The cost**: four words copied from a sentence find it first 0.3–3.7 points less often, because the function
       words they shared with it no longer count.
     - **Hausa, Yoruba, Amharic** (unreleased): Hausa `a`, `ko`, `yi`, `mai` and Yoruba `lọ`, `ṣe`, `jẹ`, `fi` vote
-      (the Yoruba verbs stay search words), and Amharic's free-standing prepositions `በ ከ የ ለ` are function words.
-      Hausa is told in 91 % (was 69 %), Yoruba 92 % (was 84 %); false recall goes to 79 % for Hausa and 63 % for
+      (the Yoruba verbs and Hausa `mai`, a name too, stay search words), and Amharic's free-standing prepositions `በ ከ የ ለ` are function words.
+      Hausa is told in 91 % (was 69 %), Yoruba 92 % (was 84 %); false recall goes to 80 % for Hausa and 63 % for
       Yoruba. Hausa `ya` and Yoruba `ó` do not vote, being Turkish, Portuguese and Polish words too. The probe covers
       all 26 languages of the plugin; none of the others moved.
     - **Names**: MasakhaNER name words written with a capital and dropped as function words stay at 0.1–0.6 % (they

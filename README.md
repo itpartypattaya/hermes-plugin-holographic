@@ -393,7 +393,8 @@ A word matches another when they share its plain form or its stem in the languag
   Polish and Dutch, with two plural rules it lacks (Portuguese `ação` / `ações`, Spanish `lápiz` / `lápices`); for
   Arabic, Larkey's light stemmer (the one Lucene ships) next to Snowball's, plus the word without a glued conjunction or
   preposition before an alef (`لإيرما`, "for Irma"; `ولإيرما`, "and for Irma"); for Bengali, a light suffix stripper
-  (Snowball has none) that leaves at least three letters, so `মাটি` (soil) is not `মা` (mother). Italian, Turkish,
+  (Snowball has none) that leaves at least three letters, so `মাটি` (soil) is not `মা` (mother); for Amharic,
+  Ukrainian and Belarusian, light stemmers of the plugin's own (see below). Italian, Turkish,
   Polish and Dutch words (0.11.0) are stemmed as written and folded: Snowball's Turkish and Polish read the letters
   folding drops (`çocuğun` is `çocuk`, `domów` is `dom`), and a word typed without its marks still meets one typed with
   them. Turkish also gets the noun without the `s` of a possessive that Snowball leaves (`kedisi` → `kedi`); Dutch keeps
@@ -401,7 +402,7 @@ A word matches another when they share its plain form or its stem in the languag
   (current Hermes installs 3.1.1); with 2.x Polish words compare as written and the rest of Polish (function words,
   greetings) works.
 - **Which language**: the script decides for Arabic, Devanagari and Bengali; Cyrillic text is Russian unless its
-  letters and function words say Ukrainian or Belarusian (see below, unreleased). Latin text is English, Spanish,
+  letters and function words say Ukrainian or Belarusian (see below, 0.33.1). Latin text is English, Spanish,
   French, Portuguese, Indonesian, German, Italian, Turkish, Polish or Dutch by the function words it uses ("the", "el",
   "le", "o", "yang", "der", "il", "bir", "się", "het"). Text with none of them is stemmed in English, Spanish, French,
   Portuguese, Indonesian and German, and in Turkish, Polish or Dutch only when it has their letters (`ı ğ ş`; `ą ę ł ń
@@ -413,7 +414,7 @@ A word matches another when they share its plain form or its stem in the languag
   words of the four newer languages that are also everyday words, names or abbreviations elsewhere (Italian `come`,
   `dove`, `per`; Turkish `kim`, `ben`; Polish `bo`; Dutch `door`, `met`, `van`, `wat`) do not tell the language and are
   dropped only where that language alone fits the other words: "Ana come carne" stays Spanish, "Kim Lane lives in Oslo"
-  keeps `kim`. Italian `mia` (my) is not on the list: it is a common name. Unreleased: Turkish `ve` (and), its commonest
+  keeps `kim`. Italian `mia` (my) is not on the list: it is a common name. 0.33.1: Turkish `ve` (and), its commonest
   word, no longer votes for Italian (except before a clitic, `ve lo dico`); Turkish postpositions and determiners
   (`tarafından`, `diğer`, `bazı`, `arasında`, `rağmen` …), more Polish ones (`gdy`, `aby`, `jako`, `podczas`, `również`
   …) and a few Dutch ones (`zich`, `toen`, `tijdens` …) tell the language and stay search words; Polish `w` (in) and `z`
@@ -547,18 +548,22 @@ A word matches another when they share its plain form or its stem in the languag
       50 %), and in the top five in 90 % (was 74 %).
     - **The cost**: four words copied from a sentence find it first 0.3–3.7 points less often, because the function
       words they shared with it no longer count.
-    - **Hausa, Yoruba, Amharic** (unreleased): Hausa `a`, `ko`, `yi`, `mai` and Yoruba `lọ`, `ṣe`, `jẹ`, `fi` vote
-      (the Yoruba verbs and Hausa `mai`, a name too, stay search words), and Amharic's free-standing prepositions `በ ከ የ ለ` are function words.
-      Hausa is told in 91 % (was 69 %), Yoruba 92 % (was 84 %); false recall goes to 80 % for Hausa and 63 % for
-      Yoruba. Hausa `ya` and Yoruba `ó` do not vote, being Turkish, Portuguese and Polish words too. The probe covers
-      all 26 languages of the plugin; none of the others moved.
-    - **Afrikaans, Zulu** (unreleased): the Afrikaans words Dutch shares (`die`, `is`, `het`, `om`, `dat` …) vote for
+    - **Hausa, Yoruba, Amharic** (0.33.1): Hausa `a`, `ko`, `yi`, `mai` and Yoruba `lọ`, `ṣe`, `jẹ`, `fi` vote
+      (the Yoruba verbs and Hausa `mai`, a name too, stay search words: `Mai ko?` finds the fact about Mai). Hausa
+      `iya`, `masu`, `mafi`, `wajen`, `kasance`, Yoruba `tó` and `ó`, and Amharic's free-standing prepositions
+      `በ ከ የ ለ`, the modal `ይችላል`, relative and copula forms (`ያለው`, `የሆነ`, `ሊሆን`) and `ሁሉም`, `አንዳንድ`, `ደግሞ` are
+      function words. Hausa is told in 91 % (was 69 %), Yoruba 92 % (was 84 %); false recall goes from 84 % to 80 %
+      for Hausa and from 76 % to 63 % for Yoruba (Amharic 70 %, unchanged), and the right fact is recalled 97 % for
+      Hausa (was 99 %), 98 % for Yoruba (was 96 %). Hausa `ya` and Yoruba `ó` do not vote, being Turkish, Portuguese
+      and Polish words too. The probe covers every language of the plugin (28 since Ukrainian and Belarusian); none
+      of the others moved.
+    - **Afrikaans, Zulu** (0.33.1): the Afrikaans words Dutch shares (`die`, `is`, `het`, `om`, `dat` …) vote for
       both, and Afrikaans decides a text only with a word of its own (`nie`, `vir`, `hulle`, `slegs` …) or with its
       article `'n` (written apart, as Dutch rarely does) beside an Afrikaans word that is no English one, so `Rock 'n
       Roll Is Fun` stays English. Its words that are Dutch or English words too (`deur`, `toe`, `gaan`, `word`, `Sal`,
       `EK`) vote but do not decide: `Wat is die deur?` stays Dutch. Zulu words of six letters or more that start with
       `uku`, `ngo`, `nge`, `ezi` or `izi` (noun-class prefixes, the infinitive, adverbs) vote, except in text with a
-      Swahili function word (`ukubwa`, `ukurasa` are Swahili) or with an English vote and no Zulu one. Afrikaans is
+      Swahili function word (`ukubwa`, `ukurasa` are Swahili) or with an English vote and no Zulu one (`Ukulele tabs and ezines` stays English). Afrikaans is
       told exactly in 69 % of sentences (was 1 %; with Dutch 74 %, was 3 %), Zulu in 79 % (was 50 %; of no language
       12 %, was 34 %). No Dutch sentence ties with Afrikaans; Afrikaans text that has only the shared words stays
       Dutch, and colloquial Dutch that writes `'n` apart with only shared words (`Dat is 'n mooi huis`) reads as
@@ -567,8 +572,8 @@ A word matches another when they share its plain form or its stem in the languag
       and the right fact is recalled 98 % (was 99 %).
     - **Names**: MasakhaNER name words written with a capital and dropped as function words stay at 0.1–0.6 % (they
       were 0.1–0.8 %, through the other languages' lists). Amharic has 1.5 %: `እስከ` (until), `በፊት` (before), which
-      the dataset tags inside dates; 2.6 % unreleased, with `ከ`, `በ`, `ለ` of the same dates.
-- **Ukrainian and Belarusian** (unreleased): until now every Cyrillic text was read as Russian, with Russian stems
+      the dataset tags inside dates; 2.6 % in 0.33.1, with `ከ`, `በ`, `ለ` of the same dates.
+- **Ukrainian and Belarusian** (0.33.1): until now every Cyrillic text was read as Russian, with Russian stems
   and function words.
   - **Telling them apart**: a word rules a language out by a letter it does not write (Ukrainian has no `ы э ё ъ`,
     Belarusian no `и щ ъ ї є ґ`, Russian no `і ї є ґ ў` and no apostrophe inside a word) or by being a common function
@@ -596,7 +601,7 @@ A word matches another when they share its plain form or its stem in the languag
     `кот` (cat) does not recall `кат` (executioner). The other spellings are searched in the index too, either way,
     so `гарады` finds `горад`, `донькою` finds `доньці`, `кота` finds `кіт` and `кніга` finds `кнізе`.
   - **Names** in a Ukrainian or Belarusian case with a letter Russian lacks share their first form (`Оксані`,
-    `Марії`, `Андрієм`, `Алесі`).
+    `Марії`, `Андрієм`, `Любові`, `Алесі`).
   - **Measured** on FLORES-200 devtest (`tools/african_probe.py`, which now covers 28 languages):
     - **Russian is unchanged** in every number: 1,012 of 1,012 sentences stay Russian (none gets Ukrainian or
       Belarusian), and so do their beginnings of 2 to 8 words; search and recall measure as before. The analysis and
@@ -867,13 +872,18 @@ none of the facts that happen "every day" (0.17.8), but when one fact alone says
 weather this week?" still recalls it, as "wifi password?" recalls the one fact about a password: one word cannot tell
 the two apart. In a script without capitals (Hebrew, Hindi, Arabic, Bengali, Ethiopic) a name cannot be told from a
 common word, so there a shared word counts as a name only when it is a word of a declared entity's name or alias
-(unreleased; a word the store only guessed as a name, such as a quoted «पानी», water, does not count): «מה דניאל לומד?»
+(0.33.1; a word the store only guessed as a name, such as a quoted «पानी», water, does not count): «מה דניאל לומד?»
 recalls the facts about Daniel when Daniel is an entity, and one shared common word recalls nothing. Until then any
 word counted as a possible name, and on FLORES-200 one shared common word recalled something for 87 % of Hindi and
-80 % of Arabic questions about facts the store does not hold (43 % and 44 % now; the right fact as before). Japanese,
+80 % of Arabic questions about facts the store does not hold (43 % and 44 % now; Bengali 81 % → 43 %, Amharic
+70 % → 45 %, Tigrinya 63 % → 33 %; the right fact as before, Bengali 100 % → 99.7 %). These five languages also got
+their commonest missing function words (Hindi `कि`, `लेकिन`, `क्योंकि`; Arabic `عندما`, `هناك`; Bengali `মধ্যে`,
+`পারে`), which cost Hindi 1.2 points of four copied words found first (90.8 % → 89.6 %); Hindi verb forms (`जाता`,
+`करने`) stay words, since as function words they cost 3.3 points for 0.7 of false recall. Japanese,
 Korean and Thai, compared by character n-grams, weigh a gram by how rare it is in the store, and a Japanese gram of
-hiragana alone by half (unreleased): grammar such as して, ます, 있습니다 recalls a fact on its own less often (false
-recall Japanese 98 % → 46 %, Korean 90 % → 38 %, Thai 75 % → 48 %). A gram no fact holds, such as a question word
+hiragana alone by half (0.33.1): grammar such as して, ます, 있습니다 recalls a fact on its own less often (false
+recall Japanese 98 % → 46 %, Korean 90 % → 38 %, Thai 75 % → 48 %; counting the grams costs a Japanese or Korean
+message about 15 ms at 2,000 facts). A gram no fact holds, such as a question word
 (어디, どこ), weighs as the rarest gram of the message that some fact holds, so «레온은 어디에 살아요?» still recalls the
 facts about Leon when all of them name him; the price is a small store (under about 30 facts), where grammar a
 message shares with every fact is the rarest thing it shares and recalls them, as before. Stems are search keys, not lemmas: an irregular form can miss (`ponies` / `pony`). A

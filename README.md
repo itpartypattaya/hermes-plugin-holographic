@@ -167,7 +167,8 @@ risk: [docs/two-topics.md](docs/two-topics.md).
   `possible_conflicts` (same subject, a different claim) and `past_versions`; the agent decides. Text that is not a
   fact (JSON, tool or chat-role markup, instruction-like phrasing, a credential with its value or a token whose shape
   alone says it is one — an API key prefix, a Telegram bot token (also inside a Bot API address), a JWT, a private key
-  (0.14.5) —; instructions and credentials in all eighteen languages of [Languages](#languages), also glued
+  (0.14.5) —; instructions and credentials in the eighteen languages of 0.15.1 (not the ten added in 0.33, see
+  [Languages](#languages)), also glued
   to Chinese text (0.15.1); an environment variable that holds a key, a token or a password, by its name — any in
   capitals ending like `…_KEY` or `…_TOKEN` and 310 popular ones of model and service providers — and an address
   with a password in it (0.15.2) —, an image (markdown or
@@ -898,9 +899,12 @@ counts: `Moi, je préfère le thé.` and `Oui, je préfère…` are not extracte
 (`J'aime bien ça`, `Je n'aime pas du tout ça`, `Je préfère celui-ci`, `On a choisi celle-là`), and so is a sentence
 that opens with `si`; a condition later in the sentence is not seen (`Nous avons décidé de partir si la météo le
 permet.` is stored, as its English equivalent is). The refusal of instruction-like text, of a
-credential with its value and of a request to send one covers all eighteen languages (0.15.1; English and Russian
-before). The
-main sets of all eighteen languages run in CI (`tests/test_holographic_languages.py`).
+credential with its value and of a request to send one covers the eighteen languages of 0.15.1 (English and Russian
+before). The ten added in 0.33 (Swahili, Hausa, Yoruba, Somali, Zulu, Afrikaans, Amharic, Tigrinya, Ukrainian,
+Belarusian) have no such phrases of their own yet: in Ukrainian and Belarusian a credential word shared with Russian
+(`пароль`) is caught, an instruction is not; a token whose shape gives it away is caught in any language. The main
+sets of those eighteen languages run in CI (`tests/test_holographic_languages.py`); the ten newer ones have their own
+(`tests/test_african_languages.py`, `tests/test_ukrainian_belarusian.py`).
 
 ## Search by meaning (optional, online)
 

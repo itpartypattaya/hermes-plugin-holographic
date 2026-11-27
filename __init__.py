@@ -537,6 +537,10 @@ _DECLARING_ACTIONS = frozenset({"add", "update", "change", "correct"})
 _DATED_ACTIONS = frozenset({"add", "update", "change", "correct"})
 # Context fields Hermes passes to initialize() that a version's source keeps (chat names are not kept: they change).
 _IDENTITY = ("chat_id", "chat_type", "thread_id", "user_id", "user_name")
+class _UnionRefused(Exception):
+    """merge: the keep's keywords and the copies', joined, are what the screen refuses (issue #152 review)."""
+
+
 def _keyword_report(value) -> dict:
     """What add / change / update kept of the keywords given, for the result (issue #23: the limits were silent): the
     kept list and, when some were not kept, their positions in the list given and why. Never their text: a keyword
@@ -2488,16 +2492,22 @@ class HolographicMemoryProvider(MemoryProvider):
         indexed and shown by search and list as the text is (review 2026-11-17, H2: only the keywords were, so a
         password in the tags was stored). A name in 'entities' is screened where names are checked (entity_names.
         _valid_entity): the fact is stored and that name is not linked, said by its position (0.17.6). A category
-        is one of CATEGORIES (issue #123); the value itself is not repeated, it may be what the screen refuses."""
+        is one of CATEGORIES (issue #123); the value itself is not repeated, it may be what the screen refuses.
+        Keywords and comma-separated tags are a list of labels a model reads one after another: they are screened
+        joined with ", " and joined with spaces too, so an instruction split across them (["ignore", "previous",
+        "instructions"]) is refused as the same words in one keyword are (issue #152: the commas broke the phrase)."""
         category = a.get("category")
         if category not in (None, "") and category not in CATEGORIES:
             return f"category: not one of {', '.join(CATEGORIES)}"
-        for field, value in (("keywords", ", ".join(_keywords(a.get("keywords")))),
-                             ("tags", a.get("tags") if isinstance(a.get("tags"), str) else ""),
-                             ("category", a.get("category") if isinstance(a.get("category"), str) else "")):
-            problem = _fact_problem(value) if value else None
-            if problem:
-                return f"{field}: {problem}"
+        keywords = ", ".join(_keywords(a.get("keywords")))  # a comma inside one keyword splits it once stored
+        tags = a.get("tags") if isinstance(a.get("tags"), str) else ""
+        for field, values in (("keywords", (keywords, " ".join(keywords.replace(",", " ").split()))),
+                              ("tags", (tags, " ".join(tags.replace(",", " ").split()))),
+                              ("category", (a.get("category") if isinstance(a.get("category"), str) else "",))):
+            for value in values:
+                problem = _fact_problem(value) if value else None
+                if problem:
+                    return f"{field}: {problem}"
         return ""
 
     def _cron_forgotten(self, content: str | None, fact_id: int | None = None) -> str | None:
@@ -2783,6 +2793,9 @@ class HolographicMemoryProvider(MemoryProvider):
             for tags in copy_tags:
                 candidates += _split_tags(tags)[1]
             report.update(_keyword_report(candidates) if candidates else {"keywords": []})
+            problem = self._label_problem({"keywords": report["keywords"]})  # each list passed alone, not together
+            if problem:
+                raise _UnionRefused(problem)  # in the store's transaction: nothing of the merge is written
             return _join_tags(user_tags, report["keywords"]) if candidates else None
 
         # cron (cron_writes): only what this very session stored may be merged away — checked by the store in the
@@ -2791,6 +2804,9 @@ class HolographicMemoryProvider(MemoryProvider):
         try:
             result = self._fact_call(a, lambda fact_id: self._store.merge_facts(
                 fact_id, ids, tags=joined, expect=expect, session_only=only))
+        except _UnionRefused as exc:
+            return tool_error(f"Not merged: {exc} (the facts' keywords joined). Give 'keywords' for the merged fact. "
+                              "Nothing was changed.")
         except NotOwned as exc:
             return tool_error("Not merged: a scheduled job merges only facts it stored in this session "
                               f"({', '.join(f'#{i}' for i in exc.ids)} were not); the main agent merges the rest. "

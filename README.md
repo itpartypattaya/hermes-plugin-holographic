@@ -43,14 +43,15 @@ Dreaming 3.6.0 can read live summaries without another correction-text cache. Se
 
 ## How it works
 
-![Architecture: before each turn Hermes core sends the message through the relevance gate and search; writes pass a
-validator that refuses instructions and credentials and land in one SQLite transaction with the fact's history; recall
-and history tools read the same file; search by meaning is an optional online add-on](diagram/architecture.svg)
+![Architecture: before each turn Hermes core sends the message through the relevance gate and search (FTS5, n-grams,
+a word scan; a graph hop and a local reranker optional); writes pass a validator that refuses instructions, credentials
+and step reports and land in one SQLite transaction with the fact's history; recall and history tools read the same
+file; search by meaning is an optional online add-on](diagram/architecture.svg)
 
-![Recall before a turn: greetings recall nothing; the message's words become keys; 15 candidates come from FTS5,
-character n-grams or a word scan, reordered by meaning if that is on; a relevance gate, a repeat window and the screen
-decide; up to five facts by their words, one by meaning alone and two of named entities go into the turn as
-data](diagram/recall.svg)
+![Recall before a turn: the message's own words become keys; 15 candidates come from FTS5, character n-grams or a word
+scan, reordered by meaning if that is on; greetings recall nothing by words or meaning; a relevance gate (word coverage,
+one common word not enough, identifiers), a repeat window and the screen decide; up to five facts by their words, one by
+meaning alone and two of named entities go into the turn as data](diagram/recall.svg)
 
 The graph (`graph_expansion`, off by default) is one bounded hop: a fact that names two entities makes those entities
 neighbours, and a search walks a single hop out of the entities its words resolve to, so a fact about a neighbouring
@@ -383,9 +384,10 @@ How to see it:
 
 ## Languages
 
-![How a word is matched across languages: words, language, function words, keys, match; examples in eighteen languages
-that match (German compounds, Russian and English spellings of one word, Traditional and Simplified Chinese, Japanese
-spelling variants) and examples that do not](diagram/languages.svg)
+![How a word is matched across languages: words, language, function words, keys, match; examples in twenty-four of the
+twenty-eight languages that match (Ukrainian and Belarusian stems, Amharic plurals, Hausa hooked letters, German
+compounds, Russian and English spellings of one word, Traditional and Simplified Chinese, Japanese spelling variants) and
+examples that do not](diagram/languages.svg)
 
 A word matches another when they share its plain form or its stem in the language of the text:
 

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 760">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 1143">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap');
     text { font-family: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'DejaVu Sans Mono', monospace; }
@@ -27,45 +27,47 @@
   <rect width="100%" height="100%" fill="url(#grid)"/>
 
   <text x="30" y="38" class="title">How a word is matched across languages</text>
-  <text x="30" y="56" class="subtitle">Two words match when their keys meet: the folded word, or its stem in the language of the text. Eighteen languages; no model calls.</text>
+  <text x="30" y="56" class="subtitle">Two words match when their keys meet: the folded word, or its stem in the language of the text. Twenty-eight languages; no model calls.</text>
 
   <!-- arrows between the steps -->
-  <line x1="236" y1="175" x2="256" y2="175" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <line x1="464" y1="175" x2="484" y2="175" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <line x1="692" y1="175" x2="712" y2="175" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <line x1="920" y1="175" x2="940" y2="175" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="236" y1="192" x2="256" y2="192" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="464" y1="192" x2="484" y2="192" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="692" y1="192" x2="712" y2="192" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="920" y1="192" x2="940" y2="192" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
 
-  <!-- 1 Words -->
-  <rect x="30" y="85" width="206" height="180" rx="6" fill="#0f172a"/>
-  <rect x="30" y="85" width="206" height="180" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <!-- 1 · Words -->
+  <rect x="30" y="85" width="206" height="214" rx="6" fill="#0f172a"/>
+  <rect x="30" y="85" width="206" height="214" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
   <text x="133" y="109" class="name" text-anchor="middle">1 · Words</text>
   <text x="133" y="131" class="sub" text-anchor="middle">punctuation off: ¿ ? ! 。</text>
   <text x="133" y="145" class="sub" text-anchor="middle">d'Irma → irma · prend-il → prend</text>
   <text x="133" y="159" class="sub" text-anchor="middle">dell'anno → anno (it)</text>
   <text x="133" y="173" class="sub" text-anchor="middle">Ankara'da → ankara (tr)</text>
-  <text x="133" y="187" class="sub" text-anchor="middle">amandelen → pinda (nl)</text>
+  <text x="133" y="187" class="sub" text-anchor="middle">pinda's → pinda (nl)</text>
   <text x="133" y="201" class="sub" text-anchor="middle">anak-anak → anak</text>
   <text x="133" y="215" class="sub" text-anchor="middle">qx-vps-এর → qx-vps + এর</text>
   <text x="133" y="229" class="sub" text-anchor="middle">qx-vps: an identifier,</text>
   <text x="133" y="243" class="sub" text-anchor="middle">matched exactly</text>
 
-  <!-- 2 Language -->
-  <rect x="258" y="85" width="206" height="180" rx="6" fill="#0f172a"/>
-  <rect x="258" y="85" width="206" height="180" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+  <!-- 2 · Language -->
+  <rect x="258" y="85" width="206" height="214" rx="6" fill="#0f172a"/>
+  <rect x="258" y="85" width="206" height="214" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
   <text x="361" y="109" class="name" text-anchor="middle">2 · Language</text>
-  <text x="361" y="131" class="sub" text-anchor="middle">by script: Cyrillic → ru,</text>
-  <text x="361" y="145" class="sub" text-anchor="middle">Arabic → ar, Devanagari → hi,</text>
-  <text x="361" y="159" class="sub" text-anchor="middle">Bengali → bn</text>
-  <text x="361" y="173" class="sub" text-anchor="middle">Latin by function words:</text>
-  <text x="361" y="187" class="sub" text-anchor="middle">the · el · le · o · yang · der</text>
-  <text x="361" y="201" class="sub" text-anchor="middle">il · bir · się · het</text>
-  <text x="361" y="215" class="sub" text-anchor="middle">→ en es fr pt id de it tr pl nl</text>
-  <text x="361" y="229" class="sub" text-anchor="middle">Chinese, Japanese, Korean,</text>
-  <text x="361" y="243" class="sub" text-anchor="middle">Thai: by their letters</text>
+  <text x="361" y="131" class="sub" text-anchor="middle">by script: Arabic → ar,</text>
+  <text x="361" y="145" class="sub" text-anchor="middle">Devanagari → hi, Bengali → bn</text>
+  <text x="361" y="159" class="sub" text-anchor="middle">Cyrillic → ru; uk or be when</text>
+  <text x="361" y="173" class="sub" text-anchor="middle">two words rule Russian out</text>
+  <text x="361" y="187" class="sub" text-anchor="middle">Ethiopic → am or ti</text>
+  <text x="361" y="201" class="sub" text-anchor="middle">Latin by function words:</text>
+  <text x="361" y="215" class="sub" text-anchor="middle">the · el · le · o · yang · der</text>
+  <text x="361" y="229" class="sub" text-anchor="middle">il · bir · się · het · na · da</text>
+  <text x="361" y="243" class="sub" text-anchor="middle">→ en es fr pt id de it tr pl nl</text>
+  <text x="361" y="257" class="sub" text-anchor="middle">sw ha yo so zu af</text>
+  <text x="361" y="271" class="sub" text-anchor="middle">CJK, Thai: by their letters</text>
 
-  <!-- 3 Function words -->
-  <rect x="486" y="85" width="206" height="180" rx="6" fill="#0f172a"/>
-  <rect x="486" y="85" width="206" height="180" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
+  <!-- 3 · Function words -->
+  <rect x="486" y="85" width="206" height="214" rx="6" fill="#0f172a"/>
+  <rect x="486" y="85" width="206" height="214" rx="6" fill="rgba(136,19,55,0.4)" stroke="#fb7185" stroke-width="1.5"/>
   <text x="589" y="109" class="name" text-anchor="middle">3 · Function words</text>
   <text x="589" y="131" class="sub" text-anchor="middle">dropped in the language</text>
   <text x="589" y="145" class="sub" text-anchor="middle">the other words show:</text>
@@ -73,88 +75,96 @@
   <text x="589" y="173" class="sub" text-anchor="middle">"il boit son café": dropped</text>
   <text x="589" y="187" class="sub" text-anchor="middle">"Kim Lane lives in Oslo":</text>
   <text x="589" y="201" class="sub" text-anchor="middle">kim kept (tr only if Turkish)</text>
-  <text x="589" y="215" class="sub" text-anchor="middle">Chinese 的 是 了 什么,</text>
-  <text x="589" y="229" class="sub" text-anchor="middle">Japanese particles:</text>
-  <text x="589" y="243" class="sub" text-anchor="middle">weigh nothing</text>
+  <text x="589" y="215" class="sub" text-anchor="middle">Hindi कि, Arabic عندما,</text>
+  <text x="589" y="229" class="sub" text-anchor="middle">Amharic በ: function words</text>
+  <text x="589" y="243" class="sub" text-anchor="middle">Chinese 的 是 了 什么,</text>
+  <text x="589" y="257" class="sub" text-anchor="middle">Japanese particles:</text>
+  <text x="589" y="271" class="sub" text-anchor="middle">weigh less</text>
 
-  <!-- 4 Keys -->
-  <rect x="714" y="85" width="206" height="180" rx="6" fill="#0f172a"/>
-  <rect x="714" y="85" width="206" height="180" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+  <!-- 4 · Keys -->
+  <rect x="714" y="85" width="206" height="214" rx="6" fill="#0f172a"/>
+  <rect x="714" y="85" width="206" height="214" rx="6" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
   <text x="817" y="109" class="name" text-anchor="middle">4 · Keys</text>
   <text x="817" y="131" class="sub" text-anchor="middle">folded word + stem</text>
   <text x="817" y="145" class="sub" text-anchor="middle">Snowball: 12 languages;</text>
-  <text x="817" y="159" class="sub" text-anchor="middle">Arabic light10, Bengali stripper</text>
-  <text x="817" y="173" class="sub" text-anchor="middle">fold: é = e, ł = l, ı = i, ২০২৯ = 2029</text>
-  <text x="817" y="187" class="sub" text-anchor="middle">German compounds (Wikidata)</text>
-  <text x="817" y="201" class="sub" text-anchor="middle">one word, two scripts:</text>
-  <text x="817" y="215" class="sub" text-anchor="middle">бэкап = backup</text>
-  <text x="817" y="229" class="sub" text-anchor="middle">臺 = 台 (OpenCC); 引っ越し =</text>
-  <text x="817" y="243" class="sub" text-anchor="middle">引越し (Sudachi variants)</text>
+  <text x="817" y="159" class="sub" text-anchor="middle">Arabic light10, Bengali</text>
+  <text x="817" y="173" class="sub" text-anchor="middle">stripper; own light stemmers:</text>
+  <text x="817" y="187" class="sub" text-anchor="middle">am, uk, be; others as written</text>
+  <text x="817" y="201" class="sub" text-anchor="middle">fold: é = e, ł = l, ı = i,</text>
+  <text x="817" y="215" class="sub" text-anchor="middle">ƙ = k, ሠ = ሰ, ২০২৯ = 2029</text>
+  <text x="817" y="229" class="sub" text-anchor="middle">German compounds (Wikidata)</text>
+  <text x="817" y="243" class="sub" text-anchor="middle">one word, two scripts:</text>
+  <text x="817" y="257" class="sub" text-anchor="middle">бэкап = backup, 臺 = 台 (OpenCC)</text>
+  <text x="817" y="271" class="sub" text-anchor="middle">引越し = 引っ越し (Sudachi)</text>
 
-  <!-- 5 Match -->
-  <rect x="942" y="85" width="206" height="180" rx="6" fill="#0f172a"/>
-  <rect x="942" y="85" width="206" height="180" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+  <!-- 5 · Match -->
+  <rect x="942" y="85" width="206" height="214" rx="6" fill="#0f172a"/>
+  <rect x="942" y="85" width="206" height="214" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
   <text x="1045" y="109" class="name" text-anchor="middle">5 · Match</text>
   <text x="1045" y="131" class="sub" text-anchor="middle">keys meet: same word</text>
   <text x="1045" y="145" class="sub" text-anchor="middle">found through</text>
   <text x="1045" y="159" class="sub" text-anchor="middle">FTS5: Latin, Cyrillic</text>
   <text x="1045" y="173" class="sub" text-anchor="middle">word scan: Arabic, Indic,</text>
-  <text x="1045" y="187" class="sub" text-anchor="middle">id, de, tr, pl, nl</text>
-  <text x="1045" y="201" class="sub" text-anchor="middle">n-grams: Chinese, Japanese,</text>
-  <text x="1045" y="215" class="sub" text-anchor="middle">Korean, Thai (+ jieba words)</text>
-  <text x="1045" y="229" class="sub" text-anchor="middle">a compound's first parts</text>
-  <text x="1045" y="243" class="sub" text-anchor="middle">count 0.6</text>
+  <text x="1045" y="187" class="sub" text-anchor="middle">Ethiopic; id, de, tr, pl,</text>
+  <text x="1045" y="201" class="sub" text-anchor="middle">nl, ha</text>
+  <text x="1045" y="215" class="sub" text-anchor="middle">n-grams: Chinese, Japanese,</text>
+  <text x="1045" y="229" class="sub" text-anchor="middle">Korean, Thai (+ jieba words)</text>
+  <text x="1045" y="243" class="sub" text-anchor="middle">a compound's first parts</text>
+  <text x="1045" y="257" class="sub" text-anchor="middle">count 0.6</text>
 
   <!-- Match table -->
-  <text x="30" y="300" class="head">Match</text>
-  <text x="30" y="320" class="col">LANGUAGE</text>
-  <text x="120" y="320" class="col">IN A FACT</text>
-  <text x="330" y="320" class="col">IN A QUESTION</text>
-  <text x="560" y="320" class="col">SHARED KEY</text>
-  <line x1="30" y1="327" x2="790" y2="327" stroke="#1e293b" stroke-width="1"/>
+  <text x="30" y="339" class="head">Match</text>
+  <text x="30" y="359" class="col">LANGUAGE</text>
+  <text x="150" y="359" class="col">IN A FACT</text>
+  <text x="470" y="359" class="col">IN A QUESTION</text>
+  <text x="790" y="359" class="col">SHARED KEY</text>
+  <line x1="30" y1="366" x2="1150" y2="366" stroke="#1e293b" stroke-width="1"/>
+  <text x="30" y="383" class="cell">Russian</text><text x="150" y="383" class="fact">Маша любит кофе</text><text x="470" y="383" class="fact">Что любит Маши?</text><text x="790" y="383" class="key">маш</text>
+  <text x="30" y="401" class="cell">Ukrainian</text><text x="150" y="401" class="fact">Оксана працювала у дитячій лікарні</text><text x="470" y="401" class="fact">Де тепер працює Оксана?</text><text x="790" y="401" class="key">працю</text><text x="930" y="401" class="note">(own light stemmer)</text>
+  <text x="30" y="419" class="cell">Belarusian</text><text x="150" y="419" class="fact">Алесь жыве ў Мінску з дзецьмі</text><text x="470" y="419" class="fact">Дзе цяпер жывуць дзеці Алеся?</text><text x="790" y="419" class="key">жыв · дзец</text><text x="930" y="419" class="note">(own light stemmer)</text>
+  <text x="30" y="437" class="cell">Spanish</text><text x="150" y="437" class="fact">La gata se llama Zelda</text><text x="470" y="437" class="fact">¿Cómo se llama el gato?</text><text x="790" y="437" class="key">gat</text>
+  <text x="30" y="455" class="cell">Portuguese</text><text x="150" y="455" class="fact">a ação foi rápida</text><text x="470" y="455" class="fact">Como foram as ações?</text><text x="790" y="455" class="key">aca</text><text x="930" y="455" class="note">(-ões as -ão)</text>
+  <text x="30" y="473" class="cell">Indonesian</text><text x="150" y="473" class="fact">Skrip dijalankan setiap malam</text><text x="470" y="473" class="fact">Kapan skrip ini jalankan?</text><text x="790" y="473" class="key">jalan</text><text x="930" y="473" class="note">(word scan)</text>
+  <text x="30" y="491" class="cell">Arabic</text><text x="150" y="491" class="fact">تدرس إيرما هنا</text><text x="470" y="491" class="fact">أين تدرس لإيرما؟</text><text x="790" y="491" class="key">ايرما</text><text x="930" y="491" class="note">(for Irma: ل off)</text>
+  <text x="30" y="509" class="cell">Hindi</text><text x="150" y="509" class="fact">इरमा कॉफ़ी पीती है</text><text x="470" y="509" class="fact">इरमा कौन सी कॉफी पीती है?</text><text x="790" y="509" class="key">कॉफी</text><text x="930" y="509" class="note">(nukta folded)</text>
+  <text x="30" y="527" class="cell">Bengali</text><text x="150" y="527" class="fact">পরিবার ২০২৯ সালে চলে যাবে</text><text x="470" y="527" class="fact">পরিবার 2029 সালে কোথায় যাবে?</text><text x="790" y="527" class="key">2029</text>
+  <text x="30" y="545" class="cell">Amharic</text><text x="150" y="545" class="fact">ሳባ በአዲስ አበባ ሁለት ቤቶች አሏት</text><text x="470" y="545" class="fact">የሳባ ቤት የት ነው?</text><text x="790" y="545" class="key">ቤት</text><text x="930" y="545" class="note">(plural undone)</text>
+  <text x="30" y="563" class="cell">French</text><text x="150" y="563" class="fact">le cœur de la ville est calme</text><text x="470" y="563" class="fact">Comment est le coeur de la ville ?</text><text x="790" y="563" class="key">coeur</text>
+  <text x="30" y="581" class="cell">Italian</text><text x="150" y="581" class="fact">La festa dell'anno è a maggio</text><text x="470" y="581" class="fact">Quando è la festa di quest'anno?</text><text x="790" y="581" class="key">anno</text><text x="930" y="581" class="note">(elision off)</text>
+  <text x="30" y="599" class="cell">Turkish</text><text x="150" y="599" class="fact">Çocuğun okulu Rayong'de</text><text x="470" y="599" class="fact">Cocuk hangi okula gidiyor?</text><text x="790" y="599" class="key">cocuk</text><text x="930" y="599" class="note">(ğ read, then folded)</text>
+  <text x="30" y="617" class="cell">Polish</text><text x="150" y="617" class="fact">Szkoła Irmy jest w Rayong</text><text x="470" y="617" class="fact">Gdzie jest szkola Irmy?</text><text x="790" y="617" class="key">szkol</text><text x="930" y="617" class="note">(ł = l)</text>
+  <text x="30" y="635" class="cell">Dutch</text><text x="150" y="635" class="fact">De hond van Pieter slaapt niet in huis</text><text x="470" y="635" class="fact">Waar slapen de honden van Pieter?</text><text x="790" y="635" class="key">hond · slaap</text>
+  <text x="30" y="653" class="cell">Afrikaans</text><text x="150" y="653" class="fact">Pieter se hond slaap nie in die huis nie</text><text x="470" y="653" class="fact">Waar slaap die hond van Pieter vir die nag?</text><text x="790" y="653" class="key">hond · slaap</text><text x="930" y="653" class="note">(as written)</text>
+  <text x="30" y="671" class="cell">Hausa</text><text x="150" y="671" class="fact">Musa yana son ƙwallon ƙafa da yawa kuma yana buga ta</text><text x="470" y="671" class="fact">Wane wasa ne Musa yake so? kwallon kafa ne?</text><text x="790" y="671" class="key">kwallon · kafa</text><text x="930" y="671" class="note">(ƙ = k)</text>
+  <text x="30" y="689" class="cell">Swahili</text><text x="150" y="689" class="fact">Juma anapenda kahawa na maziwa kila asubuhi</text><text x="470" y="689" class="fact">Juma anapenda kahawa gani na kwa nini?</text><text x="790" y="689" class="key">kahawa</text><text x="930" y="689" class="note">(as written)</text>
+  <text x="30" y="707" class="cell">German</text><text x="150" y="707" class="fact">Irma hat einen Termin beim Zahnarzt</text><text x="470" y="707" class="fact">Wann ist Irmas Zahnarzttermin?</text><text x="790" y="707" class="key">zahn · arzt · termin</text>
+  <text x="30" y="725" class="cell">German</text><text x="150" y="725" class="fact">Die Familienkatze schläft viel</text><text x="470" y="725" class="fact">Wie viel schläft die Katze?</text><text x="790" y="725" class="key">katz</text><text x="930" y="725" class="note">(last part)</text>
+  <text x="30" y="743" class="cell">Russian, English</text><text x="150" y="743" class="fact">Бэкап базы каждую ночь</text><text x="470" y="743" class="fact">When does the backup run?</text><text x="790" y="743" class="key">backup</text><text x="930" y="743" class="note">(one word, two scripts)</text>
+  <text x="30" y="761" class="cell">English</text><text x="150" y="761" class="fact">Irma is allergic to almonds</text><text x="470" y="761" class="fact">What allergy does Irma have?</text><text x="790" y="761" class="key">irma · allergi</text><text x="930" y="761" class="note">(allergi: same root, 0.6)</text>
+  <text x="30" y="779" class="cell">Chinese</text><text x="150" y="779" class="fact">伊尔玛对杏仁过敏</text><text x="470" y="779" class="fact">伊尔玛对什么过敏？</text><text x="790" y="779" class="key">伊尔 · 尔玛 · 过敏</text><text x="930" y="779" class="note">(n-grams)</text>
+  <text x="30" y="797" class="cell">Chinese</text><text x="150" y="797" class="fact">臺灣大學在台北</text><text x="470" y="797" class="fact">台湾大学在哪里？</text><text x="790" y="797" class="key">台湾 · 大学</text><text x="930" y="797" class="note">(Traditional = Simplified)</text>
+  <text x="30" y="815" class="cell">Japanese</text><text x="150" y="815" class="fact">引っ越しは来月です</text><text x="470" y="815" class="fact">引越しはいつですか？</text><text x="790" y="815" class="key">引っ越し</text><text x="930" y="815" class="note">(spelling variant)</text>
+  <text x="30" y="833" class="cell">Korean</text><text x="150" y="833" class="fact">이르마는 아몬드 알레르기가 있다</text><text x="470" y="833" class="fact">이르마는 무슨 알레르기가 있어?</text><text x="790" y="833" class="key">알레르기</text><text x="930" y="833" class="note">(n-grams)</text>
+  <text x="30" y="851" class="cell">Thai</text><text x="150" y="851" class="fact">เอวาแพ้อัลมอนด์</text><text x="470" y="851" class="fact">เอวาแพ้อะไร</text><text x="790" y="851" class="key">เอวา · แพ้</text><text x="930" y="851" class="note">(n-grams)</text>
 
-  <text x="30" y="344" class="cell">Russian</text><text x="120" y="344" class="fact">Маша любит кофе</text><text x="330" y="344" class="fact">Что любит Маши?</text><text x="560" y="344" class="key">маш</text>
-  <text x="30" y="362" class="cell">Spanish</text><text x="120" y="362" class="fact">La gata se llama Zelda</text><text x="330" y="362" class="fact">¿Cómo se llama el gato?</text><text x="560" y="362" class="key">gat</text>
-  <text x="30" y="380" class="cell">Portuguese</text><text x="120" y="380" class="fact">a ação foi rápida</text><text x="330" y="380" class="fact">Como foram as ações?</text><text x="560" y="380" class="key">aca</text><text x="610" y="380" class="note">(-ões as -ão)</text>
-  <text x="30" y="398" class="cell">Indonesian</text><text x="120" y="398" class="fact">Skrip dijalankan setiap malam</text><text x="330" y="398" class="fact">Kapan skrip ini jalankan?</text><text x="560" y="398" class="key">jalan</text><text x="610" y="398" class="note">(word scan)</text>
-  <text x="30" y="416" class="cell">Arabic</text><text x="120" y="416" class="fact">تدرس إيرما هنا</text><text x="330" y="416" class="fact">أين تدرس لإيرما؟</text><text x="560" y="416" class="key">ايرما</text><text x="610" y="416" class="note">(for Irma: ل off)</text>
-  <text x="30" y="434" class="cell">Hindi</text><text x="120" y="434" class="fact">इरमा कॉफ़ी पीती है</text><text x="330" y="434" class="fact">इरमा कौन सी कॉफी पीती है?</text><text x="560" y="434" class="key">कॉफी</text><text x="610" y="434" class="note">(nukta folded)</text>
-  <text x="30" y="452" class="cell">Bengali</text><text x="120" y="452" class="fact">পরিবার ২০২৯ সালে চলে যাবে</text><text x="330" y="452" class="fact">পরিবার 2029 সালে কোথায় যাবে?</text><text x="560" y="452" class="key">2029</text>
-  <text x="30" y="470" class="cell">French</text><text x="120" y="470" class="fact">le cœur de la ville est calme</text><text x="330" y="470" class="fact">Comment est le coeur de la ville ?</text><text x="560" y="470" class="key">coeur</text>
-  <text x="30" y="488" class="cell">Italian</text><text x="120" y="488" class="fact">La festa dell'anno è a maggio</text><text x="330" y="488" class="fact">Quando è la festa di quest'anno?</text><text x="560" y="488" class="key">anno</text><text x="610" y="488" class="note">(elision off)</text>
-  <text x="30" y="506" class="cell">Turkish</text><text x="120" y="506" class="fact">Çocuğun okulu Rayong'de</text><text x="330" y="506" class="fact">Cocuk hangi okula gidiyor?</text><text x="560" y="506" class="key">cocuk</text><text x="610" y="506" class="note">(ğ read, then folded)</text>
-  <text x="30" y="524" class="cell">Polish</text><text x="120" y="524" class="fact">Szkoła Irmy jest w Rayong</text><text x="330" y="524" class="fact">Gdzie jest szkola Irmy?</text><text x="560" y="524" class="key">szkol</text><text x="610" y="524" class="note">(ł = l)</text>
-  <text x="30" y="542" class="cell">Dutch</text><text x="120" y="542" class="fact">De amandelen zijn op</text><text x="330" y="542" class="fact">Waar zijn de pinda?</text><text x="560" y="542" class="key">pinda</text>
-  <text x="30" y="560" class="cell">German</text><text x="120" y="560" class="fact">Irma hat einen Termin beim Zahnarzt</text><text x="330" y="560" class="fact">Wann ist Irmas Zahnarzttermin?</text><text x="560" y="560" class="key">zahn · arzt · termin</text>
-  <text x="30" y="578" class="cell">German</text><text x="120" y="578" class="fact">Die Familienkatze schläft viel</text><text x="330" y="578" class="fact">Wie viel schläft die Katze?</text><text x="560" y="578" class="key">katz</text><text x="610" y="578" class="note">(last part)</text>
-  <text x="30" y="596" class="cell">Russian, English</text><text x="120" y="596" class="fact">Бэкап базы каждую ночь</text><text x="330" y="596" class="fact">When does the backup run?</text><text x="560" y="596" class="key">backup</text><text x="610" y="596" class="note">(one word, two scripts)</text>
-  <text x="30" y="614" class="cell">English</text><text x="120" y="614" class="fact">Irma is allergic to almonds</text><text x="330" y="614" class="fact">What allergy does Irma have?</text><text x="560" y="614" class="key">allergi</text>
-  <text x="30" y="632" class="cell">Chinese</text><text x="120" y="632" class="fact">伊尔玛对杏仁过敏</text><text x="330" y="632" class="fact">伊尔玛对什么过敏？</text><text x="560" y="632" class="key">伊尔玛 · 过敏</text><text x="610" y="632" class="note">(n-grams)</text>
-  <text x="30" y="650" class="cell">Chinese</text><text x="120" y="650" class="fact">臺灣大學在台北</text><text x="330" y="650" class="fact">台湾大学在哪里？</text><text x="560" y="650" class="key">台湾大学</text><text x="610" y="650" class="note">(Traditional = Simplified)</text>
-  <text x="30" y="668" class="cell">Japanese</text><text x="120" y="668" class="fact">引っ越しは来月です</text><text x="330" y="668" class="fact">引越しはいつですか？</text><text x="560" y="668" class="key">引越し</text><text x="610" y="668" class="note">(spelling variant)</text>
-  <text x="30" y="686" class="cell">Korean</text><text x="120" y="686" class="fact">이르마는 아몬드 알레르기가 있다</text><text x="330" y="686" class="fact">이르마는 무슨 알레르기가 있어?</text><text x="560" y="686" class="key">알레르기</text><text x="610" y="686" class="note">(n-grams)</text>
-  <text x="30" y="704" class="cell">Thai</text><text x="120" y="704" class="fact">เอวาแพ้อัลมอนด์</text><text x="330" y="704" class="fact">เอวาแพ้อะไร</text><text x="560" y="704" class="key">เอวา · แพ้</text><text x="610" y="704" class="note">(n-grams)</text>
+  <!-- No match -->
+  <text x="30" y="899" class="head">No match</text>
+  <text x="30" y="919" class="col">IN A FACT</text>
+  <text x="190" y="919" class="col">IN A QUESTION</text>
+  <text x="350" y="919" class="col">WHY</text>
+  <line x1="30" y1="926" x2="560" y2="926" stroke="#1e293b" stroke-width="1"/>
+  <text x="30" y="943" class="fact">qx-other</text><text x="190" y="943" class="fact">qx-vps</text><text x="350" y="943" class="why">identifier: exact</text>
+  <text x="30" y="961" class="fact">contrast</text><text x="190" y="961" class="fact">contract</text><text x="350" y="961" class="why">whole stem only</text>
+  <text x="30" y="979" class="fact">মাটি (soil)</text><text x="190" y="979" class="fact">মা (mother)</text><text x="350" y="979" class="why">3 letters kept</text>
+  <text x="30" y="997" class="fact">كتاب (book)</text><text x="190" y="997" class="fact">تاب</text><text x="350" y="997" class="why">ك here is no clitic</text>
+  <text x="30" y="1015" class="fact">gezin (family)</text><text x="190" y="1015" class="fact">zin (sense)</text><text x="350" y="1015" class="why">ge- kept (nl)</text>
+  <text x="30" y="1033" class="fact">Matrose</text><text x="190" y="1033" class="fact">Rose</text><text x="350" y="1033" class="why">one word (dictionary)</text>
+  <text x="30" y="1051" class="fact">Hochzeit</text><text x="190" y="1051" class="fact">Zeit</text><text x="350" y="1051" class="why">not its parts' meaning</text>
+  <text x="30" y="1069" class="fact">ботинки</text><text x="190" y="1069" class="fact">бот</text><text x="350" y="1069" class="why">a loanword by its forms</text>
+  <text x="620" y="943" class="note">Synonyms and words of another root match through keywords the agent adds</text>
+  <text x="620" y="959" class="note">when it stores a fact; a paraphrase, through the optional search by meaning.</text>
+  <text x="620" y="975" class="note">Ukrainian and Belarusian need two telling words, so a Russian message reads as before;</text>
+  <text x="620" y="991" class="note">Swahili, Hausa, Yoruba, Somali, Zulu, Afrikaans and Tigrinya compare words as written.</text>
 
-  <!-- No match table -->
-  <text x="820" y="300" class="head">No match</text>
-  <text x="820" y="320" class="col">IN A FACT</text>
-  <text x="915" y="320" class="col">IN A QUESTION</text>
-  <text x="1010" y="320" class="col">WHY</text>
-  <line x1="820" y1="327" x2="1150" y2="327" stroke="#1e293b" stroke-width="1"/>
-
-  <text x="820" y="344" class="fact">qx-other</text><text x="915" y="344" class="fact">qx-vps</text><text x="1010" y="344" class="why">identifier: exact</text>
-  <text x="820" y="362" class="fact">contrast</text><text x="915" y="362" class="fact">contract</text><text x="1010" y="362" class="why">whole stem only</text>
-  <text x="820" y="380" class="fact">মাটি (soil)</text><text x="915" y="380" class="fact">মা (mother)</text><text x="1010" y="380" class="why">3 letters kept</text>
-  <text x="820" y="398" class="fact">كتاب (book)</text><text x="915" y="398" class="fact">تاب</text><text x="1010" y="398" class="why">ك here is no clitic</text>
-  <text x="820" y="416" class="fact">gezin (family)</text><text x="915" y="416" class="fact">zin (sense)</text><text x="1010" y="416" class="why">ge- kept (nl)</text>
-  <text x="820" y="434" class="fact">Matrose</text><text x="915" y="434" class="fact">Rose</text><text x="1010" y="434" class="why">one word (dictionary)</text>
-  <text x="820" y="452" class="fact">Hochzeit</text><text x="915" y="452" class="fact">Zeit</text><text x="1010" y="452" class="why">not its parts' meaning</text>
-  <text x="820" y="470" class="fact">ботинки</text><text x="915" y="470" class="fact">бот</text><text x="1010" y="470" class="why">a loanword by its forms</text>
-
-  <text x="820" y="510" class="note">Synonyms and words of another root match</text>
-  <text x="820" y="524" class="note">through keywords the agent adds when it</text>
-  <text x="820" y="538" class="note">stores a fact; a paraphrase, through the</text>
-  <text x="820" y="552" class="note">optional search by meaning.</text>
-
-  <text x="30" y="732" class="note">Every pair was run against the code (0.17.3): the question finds the fact by search; in a no-match pair the two words share no key, and the fact about qx-other is not recalled for qx-vps.</text>
+  <text x="30" y="1113" class="note">Every pair was run against the code (0.33.1): the question finds the fact by search; in a no-match pair the two words share no key (qx-other and qx-vps only their part qx), and the fact is not recalled.</text>
 </svg>

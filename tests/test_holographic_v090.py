@@ -122,7 +122,8 @@ def test_roots_only_in_text_of_a_determined_language():
     assert not text.analyze("teacher").roots  # one word: English, Spanish, French …? no roots
     assert not text.analyze("le lit est grand").roots  # French text
     assert ("ru", "ноч") in text.analyze("ночные смены").roots
-    assert not text.analyze("головний офіс у Києві").roots  # Ukrainian letters: not Russian
+    # Ukrainian text: no Russian roots («головний» is no «гол»); Ukrainian has its own since it is a language here
+    assert not [r for lang, r in text.analyze("головний офіс у Києві").roots if lang == "ru"]
 
 
 # -- search: a root brings in what the word's own forms miss, below the word itself ---------------------------------

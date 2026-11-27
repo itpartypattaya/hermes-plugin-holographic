@@ -11,6 +11,10 @@ Run (the venv has snowballstemmer and numpy):
 Measures, per language:
   detect   — Latin text: share of sentences whose language is determined and is the right one alone (exact), the
              right one among tied ones (tied), and old-language sentences that get a new language among theirs (leak).
+             Cyrillic text (Russian, Ukrainian, Belarusian): the same of Analysis.cyrillic; "undetermined" is a
+             Ukrainian or Belarusian sentence read as Russian (what nothing telling it apart gives), "leak" a Russian
+             sentence that gets Ukrainian or Belarusian among its languages. Code without Analysis.cyrillic reads all
+             Cyrillic as Russian.
   dropped  — share of tokens dropped as function words.
   ner      — MasakhaNER: share of name tokens (B-/I- tags) dropped as function words (should stay near 0).
   hooks    — Hausa: a question that types ɓ ɗ ƙ ƴ as b d k y (its hooked words plus up to two neighbours) finds its
@@ -39,8 +43,8 @@ ROOT = Path(__file__).resolve().parents[1]
 FLORES = {"en": "eng_Latn", "es": "spa_Latn", "fr": "fra_Latn", "pt": "por_Latn", "id": "ind_Latn", "de": "deu_Latn",
           "it": "ita_Latn", "tr": "tur_Latn", "pl": "pol_Latn", "nl": "nld_Latn", "sw": "swh_Latn", "ha": "hau_Latn",
           "yo": "yor_Latn", "so": "som_Latn", "zu": "zul_Latn", "af": "afr_Latn", "am": "amh_Ethi", "ti": "tir_Ethi",
-          "ru": "rus_Cyrl", "hi": "hin_Deva", "ar": "arb_Arab", "bn": "ben_Beng", "zh": "zho_Hans", "ja": "jpn_Jpan",
-          "ko": "kor_Hang", "th": "tha_Thai"}
+          "ru": "rus_Cyrl", "uk": "ukr_Cyrl", "be": "bel_Cyrl", "hi": "hin_Deva", "ar": "arb_Arab", "bn": "ben_Beng",
+          "zh": "zho_Hans", "ja": "jpn_Jpan", "ko": "kor_Hang", "th": "tha_Thai"}
 CHARS = {"zh": 12, "ja": 12, "th": 16}  # unsegmented: span length in characters
 OLD = ("en", "es", "fr", "pt", "id", "de", "it", "tr", "pl", "nl")
 NER = {"ha": "hau.test.txt", "yo": "yor.test.txt", "sw": "swa.test.txt", "zu": "zul.test.txt", "am": "amh.test.txt"}
@@ -93,6 +97,19 @@ def detect(t, lang: str, sents: list[str]) -> dict:
         exact += a.langs == (lang,)
         tied += lang in a.langs
         leak += lang in OLD and any(x not in OLD for x in a.langs)
+    n = len(sents)
+    return {"exact": round(exact / n, 4), "tied": round(tied / n, 4), "undetermined": round(undetermined / n, 4),
+            "leak": round(leak / n, 4)}
+
+
+def detect_cyrillic(t, lang: str, sents: list[str]) -> dict:
+    exact = tied = undetermined = leak = 0
+    for s in sents:
+        langs = getattr(t.analyze(s), "cyrillic", ("ru",))
+        exact += langs == (lang,)
+        tied += lang in langs
+        undetermined += lang != "ru" and langs == ("ru",)
+        leak += lang == "ru" and langs != ("ru",)
     n = len(sents)
     return {"exact": round(exact / n, 4), "tied": round(tied / n, 4), "undetermined": round(undetermined / n, 4),
             "leak": round(leak / n, 4)}
@@ -256,6 +273,8 @@ def main() -> None:
         sents = sentences(args.flores, lang, args.split)
         if FLORES[lang].endswith("_Latn"):
             report["detect"][lang] = detect(t, lang, sents)
+        elif FLORES[lang].endswith("_Cyrl"):
+            report["detect"][lang] = detect_cyrillic(t, lang, sents)
         report["dropped"][lang] = dropped(t, sents)
     if args.ner:
         for lang, name in NER.items():

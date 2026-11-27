@@ -228,6 +228,58 @@ def test_weak_words_are_function_words_of_their_language():
     assert [t.word for t in query_terms("Come prende il caffè Leon?")] == ["come", "prende", "caffe", "leon"]
 
 
+
+# Before (unreleased): Turkish "ve" (and), its commonest word, voted for Italian too ("ve", there), and Turkish
+# postpositions and determiners were no function words, so a fifth of Turkish sentences tied with Italian or were of no
+# language. Polish "w" (in) and "z" (with), its commonest words, did not vote, being initials elsewhere.
+
+@pytest.mark.parametrize("text", [
+    "Proje Ahmet ve Mehmet tarafından hazırlandı", "Annem ve babam yarın geliyor",
+    "Bazı arkadaşlar toplantıya katılmadı",
+])
+def test_turkish_by_ve_and_its_postpositions(text):
+    assert analyze(text).langs == ("tr",)
+
+
+@pytest.mark.parametrize("text, lang, word", [
+    ("Proje Ahmet ve Mehmet tarafından hazırlandı", "tr", "tarafindan"),
+    ("Podczas spotkania omówiliśmy budżet", "pl", "podczas"),
+    ("De grot bevindt zich op een berg", "nl", "zich"),
+])
+def test_the_new_voters_stay_search_words(text, lang, word):
+    """They tell the language but are not dropped: as function words they cost retrieval (Dutch 0.7 points on
+    FLORES-200)."""
+    assert analyze(text).langs == (lang,)
+    assert word in [t.word for t in query_terms(text)]
+
+
+@pytest.mark.parametrize("text, lang", [
+    ("Ve lo dico io", "it"),  # Italian "ve" before a clitic; alone it is Turkish "and"
+    ("Esa poza azul", "es"),  # Spanish "poza" (pool), no Polish "poza" (beyond)
+])
+def test_old_languages_keep_their_words(text, lang):
+    assert analyze(text).langs == (lang,)
+
+
+@pytest.mark.parametrize("text", [
+    "Spotkanie w piątek z Anną", "Mieszkam w Warszawie od trzech lat", "Podczas spotkania omówiliśmy budżet",
+    "W środę idę do kina",  # a capital "W" that starts a sentence
+])
+def test_polish_by_w_z_and_more_function_words(text):
+    assert analyze(text).langs == ("pl",)
+
+
+@pytest.mark.parametrize("text", ["George W. Bush visited Warsaw", "Gen Z shoppers like TikTok", "from a to z",
+                                  "gen z trends", "w !", "George W Bush", "W Edwards Deming", "W hotels are nice",
+                                  "Book a room at W hotel"])
+def test_w_and_z_as_initials_or_letters_are_no_polish(text):
+    assert "pl" not in analyze(text).langs
+
+
+def test_a_place_name_is_no_turkish_word():
+    """Hatta (a town in Dubai, an Indonesian name) is no voter, though Turkish "hatta" (even) is a function word."""
+    assert "tr" not in analyze("Hatta hiking").langs
+
 # -- courtesy and function words recall nothing ------------------------------------------------------------------------
 
 @pytest.mark.parametrize("message", [

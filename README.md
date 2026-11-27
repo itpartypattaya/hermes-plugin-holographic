@@ -413,7 +413,15 @@ A word matches another when they share its plain form or its stem in the languag
   words of the four newer languages that are also everyday words, names or abbreviations elsewhere (Italian `come`,
   `dove`, `per`; Turkish `kim`, `ben`; Polish `bo`; Dutch `door`, `met`, `van`, `wat`) do not tell the language and are
   dropped only where that language alone fits the other words: "Ana come carne" stays Spanish, "Kim Lane lives in Oslo"
-  keeps `kim`. Italian `mia` (my) is not on the list: it is a common name.
+  keeps `kim`. Italian `mia` (my) is not on the list: it is a common name. Unreleased: Turkish `ve` (and), its commonest
+  word, no longer votes for Italian (except before a clitic, `ve lo dico`); Turkish postpositions and determiners
+  (`tarafından`, `diğer`, `bazı`, `arasında`, `rağmen` …), more Polish ones (`gdy`, `aby`, `jako`, `podczas`, `również`
+  …) and a few Dutch ones (`zich`, `toen`, `tijdens` …) tell the language and stay search words; Polish `w` (in) and `z`
+  (with) vote when written alone in lower case before another word, `z` only beside other Polish evidence, so `George W.
+  Bush`, `Gen Z` and `gen z trends` are not read as Polish. On FLORES-200 devtest Turkish is told exactly in 91 % of
+  sentences (was 78 %; of no language 5 %, was 8 %), Polish in 96 % (was 84 %; of no language 1 %, was 3 %). Of the
+  other languages only Dutch moves: four sentences that tied with Spanish are Dutch alone. Retrieval moves by at most
+  0.1 point (Dutch).
 - **Folding**: Latin accents and ligatures (`esta` finds `está`, `coeur` finds `cœur`), Arabic vowel marks and letter
   variants, the Indic nukta, and native digits (`2027` finds `২০২৭`, `QX24` finds `QX২৪`). Folding also merges what
   only an accent tells apart (Spanish `año` / `ano`), as the FTS5 index already did. Turkish `ı` and Polish `ł` compare
@@ -544,6 +552,22 @@ A word matches another when they share its plain form or its stem in the languag
       Hausa is told in 91 % (was 69 %), Yoruba 92 % (was 84 %); false recall goes to 80 % for Hausa and 63 % for
       Yoruba. Hausa `ya` and Yoruba `ó` do not vote, being Turkish, Portuguese and Polish words too. The probe covers
       all 26 languages of the plugin; none of the others moved.
+    - **Afrikaans, Zulu** (unreleased): the Afrikaans words Dutch shares (`die`, `is`, `het`, `om`, `dat` …) vote for
+      both, and Afrikaans decides a text only with a word of its own (`nie`, `vir`, `hulle`, `slegs` …) or with its
+      article `'n` (written apart, as Dutch rarely does) beside an Afrikaans word that is no English one, so `Rock 'n
+      Roll Is Fun` stays English. Its words that are Dutch or English words too (`deur`, `toe`, `gaan`, `word`, `Sal`,
+      `EK`) vote but do not decide: `Wat is die deur?` stays Dutch. Zulu words of six letters or more that start with
+      `uku`, `ngo`, `nge`, `ezi` or `izi` (noun-class prefixes, the infinitive, adverbs) vote, except in text with a
+      Swahili function word (`ukubwa`, `ukurasa` are Swahili) or with an English vote and no Zulu one. Afrikaans is
+      told exactly in 69 % of sentences (was 1 %; with Dutch 74 %, was 3 %), Zulu in 79 % (was 50 %; of no language
+      12 %, was 34 %). No Dutch sentence ties with Afrikaans; Afrikaans text that has only the shared words stays
+      Dutch, and colloquial Dutch that writes `'n` apart with only shared words (`Dat is 'n mooi huis`) reads as
+      Afrikaans. Afrikaans text is no longer stemmed as Dutch, and its function words are dropped: false recall falls
+      from 54 % to 48 %, while four words copied from a sentence find it first 2.5 points less often (89 %, was 91 %)
+      and the right fact is recalled 98 % (was 99 %).
+    - **Names**: MasakhaNER name words written with a capital and dropped as function words stay at 0.1–0.6 % (they
+      were 0.1–0.8 %, through the other languages' lists). Amharic has 1.5 %: `እስከ` (until), `በፊት` (before), which
+      the dataset tags inside dates; 2.6 % unreleased, with `ከ`, `በ`, `ለ` of the same dates.
 - **Ukrainian and Belarusian** (unreleased): until now every Cyrillic text was read as Russian, with Russian stems
   and function words.
   - **Telling them apart**: a word rules a language out by a letter it does not write (Ukrainian has no `ы э ё ъ`,
@@ -590,9 +614,6 @@ A word matches another when they share its plain form or its stem in the languag
       nothing there (measured with Russian stems in their place: the same).
   - **Left Russian-only**: the experimental Russian case forms (`_RU_FORMS`), the borrowed-word table (`телеграмі` is
     not one of its forms), the sensitive-data patterns of `screen.py`, and splitting a message into two questions.
-    - **Names**: MasakhaNER name words written with a capital and dropped as function words stay at 0.1–0.6 % (they
-      were 0.1–0.8 %, through the other languages' lists). Amharic has 1.5 %: `እስከ` (until), `በፊት` (before), which
-      the dataset tags inside dates; 2.6 % unreleased, with `ከ`, `በ`, `ለ` of the same dates.
 - **Chinese, Japanese, Korean, Thai** (no spaces between words): character n-grams, bigrams for Chinese, Japanese and
   Korean, trigrams for Thai. Grammar weighs less: Chinese function characters (的 是 了), Japanese particles (は が を
   に の), Thai function words (ของ ที่ และ); a message that is only a filler (はい, 네, โอเค) recalls nothing. Chinese

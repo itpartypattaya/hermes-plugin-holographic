@@ -195,6 +195,13 @@ def test_english_words_and_names_stay_search_words(text, word):
     assert word not in _stops(text)
 
 
+@pytest.mark.parametrize("word", ["Word", "sal", "deur", "toe", "teen", "gaan"])
+def test_afrikaans_words_that_are_english_or_dutch_ones_stay_words_where_the_language_is_unknown(word):
+    """They vote for Afrikaans (unreleased) but are no language-blind function word: a Latin word in Chinese text, the
+    sides of "aka"."""
+    assert fold(word.lower()) in dict(query_grams(f"这是{word}吗"))
+
+
 def test_a_latin_word_in_chinese_text_is_not_taken_for_a_hausa_function_word():
     """The language-blind list (STOPWORDS) holds of the new languages only words that are no word elsewhere."""
     assert "game" in dict(query_grams("这是game吗"))
@@ -353,3 +360,85 @@ def test_a_turkish_either_or_keeps_turkish():
     """Known: "ya ... ya" (either ... or) is two Swahili "ya" too, a tie that keeps Turkish and its stems; making Swahili
     "ya" not vote would lose 9 points of Swahili sentences on FLORES."""
     assert "tr" in analyze("Ya geldi ya gelmedi, bilmiyorum").langs
+
+
+# -- Afrikaans and Dutch, Zulu prefixes (unreleased) -----------------------------------------------------------------
+# Before: Afrikaans was told in 3 % of FLORES-200 sentences. Its commonest words (die, is, het, wat, om, dat) are Dutch
+# too and voted for Dutch only, so Afrikaans text was read as Dutch (Dutch stems, Afrikaans grammar words kept as search
+# words). Zulu glues its grammar to the word and has few free function words: a third of its sentences were of no
+# language.
+
+@pytest.mark.parametrize("text", [
+    "Ek het 'n nuwe motor gekoop",  # the article 'n
+    "Ek het ’n nuwe motor gekoop",  # typed with a curly apostrophe
+    "Ek het 'n motor", "Ek het ('n motor)",  # a short one; the article after a bracket
+    pytest.param("Die vergadering word môre in die stadsaal gehou", marks=pytest.mark.xfail(
+        strict=True, reason="known: 'word' (is, passive) is Dutch 'ik word' too, so it does not decide; the other "
+        "words are shared, and the text stays Dutch")),
+    "Ons gaan nie vandag werk toe nie",
+    "Dit is nie wat ons wil nie",
+])
+def test_afrikaans_is_told_apart_from_dutch(text):
+    assert analyze(text).langs == ("af",)
+
+
+def test_afrikaans_grammar_words_drop_and_its_content_words_stay():
+    text = "Ek het 'n nuwe motor gekoop"
+    assert {"ek", "het", "n"} <= _stops(text)
+    assert not {"nuwe", "motor", "gekoop"} & _stops(text)
+
+
+@pytest.mark.parametrize("text", [
+    "Dat is het", "Het is wat het is", "Wat is dat voor een boek?", "Zo'n auto wil ik ook",
+    "Iedereen die in Vaticaanstad woont, is rooms-katholiek.",  # FLORES-200: only words Afrikaans shares
+])
+def test_dutch_made_of_words_afrikaans_shares_stays_dutch(text):
+    """Afrikaans decides only with a word or article Dutch does not have."""
+    assert analyze(text).langs == ("nl",)
+
+
+@pytest.mark.parametrize("text", [
+    "Ukudla kwakumnandi ngesikhathi somcimbi",  # the food was tasty during the ceremony
+    "Izingane ezincane zidlala ngaphandle",  # the small children play outside
+])
+def test_zulu_is_told_by_its_prefixes(text):
+    assert analyze(text).langs == ("zu",)
+
+
+@pytest.mark.parametrize("text", [
+    "Ngorongoro safari booking",  # one word with a Zulu prefix does not decide
+    "Ukubwa wa ukurasa huu ni mdogo",  # Swahili has uku- nouns too
+])
+def test_a_zulu_prefix_does_not_make_other_text_zulu(text):
+    assert "zu" not in analyze(text).langs
+
+
+
+# Review (Codex, of the change above): words that decide Afrikaans must be no Dutch or English words, the article must
+# not decide English or Dutch text alone, Zulu prefixes must not outvote English or Swahili.
+
+@pytest.mark.parametrize("text, lang, word", [
+    ("Wat is die deur?", "nl", "deur"),  # Dutch "deur" (door), not Afrikaans "deur" (through)
+    ("Is Word open?", "en", "word"),
+    ("Het EK begint morgen", "nl", "ek"),  # the European championship, not Afrikaans "ek" (I)
+])
+def test_a_dutch_or_english_word_does_not_make_text_afrikaans(text, lang, word):
+    a = analyze(text)
+    assert "af" not in a.langs and lang in a.langs
+    assert word not in _stops(text)
+
+
+@pytest.mark.parametrize("text", [
+    "Doe de deur toe", "Dat is wat ik word", "Amerika om te gaan",  # FLORES-200: four words of a Dutch sentence
+    "Rock 'n Roll Is Fun", "Fish 'n chips in London",
+])
+def test_no_afrikaans_from_homographs_or_an_english_n(text):
+    assert "af" not in analyze(text).langs
+
+
+@pytest.mark.parametrize("text", [
+    "Ukulele tabs and ezines", "Ukulele lessons in Ngorongoro",  # English
+    "Kuna ukungu ukumbini",  # Swahili: there is fog in the hall
+])
+def test_zulu_prefixes_do_not_outvote_english_or_swahili(text):
+    assert "zu" not in analyze(text).langs

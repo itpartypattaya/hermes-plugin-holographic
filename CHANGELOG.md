@@ -61,6 +61,28 @@
   - **False recall** for a question the store holds no fact for: Hausa 84 % → 80 %, Yoruba 76 % → 63 %; the right
     fact is recalled 99 % → 97 % for Hausa, 96 % → 98 % for Yoruba. Amharic is unchanged (70 %).
   - Every other language of the plugin measures as before (`tools/african_probe.py` now covers all 26).
+- **Afrikaans, Zulu, Turkish, Polish told more often** (README, Languages): measured on FLORES-200 devtest with
+  `tools/african_probe.py`.
+  - **Afrikaans**: the words it shares with Dutch (`die`, `is`, `het`, `om`, `dat` …) vote for both, and Afrikaans
+    decides only with a word of its own (`nie`, `vir`, `hulle`, `slegs` …) or with its article `'n` beside an
+    Afrikaans word that is no English one. Afrikaans words that are Dutch or English words too (`deur`, `toe`, `gaan`,
+    `word`, `Sal`, `EK`) do not decide. Told in 74 % of sentences, 69 % alone (was 3 % and 1 %); no Dutch sentence
+    ties. Text with only the shared words stays Dutch. Afrikaans is no longer stemmed as Dutch: false recall
+    54 % → 48 %, the right fact 99 % → 98 %, four words copied from a sentence find it first 89 % (was 91 %).
+    Known: colloquial Dutch that writes `'n` apart with only shared words (`Dat is 'n mooi huis`) reads as Afrikaans.
+  - **Zulu**: words of six letters or more starting with `uku`, `ngo`, `nge`, `ezi`, `izi` vote, not in text with a
+    Swahili function word or with an English vote and no Zulu one (`Ukulele tabs and ezines`). Told in 79 % (was
+    51 %), of no language 12 % (was 34 %).
+  - **Turkish**: `ve` (and) no longer votes for Italian, except before a clitic (`ve lo dico`); `tarafından`,
+    `diğer`, `bazı`, `arasında` and other postpositions and determiners vote. Told alone in 91 % (was 78 %), of no
+    language 5 % (was 8 %).
+  - **Polish**: `w` and `z` vote when written alone in lower case before a word (not `George W. Bush`, `Gen Z`), `z`
+    only beside other Polish evidence (`gen z trends` is no Polish); `gdy`, `aby`, `jako`, `podczas` and others vote.
+    Told alone in 96 % (was 84 %), of no language 1 % (was 3 %).
+  - The new Turkish, Polish, Dutch and Afrikaans words stay search words: as function words they cost Dutch 0.7
+    points of retrieval. Of the other languages only Dutch moves (four sentences that tied with Spanish are Dutch
+    alone); retrieval moves by at most 0.1 point (Dutch). Reviewed by Codex; its findings were fixed or are listed
+    above as known.
 
 ## 0.33.0 — 2026-11-27
 

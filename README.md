@@ -203,7 +203,7 @@ risk: [docs/two-topics.md](docs/two-topics.md).
   name, Stripe keys, a 2FA secret, Slack and Discord webhooks, an instruction in full-width or lookalike letters.
   Tags and the category are screened as a fact's text is, and a name given in `entities` that holds a credential or
   an instruction is not linked (0.30.0). Keywords and tags are screened as written and with their words side by
-  side, so an instruction or a password split across them is refused, a merge's union of keywords too (unreleased,
+  side, so an instruction or a password split across them is refused, a merge's union of keywords too (0.33.2,
   issue #152). A write takes one of the four categories the tool declares (`user_pref`,
   `project`, `tool`, `general`); search and list also filter by any category an older release stored. Recall
   checks a stored fact again before it goes into a prompt (0.13.0): one an older release, or another program, wrote

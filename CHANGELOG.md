@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.33.2 — 2026-11-28
 
 ### Fixed
 - **An instruction split across keywords or tags is refused** (issue #152, reported by rohitxsh). The write screen

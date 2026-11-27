@@ -59,6 +59,16 @@ entity is reachable without sharing a word with the query. Hub entities — a na
 are never traversed, and inside `search()` a discovery only fills the tail of the result list, never displacing a text
 hit (a reranker run afterwards may reorder the pool). Bounds, measurements and repair: [docs/memory-graph.md](docs/memory-graph.md).
 
+**Standing rules belong in the built-in memory.** Recall is by relevance: a fact comes in when the message shares its
+words, a named entity or, with search by meaning on, its sense. A rule meant for every turn ("always answer in
+Russian", "never delete files without asking", "don't message Alice after 22:00") is easily missed by a message that
+needs it but says none of it ("write to her about the meeting"). Put such rules in Hermes' built-in memory
+(`MEMORY.md` / `USER.md`): it is in the system prompt on every turn. Holographic keeps the facts that are recalled
+when they matter. The core reads the built-in memory once, at the start of a session, so a rule added there holds from
+the next session on; it is small (2,200 and 1,375 characters by default, `memory_char_limit` / `user_char_limit`)
+and one per profile, so with `scope: user`, `chat` or `thread` a rule written there reaches every person and chat of
+the profile.
+
 ## Install
 
 While your Hermes still bundles `holographic`, the bundled copy is used and this plugin stays dormant. After core

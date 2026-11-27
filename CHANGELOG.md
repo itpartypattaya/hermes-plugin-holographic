@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- **An instruction split across keywords or tags is refused** (issue #152, reported by rohitxsh). The write screen
+  read a fact's keywords joined with `", "`, and the commas broke the phrase: `["ignore", "previous",
+  "instructions"]` was stored while `["ignore previous instructions"]` was refused; a `tags` string such as
+  `ignore,previous,instructions` the same, and one keyword with commas inside (`["ignore, previous, instructions"]`),
+  which reads back as three. Both are now screened as written and with the words side by side, on add, change,
+  update, correct and merge. Recall before a turn never showed keywords or tags; search and list do.
+  - **Merge** without `keywords` joins the keep's keywords and each copy's: the union is screened too. `["ignore"]`
+    and `["previous", "instructions"]` passed one by one; their merge is refused, nothing is changed, and the answer
+    asks for `keywords` for the merged fact.
+  - **Credentials** are screened the same way: `["password", "Qwerty123!"]` was stored. A credential word next to a
+    number is refused now, also when it is not one: `["pin", "2024", "bangkok"]`, `["PIN", "4821"]` (a part number);
+    the answer says the field, and the agent words the keywords otherwise. On the 122 facts with keywords in a real
+    store, none would now be refused.
+  - Only more is refused; nothing stored changes, and facts written before keep their keywords. `screen.py` is
+    unchanged (hermes-dreaming needs no new copy).
+
 ## 0.33.1 — 2026-11-27
 
 ### Added

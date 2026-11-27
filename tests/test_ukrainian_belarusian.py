@@ -156,6 +156,19 @@ def test_a_consonant_the_dative_changes_meets_at_root_weight():
     assert 0.0 < term.match(fact) < 1.0
 
 
+@pytest.mark.parametrize("fact, query", [
+    ("Подарунок доньці від її бабусі", "що з її донькою"),  # к / ц of the dative
+    ("Наш кіт спить на дивані, і йому там добре", "Ви бачили її кота?"),  # і / о
+    ("Бабуля жыве ў хаце, і ёй там утульна", "Ці вялікая ў яе хата?"),  # Belarusian т / ц
+    ("Я купіла кнізе вокладку, і яна мне падабаецца", "Ці ёсць у яе кніга?"),  # Belarusian г / з
+])
+def test_a_fact_with_the_other_spelling_of_a_word_is_found(store, fact, query):
+    # the fact has only the changed consonant or vowel: the index must be searched for it, not only the fact scored
+    store.add_fact(fact)
+    store.add_fact("Оксана гуляє з собакою в парку, і їй там добре")
+    assert fact in _found(store, query)
+
+
 def test_ukrainian_names_in_cases_with_letters_russian_lacks_share_a_first_form():
     assert "оксана" in name_lemmas("оксані")
     assert "марія" in name_lemmas("марії")

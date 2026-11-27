@@ -569,8 +569,8 @@ A word matches another when they share its plain form or its stem in the languag
     `новае` an adjective), both stems are keys; a first `ў`/`у` compare alike. Belarusian unstressed `о`/`а`
     (`горад` / `гарады`), a consonant the dative changes (`доньці` / `донька`, `кнізе` / `кніга`) and the Ukrainian
     `і` of a closed syllable (`кіт` / `кота`, `рік` / `року`) count as same-root words: 0.6, never a recall alone, so
-    `кот` (cat) does not recall `кат` (executioner). The `о` spellings are searched in the index too, so `гарады`
-    finds `горад`.
+    `кот` (cat) does not recall `кат` (executioner). The other spellings are searched in the index too, either way,
+    so `гарады` finds `горад`, `донькою` finds `доньці`, `кота` finds `кіт` and `кніга` finds `кнізе`.
   - **Names** in a Ukrainian or Belarusian case with a letter Russian lacks share their first form (`Оксані`,
     `Марії`, `Андрієм`, `Алесі`).
   - **Measured** on FLORES-200 devtest (`tools/african_probe.py`, which now covers 28 languages):
@@ -585,8 +585,8 @@ A word matches another when they share its plain form or its stem in the languag
       Ukrainian (`Київ посетил турист` lost its Russian stems): Russian comes first.
     - **False recall** for a question whose fact the store does not hold: Ukrainian 82 % → 49 %, Belarusian
       58 % → 54 %; the right fact is recalled 99.3 % and 99.0 % of the time (was 100 %).
-    - **The cost**: four words copied from a sentence find it first 1.3 (Ukrainian) and 1.5 (Belarusian) points
-      less often (97.3 %, 97.7 %), since the function words they shared with it no longer count; the stems cost
+    - **The cost**: four words copied from a sentence find it first 1.2 (Ukrainian) and 1.5 (Belarusian) points
+      less often (97.4 %, 97.7 %), since the function words they shared with it no longer count; the stems cost
       nothing there (measured with Russian stems in their place: the same).
   - **Left Russian-only**: the experimental Russian case forms (`_RU_FORMS`), the borrowed-word table (`телеграмі` is
     not one of its forms), the sensitive-data patterns of `screen.py`, and splitting a message into two questions.

@@ -13,8 +13,9 @@
     word of a Russian query, `Иван aka Ласка` keeps its alias).
   - **Light stemmers** of the plugin's own (Snowball has none): on hand-made sets, two forms of one word share a key
     in 80–90 % of pairs, against 35–37 % with the Russian stemmer used before. A first Belarusian `ў`/`у` compare
-    alike; Belarusian `о`/`а` (`горад` / `гарады`, searched in both spellings), dative consonant changes and the
-    Ukrainian `і`/`о` alternation are same-root words (0.6), so `кот` does not recall `кат`.
+    alike; Belarusian `о`/`а` (`горад` / `гарады`), dative consonant changes (`донькою` / `доньці`) and the
+    Ukrainian `і`/`о` alternation (`кота` / `кіт`) are same-root words (0.6), so `кот` does not recall `кат`; both
+    spellings are searched in the index, so a fact with only the other one is found.
   - **Names**: Ukrainian and Belarusian case endings with a letter Russian lacks (`Оксані`, `Марії`, `Андрієм`,
     `Любові`).
   - **Russian**: analysis and query terms of all 2,009 FLORES-200 Russian sentences, of their 2- and 4-word
@@ -22,7 +23,7 @@
   - **Measured** on FLORES-200 devtest (`tools/african_probe.py` now covers Russian, Ukrainian and Belarusian
     detection): Ukrainian told in 98.4 % of sentences, Belarusian 99.2 %, no Russian sentence read as either.
     False recall Ukrainian 82 % → 49 %, Belarusian 58 % → 54 %; the right fact recalled 99.3 % / 99.0 % (was
-    100 %). Four words copied from a sentence find it first 1.3 / 1.5 points less often, as their function words
+    100 %). Four words copied from a sentence find it first 1.2 / 1.5 points less often, as their function words
     no longer count. Russian and the other 25 languages measure as before.
 
 ### Fixed

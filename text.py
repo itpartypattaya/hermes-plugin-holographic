@@ -949,12 +949,10 @@ def _ukrainian(word: str) -> tuple[str, frozenset]:
         if w.endswith(("ся", "сь")) and len(w) > 4 and (
                 _longest(w[:-2], _UK_VERB)[0] is not None or _cut(w[:-2], _UK_ADJ)[0] is not None):
             w = w[:-2]
-        for kind, (stem_, e) in (("adj", _cut(w, _UK_ADJ)), ("verb", _longest(w, _UK_VERB)),
-                                 ("noun", _cut(w, _UK_NOUN))):
-            if stem_ is not None:
-                break
-        else:
-            stem_, kind = w, "none"
+        # the first of an adjective, a verb, a noun ending that fits; none: the word as it is
+        kind, stem_, e = next(((k, st, en) for k, (st, en) in (
+            ("adj", _cut(w, _UK_ADJ)), ("verb", _longest(w, _UK_VERB)), ("noun", _cut(w, _UK_NOUN)))
+            if st is not None), ("none", w, ""))
         if kind == "verb":
             if e in ("ти", "ити", "іти"):
                 extras.add(w[:-1])  # a noun in -ти: «зарплати», «діти», «кредити»
@@ -1004,12 +1002,10 @@ def _belarusian(word: str) -> tuple[str, frozenset]:
         if w.endswith("ся") and len(w) > 4 and (
                 _longest(w[:-2], _BE_VERB)[0] is not None or _cut(w[:-2], _BE_ADJ)[0] is not None):
             w = w[:-2]
-        for kind, (stem_, e) in (("adj", _cut(w, _BE_ADJ)), ("verb", _longest(w, _BE_VERB)),
-                                 ("noun", _cut(w, _BE_NOUN))):
-            if stem_ is not None:
-                break
-        else:
-            stem_, kind = w, "none"
+        # the first of an adjective, a verb, a noun ending that fits; none: the word as it is
+        kind, stem_, e = next(((k, st, en) for k, (st, en) in (
+            ("adj", _cut(w, _BE_ADJ)), ("verb", _longest(w, _BE_VERB)), ("noun", _cut(w, _BE_NOUN)))
+            if st is not None), ("none", w, ""))
         if kind == "adj" and e in _BE_VERB_FORM:
             extras.add(w[:-len(_BE_VERB_FORM[e])])  # «чытае», «працую»
         if kind == "verb":
@@ -1029,6 +1025,11 @@ def _belarusian(word: str) -> tuple[str, frozenset]:
 _SLAVIC_STEMS = {"uk": _ukrainian, "be": _belarusian}
 _UK_ALTERNATION = re.compile(r"і([^аеєиіїоуюяь']+)$")  # і of a closed last syllable, often о elsewhere: «кіт» / «кота»
 _MUTATIONS = {"uk": {"ц": ("к",), "з": ("г",), "с": ("х",)}, "be": {"ц": ("к", "т"), "з": ("г",), "с": ("х",)}}
+# ... and the other way, from the form that keeps the consonant to the one that changes it: a question's «донькою» must
+# search the index for the fact's «доньці», which no prefix of «доньк» reaches
+_UNMUTATIONS = {lang: {c: tuple(m for m, cs in table.items() if c in cs) for c in set().union(*table.values())}
+                for lang, table in _MUTATIONS.items()}
+_UK_ALTERNATION_O = re.compile(r"о([^аеєиіїоуюяь']+)$")  # the о of «кота», «школа»: «кіт», «шкіл» elsewhere
 
 
 _AKANYE_MAX = 3  # Belarusian stems with more а than this get no о spellings (each is a key and an FTS prefix)
@@ -1040,7 +1041,9 @@ def _slavic_roots(word: str, lang: str) -> frozenset:
     and locative change back («доньці» / «донька», «кнізе» / «кніга», «хаце» / «хата»), in Ukrainian the о of
     other forms of a word whose last syllable has і («кіт» / «кота», «шкіл» / «школа», «рік» / «року»), in Belarusian
     the stem with о and ё written а and е, and with one а written о (akanye: «гарады» / «горад»): a word whose
-    stressed о is unstressed in another form. The о spellings are also what the FTS index is searched for."""
+    stressed о is unstressed in another form. Each change also the other way («донька» gets «доньц», «кота» «кіт»):
+    these keys are what the FTS index is searched for (Term.fts_extra), so a fact that has only the other spelling is
+    found, not only scored once something else found it."""
     stem_, _ = _SLAVIC_STEMS[lang](word)
     out = set()
     if lang == "be":
@@ -1050,8 +1053,13 @@ def _slavic_roots(word: str, lang: str) -> frozenset:
             out |= {plain[:i] + "о" + plain[i + 1:] for i, c in enumerate(plain) if c == "а"}
     if len(stem_) >= 3 and stem_[-1] in _MUTATIONS[lang] and word[-1] in "іеы":
         out |= {stem_[:-1] + c for c in _MUTATIONS[lang][stem_[-1]]}
-    if lang == "uk" and (m := _UK_ALTERNATION.search(stem_)) and len(stem_) >= 3:
-        out.add(stem_[:m.start()] + "о" + m.group(1))
+    if len(stem_) >= 3 and stem_[-1] in _UNMUTATIONS[lang]:
+        out |= {stem_[:-1] + c for c in _UNMUTATIONS[lang][stem_[-1]]}
+    if lang == "uk" and len(stem_) >= 3:
+        if m := _UK_ALTERNATION.search(stem_):
+            out.add(stem_[:m.start()] + "о" + m.group(1))
+        if m := _UK_ALTERNATION_O.search(stem_):
+            out.add(stem_[:m.start()] + "і" + m.group(1))
     return frozenset(r for r in out if len(r) >= _MIN_STEM and r != stem_)
 
 

@@ -1016,6 +1016,22 @@ class FactRetriever:
             return []
         grams, zh = query_grams(query or ""), is_chinese(query or "")
         gram_kept = []
+        if grams and candidates and not zh:
+            # Japanese, Korean, Thai (unreleased): a gram most facts hold (して, ます; 있습, 니다) says as little as a
+            # common word, so grams weigh by how rare they are in the store, as words do. A gram no fact holds (a
+            # question word, 어디서, どこ) weighs as the rarest gram of the message that some fact holds: weighed as the
+            # rarest of the whole store, it outweighed a topic every fact shares, and «레온은 어디에 살아요?» (where
+            # does Leon live) recalled none of the facts about Leon. Japanese grammar is written in hiragana (して,
+            # ました): a gram of hiragana alone weighs half. Chinese, read in words, keeps its weights. FLORES-200
+            # devtest (tools/african_probe.py, gate): false recall Japanese 98 % -> 46 %, Korean 90 % -> 38 %, Thai
+            # 75 % -> 48 %, the right fact as before.
+            texts = self._texts()
+            n = max(len(texts), 1)
+            df = {g: sum(1 for _, _, a in texts if g in a.text) for g, _ in grams}
+            idf = {g: math.log(1.0 + n / d) for g, d in df.items() if d}
+            unheld = max(idf.values(), default=1.0)
+            grams = [(g, w * idf.get(g, unheld) * (0.5 if all("\u3041" <= c <= "\u309f" for c in g) else 1.0))
+                     for g, w in grams]
         if grams and candidates:
             # Unsegmented script: weighted coverage of the query's n-grams, or (stricter, since one character says
             # less than a word) IDF-weighted coverage of its meaningful characters: in Chinese a one-character
@@ -1077,6 +1093,7 @@ class FactRetriever:
                 held[term] = sum(1 for _, _, a in self._texts() if term.match(a) == 1.0 or by_name(term, a))
             return held[term] > 1
 
+        safe_names = self.store.safe_name_forms()
         kept, left_out = [], []
         for fact in candidates:
             analysis = analyze(_fact_text(fact))
@@ -1094,11 +1111,13 @@ class FactRetriever:
             # with everything that happens every day and is about none of it. A message of that word alone ("Lena?")
             # is about it, and so is one that may name someone inside the sentence ("What is Dina studying?" of
             # "Dina takes a pottery course"; in German any capitalized word; in a script without capitals, such as
-            # Hebrew or Hindi, any word); a known entity's facts the message mentions come by the entity (prefetch).
+            # Hebrew or Hindi, a word of a declared entity's name: unreleased, since any word let one shared common word
+            # recall, 87 % of Hindi and 80 % of Arabic questions about facts the store does not hold recalled one); a
+            # known entity's facts the message mentions come by the entity (prefetch).
             matched = [t for t, s in strength.items() if s]
             lone = len(terms) > 1 and len(matched) == 1 and freq[matched[0]] > 1 \
-                and any(c.lower() != c.upper() for c in matched[0].word) and matched[0].keys.isdisjoint(name_keys) \
-                and held_by_others(matched[0])
+                and (any(c.lower() != c.upper() for c in matched[0].word) or (name_forms(matched[0].word) | {matched[0].word}).isdisjoint(safe_names)) \
+                and matched[0].keys.isdisjoint(name_keys) and held_by_others(matched[0])
             if any(t.identifier and t not in numbers and s for t, s in strength.items()) or fact in gram_kept or (
                     exact and not lone and sum(weights[t] * s for t, s in strength.items()) / total >= min_coverage):
                 kept.append(fact)

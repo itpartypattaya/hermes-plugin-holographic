@@ -143,8 +143,10 @@ OTHER_FACTS_SHARE_THE_WORD = [
     ("What is José studying?", ["José takes pottery classes", "José lives in Madrid"], 0),
     ("What is Peter's occupation?", ["Peter repairs watches", "Peter lives in York"], 0),
     ("Wo arbeitet Oleg?", ["Oleg ist Arzt im Krankenhaus", "Oleg wohnt in Berlin"], 0),  # German: every noun capitalized
-    ("מה דניאל לומד?", ["דניאל משתתף בקורס ספרדית", "דניאל גר בתל אביב"], 0),  # Hebrew: no capitals to tell a name by
 ]
+# Hebrew, Hindi, Arabic have no capitals to tell a name by: there a name recalls when the store knows it (declared
+# entity), tests/test_non_latin_gate.py. Until the change that file describes, any word counted as a possible name,
+# and one shared common word recalled 80-87 % of Hindi and Arabic questions about facts the store does not hold.
 
 
 @pytest.mark.parametrize("query,facts,answer", OTHER_FACTS_SHARE_THE_WORD)

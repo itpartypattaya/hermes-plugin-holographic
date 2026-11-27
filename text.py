@@ -128,6 +128,20 @@ _EVIDENCE = {"it": None, "tr": re.compile("[ığş\u0307]"), "pl": re.compile("[
 # stays as it was (often undetermined: stemmed in six languages, scanned), which serves a short message better than a
 # language that compares words only as written ("Sana güveniyorum", "Kanye albums", "Kati kommt morgen").
 _TWO_WORDS = ("sw", "ha", "yo", "so", "zu", "af")
+# Afrikaans shares most of its function words with Dutch (die, is, het, om, dat, ...): they vote for both, and
+# Afrikaans decides a text only with a word of its own (nie, vir, hulle, slegs, ...; _AF_OWN) or with its article 'n
+# ("a"), written apart with an apostrophe (in FLORES-200 also with a left quote mark), which votes as written beside
+# an Afrikaans word that is no English one ("Rock 'n Roll Is Fun" stays English). Dutch writes it attached ("zo'n"), a
+# bare "n" is Yoruba. "Dit is nie wat ons wil nie" is Afrikaans, "Dat is het" stays Dutch. Known: colloquial Dutch
+# that writes 'n apart and has only words Afrikaans shares ("Dat is 'n mooi huis") is read as Afrikaans.
+_AF_ARTICLE = frozenset({"'n", "‘n"})
+# Zulu glues its grammar to the word: noun-class prefixes (izi-, ezi-) and the infinitive uku- start a noun or verb,
+# ngo-/nge- an adverb or "by, with" ("ngokuthi", "ngemva", "ngesikhathi"). A word of six letters or more that
+# starts with one votes for Zulu; two are still needed (_TWO_WORDS), so a name ("Ngorongoro") does not decide. Measured
+# on FLORES-200 the other Latin languages have such words under 1 in 1000, Swahili most ("ukubwa", "ukurasa"): they
+# do not vote in text with a Swahili function word, nor in text with an English vote and no Zulu one ("Ukulele tabs
+# and ezines").
+_ZU_PREFIXES = ("uku", "ngo", "nge", "ezi", "izi")
 _SCAN_LATIN = frozenset({"id", "de", "tr", "pl", "nl", "ha"})  # Hausa: hooked letters typed without the hooks
 # Languages stemmed as written as well as folded: Snowball reads the letters folding drops (Turkish "çocuğun" is
 # "çocuk", folded "cocugun" stays "cocugu"; Polish "domów" is "dom", "domow" stays), and a word typed without its marks
@@ -360,7 +374,7 @@ STOP = {
     die van is en het in te om wat nie dit op met dat vir as se hulle jy was na kan aan hy sal daar baie maar jou sy
     by toe een uit ons al gaan so af ek hom my haar ook deur oor meer tot soos moet sou teen wanneer terwyl hierdie
     daardie wees word hul julle nog net reeds dus want omdat of hoe waar waarom wie watter ja nee asseblief dankie
-    saam"""),
+    saam n"""),
 # Ethiopic script: Amharic and Tigrinya, told apart by the words below (_ethiopic_langs); text of neither stays both.
 "am": _folded("""
     ላይ ውስጥ ወደ ወይም ወይ ጋር ሲሆን ግን ይህ ያ እንደ ነው ናቸው ናት ነበር ነበሩ በኋላ ብቻ በላይ እስከ ያለ ያሉ ይህም ይህን እንኳን ሌላ ሌሎች
@@ -378,14 +392,14 @@ STOP = {
 # Thai "wat"): they do not vote for their language, and are dropped only in text that language alone is best
 # supported in, so "Ana come carne" stays Spanish and "Leon met Irma at the door" English.
 _WEAK = {
-    "it": _folded("per come dove ci vi io lei ed chi fra sei col"),
+    "it": _folded("per come dove ci vi ve io lei ed chi fra sei col"),  # "ve": Turkish "and", its commonest word
     "tr": _folded("kim ben ki var bile sen beni yani daha az sana ama"),
     "pl": _folded("u w z bo ci ale maja nam mu coś ile po od"),
     "nl": _folded("door met van wat heel ben dank"),
     # African languages: English words ("pale", "lake", "wake", "can", "take", "game", "shine", "won", "fun", "kale",
     # "tan"), names ("Yao", "Mimi", "Ana", "Amma", "Yana"), words of another supported language a language has enough
-    # other evidence without (Swahili "ya", "la", "na"; Afrikaans "die", "van", "het", all of Dutch), and words the
-    # African languages share. A function word of another language that is the commonest evidence of this one votes
+    # other evidence without (Swahili "ya", "la", "na"; Afrikaans "van", "met", "een", commoner in Dutch), and words
+    # the African languages share. A function word of another language that is the commonest evidence of this one votes
     # for both, as "son" does for French and Spanish: Yoruba "ni", "si", "ti", "mi", "le" (Spanish, Italian, French
     # words too), Swahili "na", "ya" (Polish, Spanish), Hausa "da", "ne" (Portuguese, Italian, French), Afrikaans
     # "nie" (Polish), Hausa "yake" (Swahili); a tie keeps both languages. Measured on FLORES-200 devtest
@@ -395,6 +409,8 @@ _WEAK = {
     # Yoruba "lo", "se", "je", "fi" vote as search words (_VOTE_ONLY): Hausa 69 % to 91 %, Yoruba 84 % to 92 %, one
     # more Polish and one Portuguese sentence tied. Hausa
     # "ya" and Yoruba "o" stay weak: as votes they tie Turkish, Portuguese and Polish sentences.
+    # Unreleased: the Afrikaans words Dutch shares vote for both (see _AF_ARTICLE), Afrikaans 3 % to 74 % told, and
+    # no Dutch sentence ties with it.
     "sw": _folded("la cha ni si au kama tu hata hawa yule ile pale lake wake yake yao mimi sisi hadi bila "
                   "basi pia nje nini nani je kuwa kuna haya sawa kati wale wangu kule ule"),
     "ha": _folded("ya na su ce sun mu ku ni kai ke ka za zan don in an ga kan bisa game har "
@@ -403,9 +419,7 @@ _WEAK = {
     "yo": _folded("won fun kan ma ju lori emi tani yin kini iwo to o"),
     "so": _folded("ku ka in ay la si ah ama kan tan mar kale sida kala badan ma aan wax kuwa kaas lakin"),
     "zu": _folded("uma nje nini cha bona mina nina yena lona kube kuya labo laba"),
-    "af": _folded("die van is en het in te om wat dit op met dat as se was na kan aan sal daar maar jou by toe een uit "
-                  "ons al gaan so af my haar ook deur oor meer tot moet teen wanneer word nog net reeds dus want omdat "
-                  "of hoe waar waarom wie ja nee ek"),
+    "af": _folded("van met as se was na kan by een uit so my haar nog net reeds dus want omdat waarom ja nee n"),
 }
 # The other way round: words that tell the language but stay words. The Spanish forms of "ir" ("va", "van", "vas",
 # "voy") are function words of French and Italian here, and without them "Irma va a la escuela" was French or Italian
@@ -413,7 +427,22 @@ _WEAK = {
 # meets "fue" through them (see word_lemmas).
 # Yoruba verbs as common as function words, lọ (go), ṣe (do), jẹ (be, eat), fi (use, put), tell the language as
 # they stay search words.
-_VOTE_ONLY = {"es": _folded("va van vas voy"), "yo": _folded("lo se je fi"), "ha": _folded("mai")}
+# Unreleased: more words that tell Turkish, Polish, Dutch and Afrikaans. As function words (dropped) they cost
+# retrieval: on FLORES-200 four words copied from a Dutch sentence found it first 0.7 points less often, Polish 0.3.
+# Turkish "ve" (and) no longer votes for Italian (_WEAK).
+_VOTE_ONLY = {"es": _folded("va van vas voy"), "yo": _folded("lo se je fi"), "ha": _folded("mai"),
+              "tr": _folded("""
+    genellikle özellikle yaklaşık fazla birlikte tarafından diğer bazı birçok çoğu başka aynı ayrıca arasında herhangi
+    boyunca rağmen nedeniyle yalnızca içinde üzerinde karşı dolayı itibaren hakkında yerine neredeyse oldukça
+    yine"""),
+              "pl": _folded("""
+    gdy aby jako niż podczas ponieważ jeśli więcej około wielu wiele kilka inne innych innym również nawet często gdyż
+    lecz jednak wszystkich wszystko wszyscy których którzy sobie siebie teraz zawsze nigdy bardziej wtedy wśród według
+    ponad pomiędzy natomiast były swoich swoim swojej"""),
+              "nl": _folded("zich toen tijdens echter terwijl waarbij alleen sinds"),
+              "af": _folded("""
+    ander slegs sedert dikwels tans behalwe egter altyd sowat almal tydens sonder binne buite sodat alhoewel selfs
+    mekaar verskeie mees eers""")}
 _AM_ONLY, _TI_ONLY = STOP["am"] - STOP["ti"], STOP["ti"] - STOP["am"]
 # Every function word, for checks that do not know the language (a Latin word in Chinese text, the sides of "aka"):
 # of the African languages only the words that are no word or name elsewhere ("game", "can", "Yao" stay words).
@@ -421,6 +450,14 @@ STOPWORDS = frozenset().union(*(words - (_WEAK.get(lang, frozenset()) if lang in
                                 for lang, words in STOP.items()))
 _VOTERS = {lang: (words | _VOTE_ONLY.get(lang, frozenset())) - _WEAK.get(lang, frozenset())
            for lang, words in STOP.items()}
+# Words that decide a text is Afrikaans (_AF_ARTICLE): its voters that are no Dutch function word, but not those that
+# are Dutch or English words or names too ("deur", door; "toe", closed; "gaan", "af", "word", "Sal", "EK"): "Wat is
+# die deur?" and "Amerika om te gaan" stay Dutch, "Is Word open?" English.
+_AF_OWN = _VOTERS["af"] - STOP["nl"] - _folded("deur oor teen toe word ander wees mees ek sal gaan af")
+_OPENERS = "([{\"“«"
+_SW_ANY = STOP["sw"]
+# Italian "ve" is weak (Turkish "and"), but before a clitic it is Italian: "ve lo dico", "ve ne andate".
+_IT_CLITICS = frozenset({"lo", "la", "li", "le", "ne"})
 
 # Question words that say nothing about the subject of a QUESTION ("какая сегодня погода": "какая" met "как" in every
 # fact that says "считать как …"), but are part of a statement ("Иван знает, почему" is not "Иван знает, куда"): left
@@ -1685,6 +1722,20 @@ def analyze(text: str) -> Analysis:
     # by "on".
     latin = [fold(g.split("-")[0]) for g in groups if word_script(g) == "latin" and _letters_only(g) and g.split("-")[0]]
     votes = {lang: sum(w in _VOTERS[lang] for w in latin) for lang in LATIN}
+    opened = [token.lstrip(_OPENERS) for token in lowered.split()]  # "('n motor)", "(w domu)"
+    article = sum(token in _AF_ARTICLE for token in opened)
+    votes["af"] += article
+    article_counts = article and any(w in _VOTERS["af"] and w not in _VOTERS["en"] for w in latin)
+    if _AF_OWN.isdisjoint(latin) and not article_counts:
+        votes["af"] = 0  # "Dat is het", "Wat is die deur?", "Rock 'n Roll Is Fun"
+    # Polish "w" (in) and "z" (with), its commonest words, do not vote (_WEAK): as letters they are initials and names
+    # elsewhere ("George W. Bush", "Gen Z", "from a to z"). Written alone in lower case before a word, as a preposition
+    # is, they vote for Polish; "z" only beside other Polish evidence (a vote or a letter): "gen z trends" is no Polish.
+    pl_evidence = bool(votes["pl"] or _EVIDENCE["pl"].search(lowered))
+    votes["pl"] += sum((a == "w" or a == "z" and pl_evidence) and b[:1].isalpha() for a, b in zip(opened, opened[1:]))
+    if not (votes["sw"] or _SW_ANY & set(latin) or votes["en"] and not votes["zu"]):  # "Kuna ukungu", "Ukulele and"
+        votes["zu"] += sum(len(w) >= 6 and w.startswith(_ZU_PREFIXES) and w not in STOP["zu"] for w in latin)
+    votes["it"] += sum(a == "ve" and b in _IT_CLITICS for a, b in zip(latin, latin[1:]))  # "ve lo dico"
     for lang in _TWO_WORDS:  # one word of a language with no stemmer does not decide: "Kanye albums" is no Zulu
         if votes[lang] < 2:
             votes[lang] = 0
